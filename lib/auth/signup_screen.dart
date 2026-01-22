@@ -19,7 +19,6 @@ class _SignupScreenState extends State<SignupScreen> {
   String? _selectedChurchCode;
   bool _loading = false;
 
-  // Dummy churches for autocomplete
   final List<Map<String, String>> _dummyChurches = [
     {'code': 'CH001', 'name': 'St. Mary Church'},
     {'code': 'CH002', 'name': 'Sacred Heart Church'},
@@ -52,23 +51,17 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _loading = true);
 
     try {
-      // Dummy signup logic: simulate backend signup
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Auto-login after signup (dummy)
-      final result = await _auth.login(
+      // Signup/login (dummy) returns User object
+      final user = await _auth.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         churchCode: _selectedChurchCode!,
       );
 
-      final String role = result['role'] as String? ?? 'member';
+      // Use dot notation for role
+      final String role = user.role ?? 'member';
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/$role',
-        (_) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/$role', (_) => false);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Signup failed')),
@@ -100,11 +93,7 @@ class _SignupScreenState extends State<SignupScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 12,
-                  offset: Offset(0, 6),
-                ),
+                BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, 6)),
               ],
             ),
             child: Column(
@@ -113,22 +102,12 @@ class _SignupScreenState extends State<SignupScreen> {
                 const CircleAvatar(
                   radius: 30,
                   backgroundColor: Color(0xFFEDE7F6),
-                  child: Icon(
-                    Icons.person_add,
-                    color: Colors.deepPurple,
-                    size: 30,
-                  ),
+                  child: Icon(Icons.person_add, color: Colors.deepPurple, size: 30),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  "Create Account",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-                ),
+                const Text("Create Account", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
-                const Text(
-                  "Sign up to get started",
-                  style: TextStyle(color: Colors.grey),
-                ),
+                const Text("Sign up to get started", style: TextStyle(color: Colors.grey)),
                 const SizedBox(height: 24),
 
                 // Name
@@ -136,17 +115,15 @@ class _SignupScreenState extends State<SignupScreen> {
                   controller: _nameController,
                   decoration: InputDecoration(
                     labelText: "Full Name",
-                    hintText: "Enter your full name",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Church selection autocomplete
+                // Church selection
                 Autocomplete<Map<String, String>>(
                   optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty) return const Iterable<Map<String, String>>.empty();
+                    if (textEditingValue.text.isEmpty) return const Iterable.empty();
                     return _dummyChurches.where((church) =>
                         church['name']!.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
                         church['code']!.toLowerCase().contains(textEditingValue.text.toLowerCase()));
@@ -158,10 +135,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       focusNode: focusNode,
                       decoration: InputDecoration(
                         labelText: "Church",
-                        hintText: "Enter church name or code",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     );
                   },
@@ -176,9 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     labelText: "Email",
-                    hintText: "Enter your email",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -189,9 +161,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Password",
-                    hintText: "Enter your password",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -202,9 +172,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Confirm Password",
-                    hintText: "Re-enter your password",
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -216,17 +184,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _loading ? null : _signup,
                     child: _loading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            "Sign Up",
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
+                        : const Text("Sign Up", style: TextStyle(fontSize: 16, color: Colors.white)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -237,9 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   children: [
                     const Text("Already have an account? "),
                     TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, Routes.login);
-                      },
+                      onPressed: () => Navigator.pushNamed(context, Routes.login),
                       child: const Text("Login"),
                     ),
                   ],

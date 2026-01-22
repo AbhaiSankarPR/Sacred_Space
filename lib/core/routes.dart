@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
+
+// Auth
 import '../auth/login_screen.dart';
+import '../auth/signup_screen.dart';
+import '../auth/auth_service.dart';
+
+// Dashboards
 import '../dashboard/member_dashboard.dart';
 import '../dashboard/profile_screen.dart';
-import '../auth/signup_screen.dart';
-import '../announcements/announcements_screen.dart';
 
-// import '../dashboard/official_dashboard.dart';
-// import '../dashboard/priest_dashboard.dart';
-// import '../dashboard/admin_dashboard.dart';
+// Features
+import '../announcements/announcements_screen.dart';
+import '../bookings/bookings_screen.dart';
+import '../emergency/emergency_alerts_screen.dart';
 
 class Routes {
   static const login = '/';
-  static const member = '/member';
-  static const official = '/official';
-  static const priest = '/priest';
-  static const admin = '/admin';
-  static const announcements = '/announcements';
-  static const profile = '/profile'; // <-- new
   static const signup = '/signup';
+  static const member = '/member';
+  static const announcements = '/announcements';
+  static const profile = '/profile';
+  static const bookings = '/bookings';
+  static const emergency = '/emergency';
 
   static Map<String, WidgetBuilder> get map => {
         login: (_) => const LoginScreen(),
-        member: (_) => const MemberDashboard(),
-        announcements: (_) => const AnnouncementsScreen(),
-        profile: (_) => const ProfileScreen(),
-        signup: (_)=> const SignupScreen(), // <-- new
-
-        // official: (_) => const OfficialDashboard(),
-        // priest: (_) => const PriestDashboard(),
-        // admin: (_) => const AdminDashboard(),
+        signup: (_) => const SignupScreen(),
+        member: (_) => MemberDashboard(user: AuthService().currentUser!),
+        announcements: (_) => AnnouncementsScreen(user: AuthService().currentUser!),
+        profile: (_) => ProfileScreen(user: AuthService().currentUser!),
+        bookings: (_) => BookingsScreen(user: AuthService().currentUser!),
+        emergency: (_) => EmergencyAlertsScreen(user: AuthService().currentUser!),
       };
 }

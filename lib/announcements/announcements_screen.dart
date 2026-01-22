@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import '../widgets/app_scaffold.dart';
+import '../auth/auth_service.dart';
 import 'announcement_service.dart';
 import 'announcement.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
-  const AnnouncementsScreen({super.key});
+  final User user; // <-- receive user
+
+  const AnnouncementsScreen({super.key, required this.user});
 
   @override
   State<AnnouncementsScreen> createState() => _AnnouncementsScreenState();
@@ -20,8 +24,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Announcements')),
+    return AppScaffold(
+      title: 'Announcements',
+      user: widget.user, // <-- pass user to AppScaffold
       body: FutureBuilder<List<Announcement>>(
         future: announcements,
         builder: (context, snapshot) {
@@ -32,6 +37,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             return const Center(child: Text('Failed to load announcements'));
           }
           final data = snapshot.data!;
+          if (data.isEmpty) {
+            return const Center(child: Text('No announcements available'));
+          }
           return ListView.builder(
             itemCount: data.length,
             itemBuilder: (context, index) {

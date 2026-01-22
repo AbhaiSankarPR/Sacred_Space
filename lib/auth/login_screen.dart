@@ -17,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _selectedChurchCode;
   bool _loading = false;
 
-  // Dummy churches for now
   final List<Map<String, String>> dummyChurches = [
     {'code': 'CH001', 'name': 'St. Mary Church'},
     {'code': 'CH002', 'name': 'Sacred Heart Church'},
@@ -41,14 +40,15 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
 
     try {
-      final result = await _authService.login(
+      final user = await _authService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         churchCode: _selectedChurchCode!,
       );
 
-      final String role = result['role'] as String? ?? 'member';
+      final role = user.role;
 
+      // Navigate to dashboard based on role
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/$role',
@@ -96,17 +96,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const CircleAvatar(
                   radius: 30,
                   backgroundColor: Color(0xFFEDE7F6),
-                  child: Icon(
-                    Icons.church,
-                    color: Colors.deepPurple,
-                    size: 30,
-                  ),
+                  child: Icon(Icons.church, color: Colors.deepPurple, size: 30),
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   "Welcome to Sacred Space",
-                  style: TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
@@ -116,16 +111,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // --- CHURCH AUTOCOMPLETE ---
+                // Church autocomplete
                 Autocomplete<Map<String, String>>(
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    if (textEditingValue.text.isEmpty) return const Iterable<Map<String, String>>.empty();
+                  optionsBuilder: (textEditingValue) {
+                    if (textEditingValue.text.isEmpty) return const Iterable.empty();
                     return dummyChurches.where((church) =>
                         church['name']!.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
                         church['code']!.toLowerCase().contains(textEditingValue.text.toLowerCase()));
                   },
-                  displayStringForOption: (Map<String, String> option) =>
-                      "${option['name']} (${option['code']})",
+                  displayStringForOption: (option) => "${option['name']} (${option['code']})",
                   fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
                     return TextField(
                       controller: controller,
@@ -133,67 +127,56 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: "Church",
                         hintText: "Enter church code or name",
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     );
                   },
-                  onSelected: (Map<String, String> selection) {
+                  onSelected: (selection) {
                     _selectedChurchCode = selection['code'];
                   },
                 ),
-
                 const SizedBox(height: 16),
 
-                // --- EMAIL ---
+                // Email
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(
                     labelText: "Email",
                     hintText: "Enter your email",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // --- PASSWORD ---
+                // Password
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Password",
                     hintText: "Enter your password",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                // --- SIGN IN BUTTON ---
+                // Sign In
                 SizedBox(
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _loading ? null : _login,
                     child: _loading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Sign In",
-                            style: TextStyle(
-                                fontSize: 16, color: Colors.white)),
+                        : const Text("Sign In", style: TextStyle(fontSize: 16, color: Colors.white)),
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // --- LINK TO SIGNUP ---
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

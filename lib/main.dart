@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'app.dart';
-import 'auth/auth_service.dart';
+import 'core/routes.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runApp(const SacredSpaceApp());
+}
 
-  final auth = AuthService();
-  final role = await auth.getRole(); // member / official / priest / admin
+class SacredSpaceApp extends StatelessWidget {
+  const SacredSpaceApp({super.key});
 
-  runApp(
-    SacredSpaceApp(
-      initialRoute: role != null ? '/$role' : '/',
-    ),
-  );
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      initialRoute: Routes.login,
+      routes: Routes.map,
+    );
+  }
 }
