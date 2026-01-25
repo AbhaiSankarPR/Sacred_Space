@@ -17,7 +17,7 @@ import '../emergency/emergency_alerts_screen.dart';
 import '../events/events_screen.dart';
 import '../gallery/gallery_screen.dart';
 import '../settings/settings_screen.dart';
-
+import '../settings/about_screen.dart';
 
 class Routes {
   static const login = '/';
@@ -27,26 +27,23 @@ class Routes {
   static const profile = '/profile';
   static const bookings = '/bookings';
   static const emergency = '/emergency';
-static const newBooking = '/new-booking'; 
-static const events = '/events';
-static const gallery = '/gallery';   
-  static const settings = '/settings'; 
+  static const newBooking = '/new-booking';
+  static const events = '/events';
+  static const gallery = '/gallery';
+  static const settings = '/settings';
+  static const about = '/about';
   static Map<String, WidgetBuilder> get map => {
-        login: (_) => const LoginScreen(),
-        signup: (_) => const SignupScreen(),
-        
-        member: (_) => const MemberDashboard(),
-        events: (_) => const EventsScreen(), // Add this
-        // ✅ FIXED: BookingsScreen handles user internally now too
-        bookings: (_) => const BookingsScreen(),
-newBooking: (_) => const NewBookingScreen(),
-        // ⚠️ CAUTION: These still rely on 'currentUser!'. 
-        // If you haven't updated these screens yet, keep them like this.
-        // If you update them later, remove the arguments here.
-        announcements: (_) => AnnouncementsScreen(),
-        profile: (_) => ProfileScreen(),
-emergency: (_) => const EmergencyAlertsScreen(),
-gallery: (_) => const GalleryScreen(),
-        settings: (_) => const SettingsScreen(),
-      };
+    login: (_) => const LoginScreen(),
+    signup: (_) => const SignupScreen(),
+    member: (_) => const MemberDashboard(),
+    events: (_) => const EventsScreen(), 
+    bookings: (_) => const BookingsScreen(),
+    newBooking: (_) => const NewBookingScreen(),
+    announcements: (_) => AnnouncementsScreen(),
+    profile: (_) => ProfileScreen(),
+    emergency: (_) => const EmergencyAlertsScreen(),
+    about: (_) => const AboutScreen(),
+    gallery: (_) => const GalleryScreen(),
+    settings: (_) => const SettingsScreen(),
+  };
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
-import '../core/theme_provider.dart';     
+import 'package:provider/provider.dart';
+import '../core/theme_provider.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
@@ -12,20 +12,25 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // 1. Access the ThemeProvider state
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     // 2. Fetch User safely
     final user = AuthService().currentUser;
 
     // Safety check: Redirect if no user found
     if (user == null) {
-      Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
+      Future.microtask(
+        () => Navigator.pushReplacementNamed(context, Routes.login),
+      );
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       // Background color is handled automatically by the Theme
       appBar: AppBar(
-        title: const Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Settings",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         elevation: 0,
       ),
@@ -50,7 +55,7 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.notifications_none,
               title: "Notifications",
               trailing: Switch(
-                value: true, 
+                value: true,
                 activeColor: const Color(0xFF9B59B6),
                 onChanged: (v) {}, // Mock logic
               ),
@@ -86,7 +91,10 @@ class SettingsScreen extends StatelessWidget {
             _SettingsTile(
               icon: Icons.language,
               title: "Language",
-              trailing: const Text("English", style: TextStyle(color: Colors.grey)),
+              trailing: const Text(
+                "English",
+                style: TextStyle(color: Colors.grey),
+              ),
               onTap: () {},
             ),
           ]),
@@ -109,7 +117,11 @@ class SettingsScreen extends StatelessWidget {
             _SettingsTile(
               icon: Icons.info_outline,
               title: "About App",
-              trailing: const Text("v1.0.0", style: TextStyle(color: Colors.grey)),
+              trailing: const Text(
+                "v1.0.0",
+                style: TextStyle(color: Colors.grey),
+              ),
+              onTap: () => Navigator.pushNamed(context, Routes.about),
             ),
           ]),
         ],
@@ -147,9 +159,7 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 }
@@ -171,9 +181,10 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Determine text color dynamically based on theme
-    final textColor = Theme.of(context).brightness == Brightness.dark 
-        ? Colors.white 
-        : Colors.black87;
+    final textColor =
+        Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : Colors.black87;
 
     return ListTile(
       leading: Container(
@@ -185,10 +196,16 @@ class _SettingsTile extends StatelessWidget {
         child: Icon(icon, color: const Color(0xFF5D3A99), size: 20),
       ),
       title: Text(
-        title, 
-        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor),
+        title,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
       ),
-      trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+      trailing:
+          trailing ??
+          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
