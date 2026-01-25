@@ -1,201 +1,253 @@
 import 'package:flutter/material.dart';
-import '../core/routes.dart';
-import '../auth/auth_service.dart';
-import '../widgets/app_drawer.dart';
+import 'package:flutter/services.dart';
+
+// --- YOUR ORIGINAL IMPORTS ---
+import '../core/routes.dart';       // Ensure this matches your Routes file location
+import '../auth/auth_service.dart'; // Ensure this matches your AuthService location
+import '../widgets/app_drawer.dart'; // Ensure this matches your AppDrawer location
 
 class MemberDashboard extends StatelessWidget {
-  final User user;
-
-  const MemberDashboard({super.key, required this.user});
+  // 1. Remove the constructor argument. We fetch data inside build() now.
+  const MemberDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeGradientStart = Color(0xFF5D3A99); // deep purple
-    final themeGradientEnd = Color(0xFF9B59B6);   // lighter purple
+    // 2. Fetch the user here. This prevents the "null check" crash on startup.
+    final user = AuthService().currentUser;
 
+    // 3. Safety Check: If user is missing (e.g. app restart), redirect to login.
+    if (user == null) {
+      Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // 4. The UI implementation using the 'user' variable we just fetched.
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA), 
       drawer: AppDrawer(user: user),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // --- CUSTOM HEADER ---
-            Container(
-              width: double.infinity,
-              height: 180,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [themeGradientStart, themeGradientEnd],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(36),
-                  bottomRight: Radius.circular(36),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Stack(
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildSliverAppBar(context, user),
+          _buildMenuGrid(context),
+          const SliverToBoxAdapter(child: SizedBox(height: 30)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar(BuildContext context, var user) {
+    return SliverAppBar(
+      expandedHeight: 220.0,
+      floating: false,
+      pinned: true,
+      backgroundColor: const Color(0xFF5D3A99),
+      elevation: 0,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF5D3A99), Color(0xFF9B59B6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Positioned(
-                    top: 24,
-                    left: 16,
-                    child: CircleAvatar(
-                      radius: 36,
-                      backgroundColor: Colors.white,
-                      child: user.logoUrl != null
-                          ? ClipOval(
-                              child: Image.network(
-                                user.logoUrl!,
-                                width: 68,
-                                height: 68,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : const Icon(Icons.church, color: Color(0xFF5D3A99), size: 36),
-                    ),
-                  ),
-                  Positioned(
-                    top: 40,
-                    left: 110,
-                    right: 16,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user.churchName,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user.location,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Welcome ${user.role.toUpperCase()} 👋',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
+                  const SizedBox(height: 10),
+                  // Avatar with Glow
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
+                    child: CircleAvatar(
+                      radius: 38,
+                      backgroundColor: Colors.white,
+                      // Handling potential null logoUrl safely
+                      backgroundImage: (user.logoUrl != null && user.logoUrl!.isNotEmpty)
+                          ? NetworkImage(user.logoUrl!) 
+                          : null,
+                      child: (user.logoUrl == null || user.logoUrl!.isEmpty)
+                          ? const Icon(Icons.church, color: Color(0xFF5D3A99), size: 36)
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user.churchName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.location_on, size: 14, color: Colors.white.withOpacity(0.8)),
+                      const SizedBox(width: 4),
+                      Text(
+                        user.location,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${user.role.toUpperCase()} ACCESS',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // --- DASHBOARD GRID (unchanged) ---
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _DashboardCard(
-                      icon: Icons.announcement,
-                      title: 'Announcements',
-                      color: Colors.orange.shade300,
-                      onTap: () => Navigator.pushNamed(context, Routes.announcements),
-                    ),
-                    _DashboardCard(
-                      icon: Icons.event,
-                      title: 'Events',
-                      color: Colors.green.shade300,
-                      onTap: () => ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(content: Text('Events coming soon!'))),
-                    ),
-                    _DashboardCard(
-                      icon: Icons.person,
-                      title: 'My Profile',
-                      color: Colors.blue.shade300,
-                      onTap: () => Navigator.pushNamed(context, Routes.profile),
-                    ),
-                    _DashboardCard(
-                      icon: Icons.book_online,
-                      title: 'Bookings',
-                      color: Colors.purple.shade300,
-                      onTap: () => Navigator.pushNamed(context, Routes.bookings),
-                    ),
-                    _DashboardCard(
-                      icon: Icons.notifications,
-                      title: 'Emergency Alerts',
-                      color: Colors.red.shade300,
-                      onTap: () => Navigator.pushNamed(context, Routes.emergency),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMenuGrid(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.all(20),
+      sliver: SliverGrid.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.1,
+        children: [
+          _DashboardMenuItem(
+            title: 'Announcements',
+            icon: Icons.campaign_outlined,
+            color: Colors.orange,
+            onTap: () => Navigator.pushNamed(context, Routes.announcements),
+          ),
+          _DashboardMenuItem(
+            title: 'Events',
+            icon: Icons.calendar_month_outlined,
+            color: Colors.green,
+            onTap: () {
+               ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Events coming soon!'))
+               );
+            },
+          ),
+          _DashboardMenuItem(
+            title: 'My Profile',
+            icon: Icons.person_outline,
+            color: Colors.blue,
+            onTap: () => Navigator.pushNamed(context, Routes.profile),
+          ),
+          _DashboardMenuItem(
+            title: 'Bookings',
+            icon: Icons.bookmark_border,
+            color: Colors.purple,
+            onTap: () => Navigator.pushNamed(context, Routes.bookings),
+          ),
+          _DashboardMenuItem(
+            title: 'Emergency',
+            icon: Icons.warning_amber_rounded,
+            color: Colors.red,
+            isAlert: true,
+            onTap: () => Navigator.pushNamed(context, Routes.emergency),
+          ),
+          _DashboardMenuItem(
+            title: 'Support',
+            icon: Icons.headset_mic_outlined,
+            color: Colors.teal,
+            onTap: () {
+               ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Support coming soon!'))
+               );
+            },
+          ),
+        ],
       ),
     );
   }
 }
 
-class _DashboardCard extends StatelessWidget {
-  final IconData icon;
+class _DashboardMenuItem extends StatelessWidget {
   final String title;
+  final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final bool isAlert;
 
-  const _DashboardCard({
-    required this.icon,
+  const _DashboardMenuItem({
     required this.title,
+    required this.icon,
     required this.color,
     required this.onTap,
+    this.isAlert = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(16),
+    return Material(
+      color: Colors.white,
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.05),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        splashColor: color.withOpacity(0.1),
+        highlightColor: color.withOpacity(0.05),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: Colors.white),
-            const SizedBox(height: 12),
+            Container(
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
