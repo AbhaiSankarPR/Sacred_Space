@@ -14,6 +14,10 @@ import '../dashboard/profile_screen.dart';
 import '../announcements/announcements_screen.dart';
 import '../bookings/bookings_screen.dart';
 import '../emergency/emergency_alerts_screen.dart';
+import '../events/events_screen.dart';
+import '../gallery/gallery_screen.dart';
+import '../settings/settings_screen.dart';
+
 
 class Routes {
   static const login = '/';
@@ -23,14 +27,16 @@ class Routes {
   static const profile = '/profile';
   static const bookings = '/bookings';
   static const emergency = '/emergency';
-static const newBooking = '/new-booking'; // 1. Add route name
+static const newBooking = '/new-booking'; 
+static const events = '/events';
+static const gallery = '/gallery';   
+  static const settings = '/settings'; 
   static Map<String, WidgetBuilder> get map => {
         login: (_) => const LoginScreen(),
         signup: (_) => const SignupScreen(),
         
-        // ✅ FIXED: MemberDashboard handles user internally
         member: (_) => const MemberDashboard(),
-        
+        events: (_) => const EventsScreen(), // Add this
         // ✅ FIXED: BookingsScreen handles user internally now too
         bookings: (_) => const BookingsScreen(),
 newBooking: (_) => const NewBookingScreen(),
@@ -39,5 +45,8 @@ newBooking: (_) => const NewBookingScreen(),
         // If you update them later, remove the arguments here.
         announcements: (_) => AnnouncementsScreen(user: AuthService().currentUser!),
         profile: (_) => ProfileScreen(user: AuthService().currentUser!),
-emergency: (_) => const EmergencyAlertsScreen(),      };
+emergency: (_) => const EmergencyAlertsScreen(),
+gallery: (_) => const GalleryScreen(),
+        settings: (_) => const SettingsScreen(),
+      };
 }

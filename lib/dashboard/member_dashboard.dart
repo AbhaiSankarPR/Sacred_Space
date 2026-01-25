@@ -156,11 +156,7 @@ class MemberDashboard extends StatelessWidget {
             title: 'Events',
             icon: Icons.calendar_month_outlined,
             color: Colors.green,
-            onTap: () {
-               ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Events coming soon!'))
-               );
-            },
+            onTap: () => Navigator.pushNamed(context, Routes.events),
           ),
           _DashboardMenuItem(
             title: 'My Profile',
