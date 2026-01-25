@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../widgets/app_scaffold.dart';
 import '../auth/auth_service.dart';
+import '../core/routes.dart';
+import '../widgets/app_drawer.dart';
 import 'announcement_service.dart';
 import 'announcement.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
-  final User user; // <-- receive user
-
-  const AnnouncementsScreen({super.key, required this.user});
+  // 1. Remove 'final User user' from constructor
+  const AnnouncementsScreen({super.key});
 
   @override
   State<AnnouncementsScreen> createState() => _AnnouncementsScreenState();
@@ -24,37 +24,210 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      title: 'Announcements',
-      user: widget.user, // <-- pass user to AppScaffold
+    // 2. Fetch user securely
+    final user = AuthService().currentUser;
+
+    if (user == null) {
+      Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Access dynamic theme
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
+      appBar: AppBar(
+        title: const Text(
+          'Announcements', 
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF5D3A99),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 0,
+      ),
+      drawer: AppDrawer(user: user),
       body: FutureBuilder<List<Announcement>>(
         future: announcements,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: theme.colorScheme.primary),
+            );
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('Failed to load announcements'));
+            return Center(
+              child: Text(
+                'Failed to load announcements',
+                style: TextStyle(color: theme.hintColor),
+              ),
+            );
           }
           final data = snapshot.data!;
           if (data.isEmpty) {
-            return const Center(child: Text('No announcements available'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.notifications_off_outlined, size: 60, color: theme.hintColor),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No announcements available',
+                    style: TextStyle(color: theme.hintColor, fontSize: 16),
+                  ),
+                ],
+              ),
+            );
           }
-          return ListView.builder(
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(20),
             itemCount: data.length,
+            separatorBuilder: (ctx, i) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
-              final a = data[index];
-              return Card(
-                margin: const EdgeInsets.all(10),
-                child: ListTile(
-                  title: Text(a.title),
-                  subtitle: Text(a.message),
-                  trailing: Text(a.date),
-                ),
+              final item = data[index];
+              // Highlight the first item as "Important/Latest"
+              final isLatest = index == 0; 
+              
+              return _AnnouncementCard(
+                item: item, 
+                isLatest: isLatest,
+                theme: theme,
+                isDark: isDark,
               );
             },
           );
         },
+      ),
+    );
+  }
+}
+
+// --- Custom Announcement Card ---
+
+class _AnnouncementCard extends StatelessWidget {
+  final Announcement item;
+  final bool isLatest;
+  final ThemeData theme;
+  final bool isDark;
+
+  const _AnnouncementCard({
+    required this.item,
+    required this.isLatest,
+    required this.theme,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Dynamic text colors
+    final titleColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.white70 : Colors.grey[700];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor, // Dynamic Card Background
+        borderRadius: BorderRadius.circular(16),
+        border: isLatest 
+            ? Border.all(color: const Color(0xFF5D3A99), width: 1.5) 
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header (Icon + Title + Date)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isLatest 
+                  ? const Color(0xFF5D3A99).withOpacity(0.1) 
+                  : Colors.transparent,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isLatest ? const Color(0xFF5D3A99) : Colors.grey[200],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isLatest ? Icons.campaign : Icons.article_outlined,
+                    color: isLatest ? Colors.white : Colors.grey[600],
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.date,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isLatest ? const Color(0xFF5D3A99) : theme.hintColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isLatest)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      "NEW",
+                      style: TextStyle(
+                        fontSize: 10, 
+                        fontWeight: FontWeight.bold, 
+                        color: Colors.red
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          
+          // Divider if not latest (latest has background distinction)
+          if (!isLatest) Divider(height: 1, color: isDark ? Colors.white12 : Colors.grey[200]),
+
+          // Message Body
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              item.message,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: subTextColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,7 +2,7 @@ class User {
   final String role;
   final String churchName;
   final String location;
-  final String? logoUrl; // optional: if you want dynamic logos
+  final String? logoUrl;
 
   User({
     required this.role,
@@ -50,6 +50,13 @@ class AuthService {
     );
 
     return _currentUser!;
+  }
+
+  // --- ADDED THIS METHOD TO FIX THE ERROR ---
+  Future<bool> isLoggedIn() async {
+    // Simulating a check (e.g., waiting for storage)
+    await Future.delayed(const Duration(milliseconds: 100));
+    return _currentUser != null;
   }
 
   User? get currentUser => _currentUser;

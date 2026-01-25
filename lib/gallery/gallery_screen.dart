@@ -13,7 +13,7 @@ class GalleryScreen extends StatefulWidget {
 class _GalleryScreenState extends State<GalleryScreen> {
   String _selectedCategory = "All";
 
-  // Mock Images (using placeholder services)
+  // Mock Images
   final List<Map<String, String>> _images = [
     {'url': 'https://picsum.photos/id/1018/400/400', 'category': 'Worship', 'title': 'Sunday Service'},
     {'url': 'https://picsum.photos/id/1015/400/400', 'category': 'Events', 'title': 'River Retreat'},
@@ -33,6 +33,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       context: context,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -43,7 +44,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white, 
+                fontSize: 18, 
+                fontWeight: FontWeight.bold,
+                shadows: [Shadow(color: Colors.black, blurRadius: 10)],
+              ),
             ),
           ],
         ),
@@ -59,8 +65,12 @@ class _GalleryScreenState extends State<GalleryScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Access dynamic theme
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
       appBar: AppBar(
         title: const Text("Media Gallery", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
@@ -73,7 +83,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
         children: [
           // --- Filter Tabs ---
           Container(
-            color: Colors.white,
+            color: theme.cardColor, // Dynamic container background
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -86,11 +96,25 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       label: Text(cat),
                       selected: isSelected,
                       onSelected: (val) => setState(() => _selectedCategory = cat),
+                      
+                      // Colors
                       selectedColor: const Color(0xFF5D3A99),
-                      backgroundColor: Colors.grey[100],
+                      backgroundColor: isDark ? Colors.white10 : Colors.grey[100],
+                      checkmarkColor: Colors.white,
+                      
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
+                        color: isSelected 
+                            ? Colors.white 
+                            : (isDark ? Colors.white70 : Colors.black87),
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      
+                      // Borders for Dark Mode visibility
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isDark ? Colors.white12 : Colors.transparent,
+                        ),
                       ),
                     ),
                   );
@@ -104,10 +128,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // 2 columns
+                crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 0.85, // Slightly taller cards
+                childAspectRatio: 0.85,
               ),
               itemCount: _filteredImages.length,
               itemBuilder: (context, index) {
@@ -117,8 +141,13 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
+                      color: theme.cardColor, // Fallback color while loading
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4)),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.1), 
+                          blurRadius: 8, 
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
                     child: ClipRRect(
@@ -126,8 +155,22 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.network(img['url']!, fit: BoxFit.cover),
-                          // Gradient Overlay for text
+                          Image.network(
+                            img['url']!, 
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded / 
+                                        loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+                          // Gradient Overlay for text visibility
                           Positioned(
                             bottom: 0,
                             left: 0,
@@ -136,14 +179,21 @@ class _GalleryScreenState extends State<GalleryScreen> {
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                                  colors: [
+                                    Colors.black.withOpacity(0.8), 
+                                    Colors.transparent
+                                  ],
                                   begin: Alignment.bottomCenter,
                                   end: Alignment.topCenter,
                                 ),
                               ),
                               child: Text(
                                 img['title']!,
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                style: const TextStyle(
+                                  color: Colors.white, 
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 14
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),

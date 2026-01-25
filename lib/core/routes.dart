@@ -43,8 +43,8 @@ newBooking: (_) => const NewBookingScreen(),
         // ⚠️ CAUTION: These still rely on 'currentUser!'. 
         // If you haven't updated these screens yet, keep them like this.
         // If you update them later, remove the arguments here.
-        announcements: (_) => AnnouncementsScreen(user: AuthService().currentUser!),
-        profile: (_) => ProfileScreen(user: AuthService().currentUser!),
+        announcements: (_) => AnnouncementsScreen(),
+        profile: (_) => ProfileScreen(),
 emergency: (_) => const EmergencyAlertsScreen(),
 gallery: (_) => const GalleryScreen(),
         settings: (_) => const SettingsScreen(),

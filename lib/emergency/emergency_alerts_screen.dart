@@ -4,35 +4,36 @@ import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
 
 class EmergencyAlertsScreen extends StatelessWidget {
-  // 1. Remove 'final User user' from constructor
   const EmergencyAlertsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 2. Fetch user securely inside build
     final user = AuthService().currentUser;
 
-    // Safety check
     if (user == null) {
       Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Access dynamic theme
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
       appBar: AppBar(
         title: const Text(
           'Emergency Alerts',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.red.shade700, // Urgent Red Color
+        backgroundColor: Colors.red.shade700, // Keep Red for urgency
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
       drawer: AppDrawer(user: user),
       
-      // 3. Floating SOS Button
+      // Floating SOS Button
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           _showSOSDialog(context);
@@ -62,8 +63,8 @@ class EmergencyAlertsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             
-            // Mock Active Alert (You can make this dynamic later)
-            _EmergencyCard(
+            // Mock Active Alert
+            const _EmergencyCard(
               title: "Heavy Rain Warning",
               description: "Severe flooding expected in lower parking areas. Please move vehicles immediately.",
               time: "10 mins ago",
@@ -78,7 +79,8 @@ class EmergencyAlertsScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18, 
                 fontWeight: FontWeight.bold, 
-                color: Colors.grey[800],
+                // Dynamic text color
+                color: isDark ? Colors.white70 : Colors.grey[800],
               ),
             ),
             const SizedBox(height: 12),
@@ -96,7 +98,6 @@ class EmergencyAlertsScreen extends StatelessWidget {
               isActive: false,
             ),
             
-            // Padding for FAB
             const SizedBox(height: 80),
           ],
         ),
@@ -105,9 +106,13 @@ class EmergencyAlertsScreen extends StatelessWidget {
   }
 
   void _showSOSDialog(BuildContext context) {
+    // Theme context for dialog
+    final theme = Theme.of(context);
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        // Background handled by theme
         title: const Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30),
@@ -121,10 +126,13 @@ class EmergencyAlertsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+            child: Text("Cancel", style: TextStyle(color: theme.hintColor)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -134,7 +142,7 @@ class EmergencyAlertsScreen extends StatelessWidget {
                 ),
               );
             },
-            child: const Text("SEND ALERT", style: TextStyle(color: Colors.white)),
+            child: const Text("SEND ALERT"),
           ),
         ],
       ),
@@ -157,15 +165,33 @@ class _EmergencyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Define colors based on state and theme
+    final cardColor = theme.cardColor;
+    final borderColor = isActive ? Colors.red.shade200 : (isDark ? Colors.white12 : Colors.transparent);
+    final headerColor = isActive 
+        ? (isDark ? Colors.red.withOpacity(0.2) : Colors.red.shade50)
+        : (isDark ? Colors.grey.withOpacity(0.1) : Colors.grey.shade100);
+    
+    final titleColor = isActive 
+        ? (isDark ? Colors.red.shade200 : Colors.red.shade900)
+        : (isDark ? Colors.white : Colors.black87);
+        
+    final textColor = isDark ? Colors.white70 : Colors.grey[800];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: isActive ? Border.all(color: Colors.red.shade200, width: 2) : null,
+        border: isActive ? Border.all(color: borderColor, width: 2) : null,
         boxShadow: [
           BoxShadow(
-            color: isActive ? Colors.red.withOpacity(0.1) : Colors.black.withOpacity(0.05),
+            color: isActive 
+                ? Colors.red.withOpacity(0.1) 
+                : Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -177,7 +203,7 @@ class _EmergencyCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isActive ? Colors.red.shade50 : Colors.grey.shade100,
+              color: headerColor,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
             ),
             child: Row(
@@ -193,7 +219,7 @@ class _EmergencyCard extends StatelessWidget {
                     title,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isActive ? Colors.red.shade900 : Colors.black87,
+                      color: titleColor,
                       fontSize: 15,
                     ),
                   ),
@@ -202,7 +228,7 @@ class _EmergencyCard extends StatelessWidget {
                   time,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isActive ? Colors.red.shade700 : Colors.grey,
+                    color: isActive ? Colors.red : Colors.grey,
                   ),
                 ),
               ],
@@ -214,7 +240,7 @@ class _EmergencyCard extends StatelessWidget {
             child: Text(
               description,
               style: TextStyle(
-                color: Colors.grey[800],
+                color: textColor,
                 fontSize: 14,
                 height: 1.4,
               ),

@@ -1,35 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; 
+import '../core/theme_provider.dart';     
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  // Mock States
-  bool _notificationsEnabled = true;
-  bool _darkMode = false;
-  bool _biometrics = false;
-
-  @override
   Widget build(BuildContext context) {
+    // 1. Access the ThemeProvider state
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    // 2. Fetch User safely
     final user = AuthService().currentUser;
+
+    // Safety check: Redirect if no user found
     if (user == null) {
       Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      // Background color is handled automatically by the Theme
       appBar: AppBar(
         title: const Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF5D3A99),
-        foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
@@ -37,9 +33,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // --- Account Section ---
+          // --- SECTION: ACCOUNT ---
           _buildSectionHeader("ACCOUNT"),
-          _buildSettingsGroup([
+          _buildSettingsGroup(context, [
             _SettingsTile(
               icon: Icons.person_outline,
               title: "Edit Profile",
@@ -48,40 +44,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _SettingsTile(
               icon: Icons.lock_outline,
               title: "Change Password",
-              onTap: () {},
+              onTap: () {}, // Add logic later
             ),
             _SettingsTile(
               icon: Icons.notifications_none,
               title: "Notifications",
               trailing: Switch(
-                value: _notificationsEnabled,
-                activeColor: const Color(0xFF5D3A99),
-                onChanged: (val) => setState(() => _notificationsEnabled = val),
+                value: true, 
+                activeColor: const Color(0xFF9B59B6),
+                onChanged: (v) {}, // Mock logic
               ),
             ),
           ]),
 
           const SizedBox(height: 24),
 
-          // --- App Settings ---
+          // --- SECTION: PREFERENCES ---
           _buildSectionHeader("PREFERENCES"),
-          _buildSettingsGroup([
+          _buildSettingsGroup(context, [
             _SettingsTile(
               icon: Icons.dark_mode_outlined,
               title: "Dark Mode",
+              // THE REAL SWITCH: Connects to ThemeProvider
               trailing: Switch(
-                value: _darkMode,
-                activeColor: const Color(0xFF5D3A99),
-                onChanged: (val) => setState(() => _darkMode = val),
+                value: themeProvider.isDarkMode,
+                activeColor: const Color(0xFF9B59B6),
+                onChanged: (bool value) {
+                  themeProvider.toggleTheme(value);
+                },
               ),
             ),
             _SettingsTile(
               icon: Icons.fingerprint,
               title: "Biometric Login",
               trailing: Switch(
-                value: _biometrics,
-                activeColor: const Color(0xFF5D3A99),
-                onChanged: (val) => setState(() => _biometrics = val),
+                value: false,
+                activeColor: const Color(0xFF9B59B6),
+                onChanged: (v) {}, // Mock logic
               ),
             ),
             _SettingsTile(
@@ -94,9 +93,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 24),
 
-          // --- Support ---
+          // --- SECTION: SUPPORT ---
           _buildSectionHeader("SUPPORT"),
-          _buildSettingsGroup([
+          _buildSettingsGroup(context, [
             _SettingsTile(
               icon: Icons.help_outline,
               title: "Help & Support",
@@ -118,28 +117,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // --- HELPER 1: Section Header ---
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 8, bottom: 8),
       child: Text(
         title,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,
-          color: Colors.grey[600],
+          color: Colors.grey, // Grey works well in both Light and Dark mode
           letterSpacing: 1.2,
         ),
       ),
     );
   }
 
-  Widget _buildSettingsGroup(List<Widget> children) {
+  // --- HELPER 2: Group Container ---
+  Widget _buildSettingsGroup(BuildContext context, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor, // Dynamic color based on theme
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -149,6 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
+// --- HELPER 3: Individual Setting Tile ---
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -164,6 +170,11 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine text color dynamically based on theme
+    final textColor = Theme.of(context).brightness == Brightness.dark 
+        ? Colors.white 
+        : Colors.black87;
+
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -173,7 +184,10 @@ class _SettingsTile extends StatelessWidget {
         ),
         child: Icon(icon, color: const Color(0xFF5D3A99), size: 20),
       ),
-      title: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+      title: Text(
+        title, 
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor),
+      ),
       trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

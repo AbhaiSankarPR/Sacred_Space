@@ -106,8 +106,12 @@ class _EventsScreenState extends State<EventsScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Access dynamic theme
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
       appBar: AppBar(
         title: const Text("Church Events", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
@@ -120,7 +124,7 @@ class _EventsScreenState extends State<EventsScreen> {
         children: [
           // --- Filter Tabs ---
           Container(
-            color: Colors.white,
+            color: theme.cardColor, // Dynamic bar background
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -153,11 +157,11 @@ class _EventsScreenState extends State<EventsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.event_busy, size: 60, color: Colors.grey[400]),
+                        Icon(Icons.event_busy, size: 60, color: theme.hintColor),
                         const SizedBox(height: 16),
                         Text(
                           "No $_selectedFilter events found",
-                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                          style: TextStyle(color: theme.hintColor, fontSize: 16),
                         ),
                       ],
                     ),
@@ -190,6 +194,12 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dynamic Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.white70 : Colors.grey[600];
+
     // Formatting Date
     final months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     final month = months[event.dateTime.month - 1];
@@ -201,11 +211,11 @@ class _EventCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor, // Dynamic Card Background
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -225,23 +235,26 @@ class _EventCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF5D3A99).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
+                    // Light border for dark mode visibility
+                    border: isDark ? Border.all(color: Colors.white12) : null,
                   ),
                   child: Column(
                     children: [
                       Text(
                         day,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20, 
                           fontWeight: FontWeight.bold, 
-                          color: Color(0xFF5D3A99)
+                          // Brighter purple in dark mode for readability
+                          color: isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)
                         ),
                       ),
                       Text(
                         month,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12, 
                           fontWeight: FontWeight.bold, 
-                          color: Color(0xFF5D3A99)
+                          color: isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)
                         ),
                       ),
                     ],
@@ -264,30 +277,35 @@ class _EventCard extends StatelessWidget {
                         ),
                         child: Text(
                           event.category.toUpperCase(),
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange[800]),
+                          style: TextStyle(
+                            fontSize: 10, 
+                            fontWeight: FontWeight.bold, 
+                            color: Colors.orange[800]
+                          ),
                         ),
                       ),
                       Text(
                         event.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           height: 1.2,
+                          color: textColor, // Dynamic text color
                         ),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                          Icon(Icons.access_time, size: 14, color: subTextColor),
                           const SizedBox(width: 4),
-                          Text(timeStr, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                          Text(timeStr, style: TextStyle(fontSize: 13, color: subTextColor)),
                           const SizedBox(width: 12),
-                          Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
+                          Icon(Icons.location_on_outlined, size: 14, color: subTextColor),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               event.location, 
-                              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                              style: TextStyle(fontSize: 13, color: subTextColor),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -301,7 +319,7 @@ class _EventCard extends StatelessWidget {
           ),
 
           // Divider
-          const Divider(height: 1, color: Colors.black12),
+          Divider(height: 1, color: isDark ? Colors.white10 : Colors.black12),
 
           // Bottom Action Bar
           InkWell(
@@ -312,7 +330,9 @@ class _EventCard extends StatelessWidget {
               width: double.infinity,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: event.isRegistered ? Colors.green.withOpacity(0.1) : Colors.transparent,
+                color: event.isRegistered 
+                    ? Colors.green.withOpacity(0.1) 
+                    : Colors.transparent,
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
               ),
               child: Row(
@@ -321,13 +341,17 @@ class _EventCard extends StatelessWidget {
                   Icon(
                     event.isRegistered ? Icons.check_circle : Icons.person_add_alt_1,
                     size: 18,
-                    color: event.isRegistered ? Colors.green : const Color(0xFF5D3A99),
+                    color: event.isRegistered 
+                        ? Colors.green 
+                        : (isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     event.isRegistered ? "REGISTERED - GOING" : "REGISTER NOW",
                     style: TextStyle(
-                      color: event.isRegistered ? Colors.green : const Color(0xFF5D3A99),
+                      color: event.isRegistered 
+                          ? Colors.green 
+                          : (isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)),
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -351,19 +375,27 @@ class _FilterTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dynamic Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF5D3A99) : Colors.grey[200],
+          color: isSelected 
+              ? const Color(0xFF5D3A99) 
+              : (isDark ? Colors.grey[800] : Colors.grey[200]),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey[700],
+            color: isSelected 
+                ? Colors.white 
+                : (isDark ? Colors.white70 : Colors.grey[700]),
             fontWeight: FontWeight.w600,
           ),
         ),

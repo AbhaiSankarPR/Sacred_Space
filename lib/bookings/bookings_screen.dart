@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-// Ensure these match your actual file paths
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
 
-// 1. Define a simple Data Model to hold booking info
+// 1. Data Model
 class BookingData {
   final String title;
   final String date;
@@ -21,7 +20,7 @@ class BookingData {
   });
 }
 
-// 2. Convert to StatefulWidget to handle the filter state
+// 2. StatefulWidget
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
 
@@ -30,10 +29,9 @@ class BookingsScreen extends StatefulWidget {
 }
 
 class _BookingsScreenState extends State<BookingsScreen> {
-  // Current active filter
   String _selectedFilter = "All";
 
-  // 3. The Data List (Move your hardcoded data here)
+  // 3. Data List
   final List<BookingData> _allBookings = [
     BookingData(
       title: "Marriage Ceremony",
@@ -58,17 +56,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
     ),
   ];
 
-  // 4. Logic to get only the items that match the filter
+  // 4. Filter Logic
   List<BookingData> get _filteredBookings {
-    if (_selectedFilter == "All") {
-      return _allBookings;
-    } else if (_selectedFilter == "Pending") {
-      return _allBookings.where((b) => b.status == BookingStatus.pending).toList();
-    } else if (_selectedFilter == "Approved") {
-      return _allBookings.where((b) => b.status == BookingStatus.approved).toList();
-    } else if (_selectedFilter == "Rejected") {
-      return _allBookings.where((b) => b.status == BookingStatus.rejected).toList();
-    }
+    if (_selectedFilter == "All") return _allBookings;
+    if (_selectedFilter == "Pending") return _allBookings.where((b) => b.status == BookingStatus.pending).toList();
+    if (_selectedFilter == "Approved") return _allBookings.where((b) => b.status == BookingStatus.approved).toList();
+    if (_selectedFilter == "Rejected") return _allBookings.where((b) => b.status == BookingStatus.rejected).toList();
     return _allBookings;
   }
 
@@ -77,19 +70,17 @@ class _BookingsScreenState extends State<BookingsScreen> {
     final user = AuthService().currentUser;
 
     if (user == null) {
-      Future.microtask(
-        () => Navigator.pushReplacementNamed(context, Routes.login),
-      );
+      Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Access dynamic theme
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
       appBar: AppBar(
-        title: const Text(
-          "My Bookings",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text("My Bookings", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -98,7 +89,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       drawer: AppDrawer(user: user),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, Routes.newBooking),
-        backgroundColor: const Color.fromARGB(255, 140, 124, 168),
+        backgroundColor: const Color(0xFF5D3A99),
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text("New Booking", style: TextStyle(color: Colors.white)),
       ),
@@ -127,7 +118,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     isSelected: _selectedFilter == "Approved",
                     onTap: () => setState(() => _selectedFilter = "Approved"),
                   ),
-                  // Renamed "Past" to "Rejected" to match the data logic cleanly
                   _FilterChip(
                     label: "Rejected",
                     isSelected: _selectedFilter == "Rejected",
@@ -138,12 +128,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
             ),
             const SizedBox(height: 20),
 
-            // --- Dynamic Booking List ---
-            // We use the getter _filteredBookings here
+            // --- Booking List ---
             if (_filteredBookings.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(top: 40),
-                child: Center(child: Text("No bookings found")),
+               Padding(
+                padding: const EdgeInsets.only(top: 40),
+                child: Center(
+                  child: Text(
+                    "No bookings found", 
+                    style: TextStyle(color: theme.hintColor),
+                  ),
+                ),
               )
             else
               ..._filteredBookings.map((data) => BookingCard(
@@ -162,9 +156,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 }
 
-// --- KEEPING EVERYTHING BELOW THE SAME ---
-
+// --- CONSTANTS ---
 enum BookingStatus { approved, pending, rejected }
+
+// --- WIDGETS ---
 
 class BookingCard extends StatelessWidget {
   final String title;
@@ -184,6 +179,10 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dynamic Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     Color statusColor;
     String statusText;
     IconData statusIcon;
@@ -209,11 +208,11 @@ class BookingCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor, // Dynamic Card Background
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), // Darker shadow in dark mode
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -221,13 +220,12 @@ class BookingCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Header Row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
+              color: statusColor.withOpacity(isDark ? 0.2 : 0.1), // Slightly more opaque in dark mode
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -249,7 +247,7 @@ class BookingCard extends StatelessWidget {
                 Text(
                   date,
                   style: TextStyle(
-                    color: Colors.grey[800],
+                    color: isDark ? Colors.white70 : Colors.grey[800],
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -257,6 +255,8 @@ class BookingCard extends StatelessWidget {
               ],
             ),
           ),
+          
+          // Body Content
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -265,7 +265,7 @@ class BookingCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: isDark ? Colors.grey[800] : Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -281,25 +281,24 @@ class BookingCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 6),
                       _IconTextRow(icon: Icons.access_time, text: time),
                       const SizedBox(height: 4),
-                      _IconTextRow(
-                        icon: Icons.location_on_outlined,
-                        text: location,
-                      ),
+                      _IconTextRow(icon: Icons.location_on_outlined, text: location),
                     ],
                   ),
                 ),
               ],
             ),
           ),
+          
+          // Action Button
           if (status == BookingStatus.pending)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -331,47 +330,63 @@ class _IconTextRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dynamic text color for subtitles
+    final color = Theme.of(context).brightness == Brightness.dark 
+        ? Colors.white60 
+        : Colors.grey;
+
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.grey),
+        Icon(icon, size: 14, color: color),
         const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+        Text(text, style: TextStyle(fontSize: 13, color: color)),
       ],
     );
   }
 }
 
-// Updated FilterChip to accept onTap
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
-  final VoidCallback onTap; // Add onTap callback
+  final VoidCallback onTap;
 
   const _FilterChip({
     required this.label,
     required this.isSelected,
-    required this.onTap, // Require it
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(right: 10),
       child: FilterChip(
         label: Text(label),
         selected: isSelected,
-        // Call the onTap function when selected
-        onSelected: (bool value) => onTap(), 
+        onSelected: (bool value) => onTap(),
         selectedColor: const Color(0xFF5D3A99),
         checkmarkColor: Colors.white,
+        
+        // Dynamic Label Style
         labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Colors.black87,
+          color: isSelected 
+              ? Colors.white 
+              : (isDark ? Colors.white70 : Colors.black87),
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
-        backgroundColor: Colors.white,
+        
+        // Dynamic Background
+        backgroundColor: theme.cardColor,
+        
+        // Dynamic Border
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.black12),
+          side: BorderSide(
+            color: isDark ? Colors.white12 : Colors.black12,
+          ),
         ),
       ),
     );

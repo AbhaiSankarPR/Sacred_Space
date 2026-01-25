@@ -1,29 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-// --- YOUR ORIGINAL IMPORTS ---
-import '../core/routes.dart';       // Ensure this matches your Routes file location
-import '../auth/auth_service.dart'; // Ensure this matches your AuthService location
-import '../widgets/app_drawer.dart'; // Ensure this matches your AppDrawer location
+import '../core/routes.dart';
+import '../auth/auth_service.dart';
+import '../widgets/app_drawer.dart';
 
 class MemberDashboard extends StatelessWidget {
-  // 1. Remove the constructor argument. We fetch data inside build() now.
   const MemberDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 2. Fetch the user here. This prevents the "null check" crash on startup.
     final user = AuthService().currentUser;
 
-    // 3. Safety Check: If user is missing (e.g. app restart), redirect to login.
     if (user == null) {
       Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // 4. The UI implementation using the 'user' variable we just fetched.
+    // Get the current theme to use dynamic colors
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), 
+      // Use the theme's background color (set in theme.dart)
+      backgroundColor: theme.scaffoldBackgroundColor, 
       drawer: AppDrawer(user: user),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -36,7 +34,7 @@ class MemberDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildSliverAppBar(BuildContext context, var user) {
+  Widget _buildSliverAppBar(BuildContext context, User user) {
     return SliverAppBar(
       expandedHeight: 220.0,
       floating: false,
@@ -76,9 +74,8 @@ class MemberDashboard extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 38,
                       backgroundColor: Colors.white,
-                      // Handling potential null logoUrl safely
                       backgroundImage: (user.logoUrl != null && user.logoUrl!.isNotEmpty)
-                          ? NetworkImage(user.logoUrl!) 
+                          ? NetworkImage(user.logoUrl!)
                           : null,
                       child: (user.logoUrl == null || user.logoUrl!.isEmpty)
                           ? const Icon(Icons.church, color: Color(0xFF5D3A99), size: 36)
@@ -210,8 +207,13 @@ class _DashboardMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get theme context
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Material(
-      color: Colors.white,
+      // Dynamic Card Color (White in Light mode, Dark Grey in Dark mode)
+      color: theme.cardColor,
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.05),
       borderRadius: BorderRadius.circular(20),
@@ -242,7 +244,8 @@ class _DashboardMenuItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
+                // Dynamic Text Color (Dark Grey in Light mode, White in Dark mode)
+                color: isDark ? Colors.white70 : Colors.grey[800],
               ),
             ),
           ],

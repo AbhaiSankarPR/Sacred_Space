@@ -11,14 +11,18 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     // Determine current route to highlight active tab
     final currentRoute = ModalRoute.of(context)?.settings.name;
+    
+    // Get dynamic colors from the current theme
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Drawer(
-      // Modern white background
-      backgroundColor: Colors.white,
+      // Use the theme's card color (White in light mode, Dark Grey in dark mode)
+      backgroundColor: theme.cardColor,
       child: Column(
         children: [
           // --- 1. Custom Gradient Header ---
-          _buildHeader(),
+          _buildHeader(theme),
 
           // --- 2. Scrollable Menu Items ---
           Expanded(
@@ -43,8 +47,12 @@ class AppDrawer extends StatelessWidget {
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.announcements),
                   isSelected: currentRoute == Routes.announcements,
                 ),
-                
-                // --- NEW: GALLERY ---
+                _DrawerItem(
+                  icon: Icons.calendar_month_outlined,
+                  title: "Events",
+                  onTap: () => Navigator.pushReplacementNamed(context, Routes.events),
+                  isSelected: currentRoute == Routes.events,
+                ),
                 _DrawerItem(
                   icon: Icons.photo_library_outlined,
                   title: "Gallery",
@@ -60,7 +68,7 @@ class AppDrawer extends StatelessWidget {
                   isAlert: true,
                 ),
                 
-                const Divider(height: 32, color: Colors.black12),
+                Divider(height: 32, color: isDark ? Colors.white24 : Colors.black12),
                 
                 _DrawerItem(
                   icon: Icons.person_outline,
@@ -69,7 +77,6 @@ class AppDrawer extends StatelessWidget {
                   isSelected: currentRoute == Routes.profile,
                 ),
 
-                // --- NEW: SETTINGS ---
                 _DrawerItem(
                   icon: Icons.settings_outlined,
                   title: "Settings",
@@ -93,7 +100,7 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeData theme) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
@@ -107,7 +114,7 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar with heavy shadow
+          // Avatar
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -182,12 +189,23 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isAlert 
-        ? Colors.red 
-        : (isSelected ? const Color(0xFF5D3A99) : Colors.grey[700]);
+    // Dynamic Colors
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     
+    // Text Color: Purple if selected, Black/White if not
+    final textColor = isSelected 
+        ? const Color(0xFF9B59B6) // Purple accent
+        : (isDark ? Colors.white70 : Colors.black87);
+
+    // Icon Color
+    final iconColor = isAlert 
+        ? Colors.red 
+        : (isSelected ? const Color(0xFF9B59B6) : (isDark ? Colors.white60 : Colors.grey[700]));
+    
+    // Background Highlight
     final bgColor = isSelected 
-        ? const Color(0xFF5D3A99).withOpacity(0.1) 
+        ? const Color(0xFF5D3A99).withOpacity(isDark ? 0.2 : 0.1) 
         : Colors.transparent;
 
     return Container(
@@ -195,11 +213,11 @@ class _DrawerItem extends StatelessWidget {
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         tileColor: bgColor,
-        leading: Icon(icon, color: color, size: 26),
+        leading: Icon(icon, color: iconColor, size: 26),
         title: Text(
           title,
           style: TextStyle(
-            color: isSelected ? const Color(0xFF5D3A99) : Colors.black87,
+            color: textColor,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 15,
           ),
@@ -217,13 +235,16 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Material(
-      color: Colors.red.shade50,
+      // Darker red background in dark mode so it's not too bright
+      color: isDark ? Colors.red.withOpacity(0.15) : Colors.red.shade50,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        splashColor: Colors.red.withOpacity(0.1),
+        splashColor: Colors.red.withOpacity(0.2),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           alignment: Alignment.center,
