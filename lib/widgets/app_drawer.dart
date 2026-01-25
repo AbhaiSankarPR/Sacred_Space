@@ -28,7 +28,6 @@ class AppDrawer extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.dashboard_outlined,
                   title: "Dashboard",
-                  // Dynamically handle route based on role if needed, or default to member
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.member),
                   isSelected: currentRoute == Routes.member,
                 ),
@@ -44,6 +43,15 @@ class AppDrawer extends StatelessWidget {
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.announcements),
                   isSelected: currentRoute == Routes.announcements,
                 ),
+                
+                // --- NEW: GALLERY ---
+                _DrawerItem(
+                  icon: Icons.photo_library_outlined,
+                  title: "Gallery",
+                  onTap: () => Navigator.pushReplacementNamed(context, Routes.gallery),
+                  isSelected: currentRoute == Routes.gallery,
+                ),
+
                 _DrawerItem(
                   icon: Icons.warning_amber_rounded,
                   title: "Emergency Alerts",
@@ -59,6 +67,14 @@ class AppDrawer extends StatelessWidget {
                   title: "Profile",
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.profile),
                   isSelected: currentRoute == Routes.profile,
+                ),
+
+                // --- NEW: SETTINGS ---
+                _DrawerItem(
+                  icon: Icons.settings_outlined,
+                  title: "Settings",
+                  onTap: () => Navigator.pushReplacementNamed(context, Routes.settings),
+                  isSelected: currentRoute == Routes.settings,
                 ),
               ],
             ),
