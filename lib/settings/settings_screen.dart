@@ -107,7 +107,11 @@ class SettingsScreen extends StatelessWidget {
             _SettingsTile(
               icon: Icons.help_outline,
               title: "Help & Support",
-              onTap: () {},
+              onTap:
+                  () => Navigator.pushNamed(
+                    context,
+                    Routes.support,
+                  ), // UPDATE THIS
             ),
             _SettingsTile(
               icon: Icons.privacy_tip_outlined,

@@ -18,6 +18,7 @@ import '../events/events_screen.dart';
 import '../gallery/gallery_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/about_screen.dart';
+import '../settings/support_screen.dart';
 
 class Routes {
   static const login = '/';
@@ -32,6 +33,7 @@ class Routes {
   static const gallery = '/gallery';
   static const settings = '/settings';
   static const about = '/about';
+  static const support = '/support';
   static Map<String, WidgetBuilder> get map => {
     login: (_) => const LoginScreen(),
     signup: (_) => const SignupScreen(),
@@ -45,5 +47,6 @@ class Routes {
     about: (_) => const AboutScreen(),
     gallery: (_) => const GalleryScreen(),
     settings: (_) => const SettingsScreen(),
+    support: (_) => const SupportScreen(),
   };
 }

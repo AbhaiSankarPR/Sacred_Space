@@ -178,11 +178,7 @@ class MemberDashboard extends StatelessWidget {
             title: 'Support',
             icon: Icons.headset_mic_outlined,
             color: Colors.teal,
-            onTap: () {
-               ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Support coming soon!'))
-               );
-            },
+            onTap: () => Navigator.pushNamed(context, Routes.support),
           ),
         ],
       ),
