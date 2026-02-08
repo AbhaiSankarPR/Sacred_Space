@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart'; // 1. Add Google Fonts
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'core/theme.dart';
 import 'core/routes.dart';
 import 'core/theme_provider.dart';
 import 'core/locale_provider.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SacredSpaceApp extends StatelessWidget {
   final String initialRoute;
@@ -14,20 +15,27 @@ class SacredSpaceApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access providers
+    // Access Providers for Theme and Language
     final themeProvider = Provider.of<ThemeProvider>(context);
     final localeProvider = Provider.of<LocaleProvider>(context);
 
-    // 2. Logic to select the font based on the language
-    // 'ml' uses Manjari, others (like 'en') use Inter
+    // Identify current language
     final isMalayalam = localeProvider.locale.languageCode == 'ml';
-    
-    // 3. Define the base TextTheme
-    // Note: We use .copyWith(height: 1.4) because Malayalam script is vertically taller
-    TextTheme getDynamicTextTheme(TextTheme base) {
-      return isMalayalam 
-        ? GoogleFonts.manjariTextTheme(base).apply(bodyColor: base.bodyLarge?.color)
-        : GoogleFonts.interTextTheme(base).apply(bodyColor: base.bodyLarge?.color);
+
+    // Logic to select Lora for English and Gayathri for Malayalam
+    TextTheme getDynamicTextTheme(TextTheme baseTheme) {
+      if (isMalayalam) {
+        // Malayalam Font: Gayathri
+        return GoogleFonts.gayathriTextTheme(baseTheme).copyWith(
+          // Malayalam characters are taller; height: 1.4 prevents clipping
+          bodyLarge: baseTheme.bodyLarge?.copyWith(height: 1.4),
+          bodyMedium: baseTheme.bodyMedium?.copyWith(height: 1.4),
+          titleLarge: baseTheme.titleLarge?.copyWith(height: 1.4, fontWeight: FontWeight.bold),
+        );
+      } else {
+        // English Font: Lora (Google Serif font)
+        return GoogleFonts.loraTextTheme(baseTheme);
+      }
     }
 
     return MaterialApp(
@@ -47,7 +55,12 @@ class SacredSpaceApp extends StatelessWidget {
       // Locale logic
       locale: localeProvider.locale,
       supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate, // Important for localized DatePickers
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }
