@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
 
 class ProfileScreen extends StatelessWidget {
-  // 1. Remove 'final User user' from constructor
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // 2. Fetch user securely
+    final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
 
     if (user == null) {
@@ -17,16 +17,15 @@ class ProfileScreen extends StatelessWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Access dynamic theme
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.white70 : Colors.grey[600];
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("My Profile", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(loc.myProfile, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -36,7 +35,7 @@ class ProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.edit),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Edit Profile coming soon!")),
+                SnackBar(content: Text(loc.editProfileComingSoon)),
               );
             },
           ),
@@ -51,7 +50,7 @@ class ProfileScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: theme.cardColor, // Dynamic Card Color
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -63,7 +62,6 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Avatar with Edit Badge
                   Stack(
                     children: [
                       Container(
@@ -99,8 +97,6 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
-                  // Name & Role
                   Text(
                     user.churchName,
                     style: TextStyle(
@@ -128,8 +124,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
-                  // Location
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -148,37 +142,37 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // --- MENU SECTIONS ---
-            _buildSectionTitle("ACCOUNT SETTINGS", theme),
+            _buildSectionTitle(loc.accountSettings, theme),
             _buildMenuCard(theme, [
               _ProfileMenuTile(
                 icon: Icons.person_outline,
-                title: "Personal Information",
+                title: loc.personalInformation,
                 onTap: () {},
               ),
               _ProfileMenuTile(
                 icon: Icons.lock_outline,
-                title: "Change Password",
+                title: loc.changePassword,
                 onTap: () {},
               ),
               _ProfileMenuTile(
                 icon: Icons.notifications_none,
-                title: "Notification Preferences",
+                title: loc.notificationPreferences,
                 onTap: () {},
               ),
             ]),
 
             const SizedBox(height: 24),
 
-            _buildSectionTitle("APP INFO", theme),
+            _buildSectionTitle(loc.appInfo, theme),
             _buildMenuCard(theme, [
               _ProfileMenuTile(
                 icon: Icons.info_outline,
-                title: "About Us",
+                title: loc.aboutUs,
                 onTap: () {},
               ),
               _ProfileMenuTile(
                 icon: Icons.privacy_tip_outlined,
-                title: "Privacy Policy",
+                title: loc.privacyPolicy,
                 onTap: () {},
               ),
             ]),
@@ -199,10 +193,12 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 onPressed: () async {
                   await AuthService().logout();
-                  Navigator.pushNamedAndRemoveUntil(context, Routes.login, (_) => false);
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(context, Routes.login, (_) => false);
+                  }
                 },
                 icon: const Icon(Icons.logout),
-                label: const Text("Log Out", style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(loc.logOut, style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 30),
@@ -211,8 +207,6 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-
-  // --- UI Helpers ---
 
   Widget _buildSectionTitle(String title, ThemeData theme) {
     return Container(

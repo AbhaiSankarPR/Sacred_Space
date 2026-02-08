@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../core/routes.dart';
 import '../auth/auth_service.dart';
 import '../widgets/app_drawer.dart';
@@ -9,6 +10,7 @@ class MemberDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
 
     if (user == null) {
@@ -16,28 +18,25 @@ class MemberDashboard extends StatelessWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Get the current theme to use dynamic colors
     final theme = Theme.of(context);
 
     return Scaffold(
-      // Use the theme's background color (set in theme.dart)
       backgroundColor: theme.scaffoldBackgroundColor, 
       drawer: AppDrawer(user: user),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          _buildSliverAppBar(context, user),
-          _buildMenuGrid(context),
+          _buildSliverAppBar(context, user, loc),
+          _buildMenuGrid(context, loc),
           const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
       ),
     );
   }
 
-  Widget _buildSliverAppBar(BuildContext context, User user) {
+  Widget _buildSliverAppBar(BuildContext context, User user, AppLocalizations loc) {
     return SliverAppBar(
       expandedHeight: 220.0,
-      floating: false,
       pinned: true,
       backgroundColor: const Color(0xFF5D3A99),
       elevation: 0,
@@ -58,7 +57,6 @@ class MemberDashboard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 10),
-                  // Avatar with Glow
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -116,7 +114,7 @@ class MemberDashboard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${user.role.toUpperCase()} ACCESS',
+                      loc.accessType(user.role.toUpperCase()),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -134,7 +132,7 @@ class MemberDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuGrid(BuildContext context) {
+  Widget _buildMenuGrid(BuildContext context, AppLocalizations loc) {
     return SliverPadding(
       padding: const EdgeInsets.all(20),
       sliver: SliverGrid.count(
@@ -144,38 +142,38 @@ class MemberDashboard extends StatelessWidget {
         childAspectRatio: 1.1,
         children: [
           _DashboardMenuItem(
-            title: 'Announcements',
+            title: loc.announcements,
             icon: Icons.campaign_outlined,
             color: Colors.orange,
             onTap: () => Navigator.pushNamed(context, Routes.announcements),
           ),
           _DashboardMenuItem(
-            title: 'Events',
+            title: loc.events,
             icon: Icons.calendar_month_outlined,
             color: Colors.green,
             onTap: () => Navigator.pushNamed(context, Routes.events),
           ),
           _DashboardMenuItem(
-            title: 'My Profile',
+            title: loc.myProfile,
             icon: Icons.person_outline,
             color: Colors.blue,
             onTap: () => Navigator.pushNamed(context, Routes.profile),
           ),
           _DashboardMenuItem(
-            title: 'Bookings',
+            title: loc.bookings,
             icon: Icons.bookmark_border,
             color: Colors.purple,
             onTap: () => Navigator.pushNamed(context, Routes.bookings),
           ),
           _DashboardMenuItem(
-            title: 'Emergency',
+            title: loc.emergency,
             icon: Icons.warning_amber_rounded,
             color: Colors.red,
             isAlert: true,
             onTap: () => Navigator.pushNamed(context, Routes.emergency),
           ),
           _DashboardMenuItem(
-            title: 'Support',
+            title: loc.support,
             icon: Icons.headset_mic_outlined,
             color: Colors.teal,
             onTap: () => Navigator.pushNamed(context, Routes.support),
@@ -203,12 +201,10 @@ class _DashboardMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get theme context
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Material(
-      // Dynamic Card Color (White in Light mode, Dark Grey in Dark mode)
       color: theme.cardColor,
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.05),
@@ -228,11 +224,7 @@ class _DashboardMenuItem extends StatelessWidget {
                 color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
+              child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 16),
             Text(
@@ -240,7 +232,6 @@ class _DashboardMenuItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                // Dynamic Text Color (Dark Grey in Light mode, White in Dark mode)
                 color: isDark ? Colors.white70 : Colors.grey[800],
               ),
             ),

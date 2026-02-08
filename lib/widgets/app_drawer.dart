@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 
@@ -9,91 +10,84 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine current route to highlight active tab
+    final loc = AppLocalizations.of(context)!;
     final currentRoute = ModalRoute.of(context)?.settings.name;
-    
-    // Get dynamic colors from the current theme
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Drawer(
-      // Use the theme's card color (White in light mode, Dark Grey in dark mode)
       backgroundColor: theme.cardColor,
       child: Column(
         children: [
-          // --- 1. Custom Gradient Header ---
           _buildHeader(theme),
-
-          // --- 2. Scrollable Menu Items ---
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
               children: [
                 _DrawerItem(
                   icon: Icons.dashboard_outlined,
-                  title: "Dashboard",
+                  title: loc.dashboard,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.member),
                   isSelected: currentRoute == Routes.member,
                 ),
                 _DrawerItem(
                   icon: Icons.bookmark_border_rounded,
-                  title: "Bookings",
+                  title: loc.bookings,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.bookings),
                   isSelected: currentRoute == Routes.bookings,
                 ),
                 _DrawerItem(
                   icon: Icons.campaign_outlined,
-                  title: "Announcements",
+                  title: loc.announcements,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.announcements),
                   isSelected: currentRoute == Routes.announcements,
                 ),
                 _DrawerItem(
                   icon: Icons.calendar_month_outlined,
-                  title: "Events",
+                  title: loc.events,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.events),
                   isSelected: currentRoute == Routes.events,
                 ),
                 _DrawerItem(
                   icon: Icons.photo_library_outlined,
-                  title: "Gallery",
+                  title: loc.gallery,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.gallery),
                   isSelected: currentRoute == Routes.gallery,
                 ),
-
                 _DrawerItem(
                   icon: Icons.warning_amber_rounded,
-                  title: "Emergency Alerts",
+                  title: loc.emergencyAlerts,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.emergency),
                   isSelected: currentRoute == Routes.emergency,
                   isAlert: true,
                 ),
-                
                 Divider(height: 32, color: isDark ? Colors.white24 : Colors.black12),
-                
                 _DrawerItem(
                   icon: Icons.person_outline,
-                  title: "Profile",
+                  title: loc.profile,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.profile),
                   isSelected: currentRoute == Routes.profile,
                 ),
-
                 _DrawerItem(
                   icon: Icons.settings_outlined,
-                  title: "Settings",
+                  title: loc.settings,
                   onTap: () => Navigator.pushReplacementNamed(context, Routes.settings),
                   isSelected: currentRoute == Routes.settings,
                 ),
               ],
             ),
           ),
-
-          // --- 3. Modern Logout Button ---
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: _LogoutButton(onTap: () async {
-              await AuthService().logout();
-              Navigator.pushNamedAndRemoveUntil(context, Routes.login, (_) => false);
-            }),
+            child: _LogoutButton(
+              title: loc.signOut,
+              onTap: () async {
+                await AuthService().logout();
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(context, Routes.login, (_) => false);
+                }
+              },
+            ),
           ),
         ],
       ),
@@ -114,7 +108,6 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -134,7 +127,6 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Name
           Text(
             user.churchName,
             style: const TextStyle(
@@ -147,7 +139,6 @@ class AppDrawer extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          // Role Pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -170,8 +161,6 @@ class AppDrawer extends StatelessWidget {
   }
 }
 
-// --- HELPER WIDGETS ---
-
 class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -189,24 +178,11 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic Colors
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
-    // Text Color: Purple if selected, Black/White if not
-    final textColor = isSelected 
-        ? const Color(0xFF9B59B6) // Purple accent
-        : (isDark ? Colors.white70 : Colors.black87);
-
-    // Icon Color
-    final iconColor = isAlert 
-        ? Colors.red 
-        : (isSelected ? const Color(0xFF9B59B6) : (isDark ? Colors.white60 : Colors.grey[700]));
-    
-    // Background Highlight
-    final bgColor = isSelected 
-        ? const Color(0xFF5D3A99).withOpacity(isDark ? 0.2 : 0.1) 
-        : Colors.transparent;
+    final textColor = isSelected ? const Color(0xFF9B59B6) : (isDark ? Colors.white70 : Colors.black87);
+    final iconColor = isAlert ? Colors.red : (isSelected ? const Color(0xFF9B59B6) : (isDark ? Colors.white60 : Colors.grey[700]));
+    final bgColor = isSelected ? const Color(0xFF5D3A99).withOpacity(isDark ? 0.2 : 0.1) : Colors.transparent;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -230,21 +206,19 @@ class _DrawerItem extends StatelessWidget {
 
 class _LogoutButton extends StatelessWidget {
   final VoidCallback onTap;
+  final String title;
 
-  const _LogoutButton({required this.onTap});
+  const _LogoutButton({required this.onTap, required this.title});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Material(
-      // Darker red background in dark mode so it's not too bright
       color: isDark ? Colors.red.withOpacity(0.15) : Colors.red.shade50,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        splashColor: Colors.red.withOpacity(0.2),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           alignment: Alignment.center,
@@ -254,7 +228,7 @@ class _LogoutButton extends StatelessWidget {
               Icon(Icons.logout_rounded, color: Colors.red.shade700, size: 22),
               const SizedBox(width: 8),
               Text(
-                "Sign Out",
+                title,
                 style: TextStyle(
                   color: Colors.red.shade700,
                   fontWeight: FontWeight.bold,

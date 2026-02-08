@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
@@ -8,6 +9,7 @@ class EmergencyAlertsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
 
     if (user == null) {
@@ -15,35 +17,31 @@ class EmergencyAlertsScreen extends StatelessWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Access dynamic theme
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          'Emergency Alerts',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          loc.emergencyAlerts,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.red.shade700, // Keep Red for urgency
+        backgroundColor: Colors.red.shade700,
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
       drawer: AppDrawer(user: user),
       
-      // Floating SOS Button
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showSOSDialog(context);
-        },
+        onPressed: () => _showSOSDialog(context),
         backgroundColor: Colors.red.shade700,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.campaign, size: 28),
-        label: const Text(
-          "REPORT SOS", 
-          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+        label: Text(
+          loc.reportSOS, 
+          style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
         ),
       ),
 
@@ -52,10 +50,9 @@ class EmergencyAlertsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- SECTION 1: ACTIVE ALERTS ---
-            const Text(
-              "Active Alerts",
-              style: TextStyle(
+            Text(
+              loc.activeAlerts,
+              style: const TextStyle(
                 fontSize: 18, 
                 fontWeight: FontWeight.bold, 
                 color: Colors.red,
@@ -63,38 +60,35 @@ class EmergencyAlertsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             
-            // Mock Active Alert
-            const _EmergencyCard(
-              title: "Heavy Rain Warning",
-              description: "Severe flooding expected in lower parking areas. Please move vehicles immediately.",
-              time: "10 mins ago",
+            _EmergencyCard(
+              title: loc.heavyRainTitle,
+              description: loc.heavyRainDesc,
+              time: loc.minsAgo("10"),
               isActive: true,
             ),
             
             const SizedBox(height: 30),
 
-            // --- SECTION 2: PAST HISTORY ---
             Text(
-              "Recent History",
+              loc.recentHistory,
               style: TextStyle(
                 fontSize: 18, 
                 fontWeight: FontWeight.bold, 
-                // Dynamic text color
                 color: isDark ? Colors.white70 : Colors.grey[800],
               ),
             ),
             const SizedBox(height: 12),
             
-            const _EmergencyCard(
-              title: "Fire Drill Completed",
-              description: "The scheduled fire drill for the north wing has been successfully completed.",
-              time: "2 days ago",
+            _EmergencyCard(
+              title: loc.fireDrillTitle,
+              description: loc.fireDrillDesc,
+              time: loc.daysAgo("2"),
               isActive: false,
             ),
-             const _EmergencyCard(
-              title: "Power Maintenance",
-              description: "Main hall power was restored at 4:00 PM.",
-              time: "5 days ago",
+             _EmergencyCard(
+              title: loc.powerMainTitle,
+              description: loc.powerMainDesc,
+              time: loc.daysAgo("5"),
               isActive: false,
             ),
             
@@ -106,27 +100,24 @@ class EmergencyAlertsScreen extends StatelessWidget {
   }
 
   void _showSOSDialog(BuildContext context) {
-    // Theme context for dialog
+    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        // Background handled by theme
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30),
-            SizedBox(width: 10),
-            Text("Confirm SOS"),
+            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30),
+            const SizedBox(width: 10),
+            Text(loc.confirmSOS),
           ],
         ),
-        content: const Text(
-          "Are you sure you want to broadcast an emergency signal to all admins? This should only be used for serious situations.",
-        ),
+        content: Text(loc.sosDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text("Cancel", style: TextStyle(color: theme.hintColor)),
+            child: Text(loc.cancel, style: TextStyle(color: theme.hintColor)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -136,13 +127,13 @@ class EmergencyAlertsScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("SOS Signal Sent! Admins notified."),
+                SnackBar(
+                  content: Text(loc.sosSent),
                   backgroundColor: Colors.red,
                 ),
               );
             },
-            child: const Text("SEND ALERT"),
+            child: Text(loc.sendAlert),
           ),
         ],
       ),
@@ -168,7 +159,6 @@ class _EmergencyCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Define colors based on state and theme
     final cardColor = theme.cardColor;
     final borderColor = isActive ? Colors.red.shade200 : (isDark ? Colors.white12 : Colors.transparent);
     final headerColor = isActive 
@@ -199,7 +189,6 @@ class _EmergencyCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -234,7 +223,6 @@ class _EmergencyCard extends StatelessWidget {
               ],
             ),
           ),
-          // Body
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(

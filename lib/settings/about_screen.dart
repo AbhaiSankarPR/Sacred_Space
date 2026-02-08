@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic Theme Colors
+    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
@@ -15,7 +16,7 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("About App", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(loc.aboutApp, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -60,9 +61,9 @@ class AboutScreen extends StatelessWidget {
                 color: const Color(0xFF5D3A99).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                "Version 1.0.0 (Beta)",
-                style: TextStyle(
+              child: Text(
+                loc.appVersion,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF5D3A99),
@@ -74,7 +75,7 @@ class AboutScreen extends StatelessWidget {
 
             // --- 2. Description ---
             Text(
-              "Sacred Space connects you with your parish community. Stay updated with announcements, book facilities, and manage your church profile all in one place.",
+              loc.appDescription,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -102,7 +103,7 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   _LinkTile(
                     icon: Icons.language,
-                    title: "Website",
+                    title: loc.website,
                     subtitle: "www.sacredspace.com",
                     textColor: textColor,
                     onTap: () {},
@@ -110,21 +111,21 @@ class AboutScreen extends StatelessWidget {
                   Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey[200]),
                   _LinkTile(
                     icon: Icons.privacy_tip_outlined,
-                    title: "Privacy Policy",
+                    title: loc.privacyPolicy,
                     textColor: textColor,
                     onTap: () {},
                   ),
                   Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey[200]),
                   _LinkTile(
                     icon: Icons.description_outlined,
-                    title: "Terms of Service",
+                    title: loc.termsOfService,
                     textColor: textColor,
                     onTap: () {},
                   ),
                   Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey[200]),
                   _LinkTile(
                     icon: Icons.star_border_rounded,
-                    title: "Rate Us",
+                    title: loc.rateUs,
                     textColor: textColor,
                     onTap: () {},
                   ),
@@ -136,7 +137,7 @@ class AboutScreen extends StatelessWidget {
 
             // --- 4. Footer ---
             Text(
-              "© 2026 Sacred Space Team.\nAll rights reserved.",
+              loc.allRightsReserved,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,

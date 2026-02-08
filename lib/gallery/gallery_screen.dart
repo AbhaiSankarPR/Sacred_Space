@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
@@ -12,21 +13,6 @@ class GalleryScreen extends StatefulWidget {
 
 class _GalleryScreenState extends State<GalleryScreen> {
   String _selectedCategory = "All";
-
-  // Mock Images
-  final List<Map<String, String>> _images = [
-    {'url': 'https://picsum.photos/id/1018/400/400', 'category': 'Worship', 'title': 'Sunday Service'},
-    {'url': 'https://picsum.photos/id/1015/400/400', 'category': 'Events', 'title': 'River Retreat'},
-    {'url': 'https://picsum.photos/id/1025/400/400', 'category': 'Community', 'title': 'Pet Show'},
-    {'url': 'https://picsum.photos/id/1040/400/400', 'category': 'Worship', 'title': 'Evening Prayer'},
-    {'url': 'https://picsum.photos/id/1059/400/400', 'category': 'Events', 'title': 'Music Concert'},
-    {'url': 'https://picsum.photos/id/1060/400/400', 'category': 'Community', 'title': 'Coffee Hour'},
-  ];
-
-  List<Map<String, String>> get _filteredImages {
-    if (_selectedCategory == "All") return _images;
-    return _images.where((img) => img['category'] == _selectedCategory).toList();
-  }
 
   void _showImageDialog(BuildContext context, String url, String title) {
     showDialog(
@@ -59,20 +45,43 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
+
     if (user == null) {
       Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Access dynamic theme
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Localized Image Data
+    final List<Map<String, String>> images = [
+      {'url': 'https://picsum.photos/id/1018/400/400', 'category': 'Worship', 'title': loc.sundayService},
+      {'url': 'https://picsum.photos/id/1015/400/400', 'category': 'Events', 'title': loc.riverRetreat},
+      {'url': 'https://picsum.photos/id/1025/400/400', 'category': 'Community', 'title': loc.petShow},
+      {'url': 'https://picsum.photos/id/1040/400/400', 'category': 'Worship', 'title': loc.eveningPrayer},
+      {'url': 'https://picsum.photos/id/1059/400/400', 'category': 'Events', 'title': loc.musicConcert},
+      {'url': 'https://picsum.photos/id/1060/400/400', 'category': 'Community', 'title': loc.coffeeHour},
+    ];
+
+    final filteredImages = _selectedCategory == "All" 
+        ? images 
+        : images.where((img) => img['category'] == _selectedCategory).toList();
+
+    // Map of categories for the filter row
+    final categories = [
+      {'key': 'All', 'label': loc.all},
+      {'key': 'Worship', 'label': loc.worship},
+      {'key': 'Events', 'label': loc.events},
+      {'key': 'Community', 'label': loc.community},
+    ];
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Media Gallery", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(loc.mediaGallery, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -83,38 +92,29 @@ class _GalleryScreenState extends State<GalleryScreen> {
         children: [
           // --- Filter Tabs ---
           Container(
-            color: theme.cardColor, // Dynamic container background
+            color: theme.cardColor,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ["All", "Worship", "Events", "Community"].map((cat) {
-                  final isSelected = _selectedCategory == cat;
+                children: categories.map((cat) {
+                  final isSelected = _selectedCategory == cat['key'];
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: ChoiceChip(
-                      label: Text(cat),
+                      label: Text(cat['label']!),
                       selected: isSelected,
-                      onSelected: (val) => setState(() => _selectedCategory = cat),
-                      
-                      // Colors
+                      onSelected: (val) => setState(() => _selectedCategory = cat['key']!),
                       selectedColor: const Color(0xFF5D3A99),
                       backgroundColor: isDark ? Colors.white10 : Colors.grey[100],
                       checkmarkColor: Colors.white,
-                      
                       labelStyle: TextStyle(
-                        color: isSelected 
-                            ? Colors.white 
-                            : (isDark ? Colors.white70 : Colors.black87),
+                        color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
-                      
-                      // Borders for Dark Mode visibility
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: isDark ? Colors.white12 : Colors.transparent,
-                        ),
+                        side: BorderSide(color: isDark ? Colors.white12 : Colors.transparent),
                       ),
                     ),
                   );
@@ -133,15 +133,15 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 mainAxisSpacing: 16,
                 childAspectRatio: 0.85,
               ),
-              itemCount: _filteredImages.length,
+              itemCount: filteredImages.length,
               itemBuilder: (context, index) {
-                final img = _filteredImages[index];
+                final img = filteredImages[index];
                 return GestureDetector(
                   onTap: () => _showImageDialog(context, img['url']!, img['title']!),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: theme.cardColor, // Fallback color while loading
+                      color: theme.cardColor,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(isDark ? 0.3 : 0.1), 
@@ -170,7 +170,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
                               );
                             },
                           ),
-                          // Gradient Overlay for text visibility
                           Positioned(
                             bottom: 0,
                             left: 0,
@@ -179,10 +178,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [
-                                    Colors.black.withOpacity(0.8), 
-                                    Colors.transparent
-                                  ],
+                                  colors: [Colors.black.withOpacity(0.8), Colors.transparent],
                                   begin: Alignment.bottomCenter,
                                   end: Alignment.topCenter,
                                 ),

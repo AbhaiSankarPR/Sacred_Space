@@ -1,28 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
-
-  // Mock FAQs
-  final List<Map<String, String>> _faqs = const [
-    {
-      'question': 'How do I book a facility?',
-      'answer': 'Go to the "Bookings" tab in the dashboard, click "New Booking", select your event type, date, and time, and submit your request.'
-    },
-    {
-      'question': 'Can I edit my profile?',
-      'answer': 'Yes, go to the "Profile" tab. Currently, you can view your details. Editing capability will be enabled in the next update.'
-    },
-    {
-      'question': 'How do I reset my password?',
-      'answer': 'You can reset your password from the "Settings" menu under "Account", or use the "Forgot Password" link on the login screen.'
-    },
-    {
-      'question': 'Who sees my emergency alerts?',
-      'answer': 'Emergency alerts are broadcasted immediately to all registered Church Admins and Priests.'
-    },
-  ];
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -33,17 +14,25 @@ class SupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic Theme
+    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.white70 : Colors.grey[600];
     final cardColor = theme.cardColor;
 
+    // Localized FAQ List
+    final List<Map<String, String>> faqs = [
+      {'question': loc.faqQ1, 'answer': loc.faqA1},
+      {'question': loc.faqQ2, 'answer': loc.faqA2},
+      {'question': loc.faqQ3, 'answer': loc.faqA3},
+      {'question': loc.faqQ4, 'answer': loc.faqA4},
+    ];
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Help & Support", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(loc.helpSupport, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -54,13 +43,13 @@ class SupportScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. Header Text ---
             Center(
               child: Column(
                 children: [
                   const SizedBox(height: 10),
                   Text(
-                    "How can we help you?",
+                    loc.howCanWeHelp,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -69,31 +58,30 @@ class SupportScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Select an option below or browse our FAQs",
+                    loc.selectOptionBrowse,
+                    textAlign: TextAlign.center,
                     style: TextStyle(color: subTextColor, fontSize: 14),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 30),
-
-            // --- 2. Contact Grid ---
             Row(
               children: [
                 Expanded(
                   child: _ContactCard(
                     icon: Icons.call,
-                    title: "Call Us",
+                    title: loc.callUs,
                     color: Colors.green,
                     isDark: isDark,
-                    onTap: () => _launchUrl("tel:+1234567890"),
+                    onTap: () => _launchUrl("tel:+919876543210"),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _ContactCard(
                     icon: Icons.email_outlined,
-                    title: "Email",
+                    title: loc.email,
                     color: Colors.orange,
                     isDark: isDark,
                     onTap: () => _launchUrl("mailto:support@sacredspace.com"),
@@ -103,20 +91,17 @@ class SupportScreen extends StatelessWidget {
                 Expanded(
                   child: _ContactCard(
                     icon: Icons.language,
-                    title: "Website",
+                    title: loc.website,
                     color: Colors.blue,
                     isDark: isDark,
-                    onTap: () => _launchUrl("https://www.google.com"),
+                    onTap: () => _launchUrl("https://sacredspace.com"),
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 30),
-
-            // --- 3. FAQs Section ---
             Text(
-              "Frequently Asked Questions",
+              loc.faqs,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -124,7 +109,7 @@ class SupportScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ..._faqs.map((faq) => Container(
+            ...faqs.map((faq) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: cardColor,
@@ -153,18 +138,15 @@ class SupportScreen extends StatelessWidget {
                   children: [
                     Text(
                       faq['answer']!,
-                      style: TextStyle(color: subTextColor, height: 1.4),
+                      style: TextStyle(color: subTextColor, height: 1.4, fontSize: 14),
                     ),
                   ],
                 ),
               ),
             )),
-
             const SizedBox(height: 30),
-
-            // --- 4. Feedback Form ---
             Text(
-              "Send us a Message",
+              loc.sendUsMessage,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -191,7 +173,7 @@ class SupportScreen extends StatelessWidget {
                     maxLines: 4,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
-                      hintText: "Describe your issue or feedback...",
+                      hintText: loc.feedbackHint,
                       hintStyle: TextStyle(color: theme.hintColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -203,7 +185,7 @@ class SupportScreen extends StatelessWidget {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF5D3A99)),
+                        borderSide: const BorderSide(color: Color(0xFF5D3A99), width: 2),
                       ),
                       filled: true,
                       fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
@@ -221,10 +203,10 @@ class SupportScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Feedback sent successfully!")),
+                          SnackBar(content: Text(loc.feedbackSuccess)),
                         );
                       },
-                      child: const Text("Submit Feedback", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(loc.submitFeedback, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ),
                 ],

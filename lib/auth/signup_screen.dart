@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 
@@ -30,20 +31,22 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _signup() async {
+    final loc = AppLocalizations.of(context)!;
+
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty ||
         _selectedChurchCode == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields and select a church')),
+        SnackBar(content: Text(loc.fillAllFields)),
       );
       return;
     }
 
     if (!_passwordsMatch()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        SnackBar(content: Text(loc.passwordMismatch)),
       );
       return;
     }
@@ -51,23 +54,25 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _loading = true);
 
     try {
-      // Signup/login (dummy) returns User object
       final user = await _auth.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         churchCode: _selectedChurchCode!,
       );
 
-      // Use dot notation for role
       final String role = user.role ?? 'member';
 
-      Navigator.pushNamedAndRemoveUntil(context, '/$role', (_) => false);
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/$role', (_) => false);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Signup failed')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.signupFailed)),
+        );
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -82,45 +87,60 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final theme = Theme.of(context); // Access current theme
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
+      backgroundColor: theme.scaffoldBackgroundColor, // Use theme background
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor, // Adapts to Dark Grey or White
               borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, 6)),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black45 : Colors.black12, 
+                  blurRadius: 12, 
+                  offset: const Offset(0, 6)
+                ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 30,
-                  backgroundColor: Color(0xFFEDE7F6),
-                  child: Icon(Icons.person_add, color: Colors.deepPurple, size: 30),
-                ),
-                const SizedBox(height: 16),
-                const Text("Create Account", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                const Text("Sign up to get started", style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 24),
-
-                // Name
-                TextField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: "Full Name",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                  child: Icon(
+                    Icons.person_add, 
+                    color: theme.colorScheme.primary, 
+                    size: 30
                   ),
                 ),
                 const SizedBox(height: 16),
+                Text(
+                  loc.signupTitle, 
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  loc.signupSubtitle, 
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.hintColor
+                  ),
+                ),
+                const SizedBox(height: 24),
 
-                // Church selection
+                _buildTextField(controller: _nameController, label: loc.fullName, theme: theme),
+                const SizedBox(height: 16),
+
                 Autocomplete<Map<String, String>>(
                   optionsBuilder: (textEditingValue) {
                     if (textEditingValue.text.isEmpty) return const Iterable.empty();
@@ -130,13 +150,11 @@ class _SignupScreenState extends State<SignupScreen> {
                   },
                   displayStringForOption: (option) => "${option['name']} (${option['code']})",
                   fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                    return TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        labelText: "Church",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                    return _buildTextField(
+                      controller: controller, 
+                      label: loc.church, 
+                      theme: theme, 
+                      focusNode: focusNode
                     );
                   },
                   onSelected: (selection) {
@@ -145,63 +163,70 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Email
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                _buildTextField(controller: _emailController, label: loc.email, theme: theme),
+                const SizedBox(height: 16),
+
+                _buildTextField(
+                  controller: _passwordController, 
+                  label: loc.password, 
+                  theme: theme, 
+                  obscure: true
                 ),
                 const SizedBox(height: 16),
 
-                // Password
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Confirm Password
-                TextField(
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: "Confirm Password",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                _buildTextField(
+                  controller: _confirmPasswordController, 
+                  label: loc.confirmPassword, 
+                  theme: theme, 
+                  obscure: true
                 ),
                 const SizedBox(height: 24),
 
-                // Signup button
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _loading ? null : _signup,
                     child: _loading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Sign Up", style: TextStyle(fontSize: 16, color: Colors.white)),
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : Text(loc.signup, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // Link to Login
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Text("Already have an account? "),
+                    Text(
+                      loc.alreadyHaveAccount,
+                      style: TextStyle(color: theme.hintColor, fontSize: 14),
+                    ),
+                    const SizedBox(width: 4),
                     TextButton(
                       onPressed: () => Navigator.pushNamed(context, Routes.login),
-                      child: const Text("Login"),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        loc.login,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
                     ),
                   ],
                 )
@@ -209,6 +234,37 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Helper method to keep text fields consistent
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required ThemeData theme,
+    bool obscure = false,
+    FocusNode? focusNode,
+  }) {
+    return TextField(
+      controller: controller,
+      focusNode: focusNode,
+      obscureText: obscure,
+      style: TextStyle(color: theme.colorScheme.onSurface),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: theme.hintColor),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.dividerColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.transparent,
       ),
     );
   }

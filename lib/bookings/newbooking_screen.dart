@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../core/locale_provider.dart'; // Ensure this path is correct
 
 class NewBookingScreen extends StatefulWidget {
   const NewBookingScreen({super.key});
@@ -18,15 +21,6 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
   final TextEditingController _noteController = TextEditingController();
   bool _isLoading = false;
 
-  final List<String> _bookingTypes = [
-    'Marriage Ceremony',
-    'Baptism',
-    'Prayer Hall Meeting',
-    'Counseling Session',
-    'Community Hall Event',
-    'Other'
-  ];
-
   @override
   void dispose() {
     _noteController.dispose();
@@ -34,6 +28,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
   }
 
   void _submitBooking() async {
+    final loc = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null) {
       setState(() => _isLoading = true);
 
@@ -47,7 +42,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
     } else if (_selectedDate == null || _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Please select a date and time"),
+          content: Text(loc.pleaseSelectDateTime),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -55,21 +50,21 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
   }
 
   void _showSuccessDialog() {
+    final loc = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        // Dialog background color handled by theme
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Column(
+        title: Column(
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 60),
-            SizedBox(height: 12),
-            Text("Request Sent!", style: TextStyle(fontWeight: FontWeight.bold)),
+            const Icon(Icons.check_circle, color: Colors.green, size: 60),
+            const SizedBox(height: 12),
+            Text(loc.requestSent, style: const TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
-        content: const Text(
-          "Your booking request has been submitted to the admin. You will receive a notification once it is approved.",
+        content: Text(
+          loc.bookingSuccessMessage,
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -78,14 +73,13 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               Navigator.pop(ctx); 
               Navigator.pop(context); 
             },
-            child: const Text("OK", style: TextStyle(fontSize: 16)),
+            child: Text(loc.ok, style: const TextStyle(fontSize: 16)),
           ),
         ],
       ),
     );
   }
 
-  // --- Logic: Pickers (Updated for Theme) ---
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -93,7 +87,6 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       initialDate: now,
       firstDate: now,
       lastDate: DateTime(now.year + 2),
-      // Theme is automatically handled by MaterialApp now, no need for manual override
     );
     if (picked != null) setState(() => _selectedDate = picked);
   }
@@ -108,15 +101,26 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Access dynamic theme data
+    // Localization and Theme access
+    final loc = AppLocalizations.of(context)!;
+    final localeProvider = Provider.of<LocaleProvider>(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
 
+    // Localized options list
+    final List<Map<String, String>> bookingTypes = [
+      {'val': 'Marriage', 'label': loc.marriageCeremony},
+      {'val': 'Baptism', 'label': loc.baptism},
+      {'val': 'Prayer', 'label': loc.prayerMeeting},
+      {'val': 'Counseling', 'label': loc.counseling},
+      {'val': 'Community', 'label': loc.communityEvent},
+      {'val': 'Other', 'label': loc.other},
+    ];
+
     return Scaffold(
-      // Background handled by theme
       appBar: AppBar(
-        title: const Text("New Request"),
+        title: Text(loc.newRequest),
         centerTitle: true,
         elevation: 0,
       ),
@@ -128,31 +132,31 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Booking Details",
+                loc.bookingDetails,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
               ),
               const SizedBox(height: 16),
 
               // 1. Booking Type Dropdown
-              _buildLabel("Event Type"),
+              _buildLabel(loc.eventType),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: _fieldDecoration(theme),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButtonFormField<String>(
-                    dropdownColor: theme.cardColor, // Fix dropdown background
+                    dropdownColor: theme.cardColor,
                     decoration: const InputDecoration(border: InputBorder.none),
-                    hint: Text("Select event type", style: TextStyle(color: theme.hintColor)),
+                    hint: Text(loc.selectEventType, style: TextStyle(color: theme.hintColor, fontSize: 14)),
                     value: _selectedType,
                     icon: Icon(Icons.keyboard_arrow_down, color: theme.colorScheme.primary),
-                    items: _bookingTypes.map((type) {
+                    items: bookingTypes.map((type) {
                       return DropdownMenuItem(
-                        value: type, 
-                        child: Text(type, style: TextStyle(color: textColor)),
+                        value: type['val'], 
+                        child: Text(type['label']!, style: TextStyle(color: textColor, fontSize: 14)),
                       );
                     }).toList(),
                     onChanged: (val) => setState(() => _selectedType = val),
-                    validator: (val) => val == null ? 'Please select a type' : null,
+                    validator: (val) => val == null ? loc.typeRequired : null,
                   ),
                 ),
               ),
@@ -165,25 +169,29 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildLabel("Date"),
+                        _buildLabel(loc.date),
                         GestureDetector(
                           onTap: _pickDate,
                           child: Container(
                             height: 56,
                             decoration: _fieldDecoration(theme),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             alignment: Alignment.centerLeft,
                             child: Row(
                               children: [
-                                Icon(Icons.calendar_today, size: 20, color: theme.colorScheme.primary),
-                                const SizedBox(width: 10),
-                                Text(
-                                  _selectedDate == null
-                                      ? "Select Date"
-                                      : DateFormat('MMM dd, yyyy').format(_selectedDate!),
-                                  style: TextStyle(
-                                    color: _selectedDate == null ? theme.hintColor : textColor,
-                                    fontSize: 15,
+                                Icon(Icons.calendar_today, size: 18, color: theme.colorScheme.primary),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _selectedDate == null
+                                        ? loc.selectDate
+                                        : DateFormat.yMMMd(localeProvider.locale.languageCode).format(_selectedDate!),
+                                    style: TextStyle(
+                                      color: _selectedDate == null ? theme.hintColor : textColor,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -193,30 +201,34 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildLabel("Time"),
+                        _buildLabel(loc.time),
                         GestureDetector(
                           onTap: _pickTime,
                           child: Container(
                             height: 56,
                             decoration: _fieldDecoration(theme),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             alignment: Alignment.centerLeft,
                             child: Row(
                               children: [
-                                Icon(Icons.access_time, size: 20, color: theme.colorScheme.primary),
-                                const SizedBox(width: 10),
-                                Text(
-                                  _selectedTime == null
-                                      ? "Select Time"
-                                      : _selectedTime!.format(context),
-                                  style: TextStyle(
-                                    color: _selectedTime == null ? theme.hintColor : textColor,
-                                    fontSize: 15,
+                                Icon(Icons.access_time, size: 18, color: theme.colorScheme.primary),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _selectedTime == null
+                                        ? loc.selectTime
+                                        : _selectedTime!.format(context),
+                                    style: TextStyle(
+                                      color: _selectedTime == null ? theme.hintColor : textColor,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -231,21 +243,21 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               const SizedBox(height: 20),
 
               // 3. Purpose / Description
-              _buildLabel("Purpose / Notes"),
+              _buildLabel(loc.purposeNotes),
               Container(
                 decoration: _fieldDecoration(theme),
                 child: TextFormField(
                   controller: _noteController,
                   maxLines: 4,
-                  style: TextStyle(color: textColor),
+                  style: TextStyle(color: textColor, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: "Describe your event briefly...",
+                    hintText: loc.describeEvent,
                     hintStyle: TextStyle(color: theme.hintColor),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.all(16),
                   ),
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Please enter a description';
+                    if (val == null || val.isEmpty) return loc.fieldRequired;
                     return null;
                   },
                 ),
@@ -271,9 +283,9 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                           width: 24, height: 24, 
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                         )
-                      : const Text(
-                          "Submit Request",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      : Text(
+                          loc.submitRequest,
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),
@@ -290,15 +302,13 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         text,
-        // Use standard grey for labels in both modes
-        style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey),
+        style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey, fontSize: 13),
       ),
     );
   }
 
   BoxDecoration _fieldDecoration(ThemeData theme) {
     return BoxDecoration(
-      // Dynamic Card Color (White vs Dark Grey)
       color: theme.cardColor,
       borderRadius: BorderRadius.circular(16),
       boxShadow: [

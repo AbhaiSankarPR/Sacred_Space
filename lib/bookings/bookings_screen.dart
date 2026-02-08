@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
 
 // 1. Data Model
 class BookingData {
-  final String title;
+  final String title; // In a real app, this would be a key or localized from backend
   final String date;
   final String time;
   final String location;
@@ -20,7 +21,6 @@ class BookingData {
   });
 }
 
-// 2. StatefulWidget
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
 
@@ -31,42 +31,9 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen> {
   String _selectedFilter = "All";
 
-  // 3. Data List
-  final List<BookingData> _allBookings = [
-    BookingData(
-      title: "Marriage Ceremony",
-      date: "12 Feb 2026",
-      time: "10:00 AM - 2:00 PM",
-      status: BookingStatus.approved,
-      location: "Main Hall",
-    ),
-    BookingData(
-      title: "Prayer Hall Request",
-      date: "20 Feb 2026",
-      time: "6:00 PM - 8:00 PM",
-      status: BookingStatus.pending,
-      location: "Community Center",
-    ),
-    BookingData(
-      title: "Youth Meeting",
-      date: "05 Jan 2026",
-      time: "5:00 PM - 7:00 PM",
-      status: BookingStatus.rejected,
-      location: "Room 101",
-    ),
-  ];
-
-  // 4. Filter Logic
-  List<BookingData> get _filteredBookings {
-    if (_selectedFilter == "All") return _allBookings;
-    if (_selectedFilter == "Pending") return _allBookings.where((b) => b.status == BookingStatus.pending).toList();
-    if (_selectedFilter == "Approved") return _allBookings.where((b) => b.status == BookingStatus.approved).toList();
-    if (_selectedFilter == "Rejected") return _allBookings.where((b) => b.status == BookingStatus.rejected).toList();
-    return _allBookings;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
 
     if (user == null) {
@@ -74,13 +41,41 @@ class _BookingsScreenState extends State<BookingsScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Access dynamic theme
+    // Mock Data using localized strings where possible
+    final List<BookingData> allBookings = [
+      BookingData(
+        title: loc.marriageCeremony,
+        date: "12 Feb 2026",
+        time: "10:00 AM - 2:00 PM",
+        status: BookingStatus.approved,
+        location: "Main Hall",
+      ),
+      BookingData(
+        title: loc.prayerHallRequest,
+        date: "20 Feb 2026",
+        time: "6:00 PM - 8:00 PM",
+        status: BookingStatus.pending,
+        location: "Community Center",
+      ),
+      BookingData(
+        title: loc.youthMeeting,
+        date: "05 Jan 2026",
+        time: "5:00 PM - 7:00 PM",
+        status: BookingStatus.rejected,
+        location: "Room 101",
+      ),
+    ];
+
+    final filteredBookings = _selectedFilter == "All" 
+        ? allBookings 
+        : allBookings.where((b) => b.status.name.toLowerCase() == _selectedFilter.toLowerCase()).toList();
+
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("My Bookings", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(loc.myBookings, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -91,35 +86,34 @@ class _BookingsScreenState extends State<BookingsScreen> {
         onPressed: () => Navigator.pushNamed(context, Routes.newBooking),
         backgroundColor: const Color(0xFF5D3A99),
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("New Booking", style: TextStyle(color: Colors.white)),
+        label: Text(loc.newBooking, style: const TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Filter Tabs ---
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   _FilterChip(
-                    label: "All",
+                    label: loc.all,
                     isSelected: _selectedFilter == "All",
                     onTap: () => setState(() => _selectedFilter = "All"),
                   ),
                   _FilterChip(
-                    label: "Pending",
+                    label: loc.pending,
                     isSelected: _selectedFilter == "Pending",
                     onTap: () => setState(() => _selectedFilter = "Pending"),
                   ),
                   _FilterChip(
-                    label: "Approved",
+                    label: loc.approved,
                     isSelected: _selectedFilter == "Approved",
                     onTap: () => setState(() => _selectedFilter = "Approved"),
                   ),
                   _FilterChip(
-                    label: "Rejected",
+                    label: loc.rejected,
                     isSelected: _selectedFilter == "Rejected",
                     onTap: () => setState(() => _selectedFilter = "Rejected"),
                   ),
@@ -127,27 +121,21 @@ class _BookingsScreenState extends State<BookingsScreen> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // --- Booking List ---
-            if (_filteredBookings.isEmpty)
+            if (filteredBookings.isEmpty)
                Padding(
                 padding: const EdgeInsets.only(top: 40),
                 child: Center(
-                  child: Text(
-                    "No bookings found", 
-                    style: TextStyle(color: theme.hintColor),
-                  ),
+                  child: Text(loc.noBookingsFound, style: TextStyle(color: theme.hintColor)),
                 ),
               )
             else
-              ..._filteredBookings.map((data) => BookingCard(
+              ...filteredBookings.map((data) => BookingCard(
                     title: data.title,
                     date: data.date,
                     time: data.time,
                     status: data.status,
                     location: data.location,
                   )),
-
             const SizedBox(height: 60),
           ],
         ),
@@ -156,10 +144,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 }
 
-// --- CONSTANTS ---
 enum BookingStatus { approved, pending, rejected }
-
-// --- WIDGETS ---
 
 class BookingCard extends StatelessWidget {
   final String title;
@@ -179,7 +164,7 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic Colors
+    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -190,17 +175,17 @@ class BookingCard extends StatelessWidget {
     switch (status) {
       case BookingStatus.approved:
         statusColor = Colors.green;
-        statusText = "Approved";
+        statusText = loc.approved;
         statusIcon = Icons.check_circle_outline;
         break;
       case BookingStatus.pending:
         statusColor = Colors.orange;
-        statusText = "Pending";
+        statusText = loc.pending;
         statusIcon = Icons.hourglass_empty;
         break;
       case BookingStatus.rejected:
         statusColor = Colors.red;
-        statusText = "Rejected";
+        statusText = loc.rejected;
         statusIcon = Icons.cancel_outlined;
         break;
     }
@@ -208,11 +193,11 @@ class BookingCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: theme.cardColor, // Dynamic Card Background
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), // Darker shadow in dark mode
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -220,11 +205,10 @@ class BookingCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header Row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(isDark ? 0.2 : 0.1), // Slightly more opaque in dark mode
+              color: statusColor.withOpacity(isDark ? 0.2 : 0.1),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
@@ -236,27 +220,17 @@ class BookingCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       statusText,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ],
                 ),
                 Text(
                   date,
-                  style: TextStyle(
-                    color: isDark ? Colors.white70 : Colors.grey[800],
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: isDark ? Colors.white70 : Colors.grey[800], fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ],
             ),
           ),
-          
-          // Body Content
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -268,11 +242,7 @@ class BookingCard extends StatelessWidget {
                     color: isDark ? Colors.grey[800] : Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.event_seat,
-                    color: Color(0xFF5D3A99),
-                    size: 28,
-                  ),
+                  child: const Icon(Icons.event_seat, color: Color(0xFF5D3A99), size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -281,11 +251,7 @@ class BookingCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
                       ),
                       const SizedBox(height: 6),
                       _IconTextRow(icon: Icons.access_time, text: time),
@@ -297,8 +263,6 @@ class BookingCard extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Action Button
           if (status == BookingStatus.pending)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -309,11 +273,9 @@ class BookingCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: BorderSide(color: Colors.red.shade200),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text("Cancel Request"),
+                  child: Text(loc.cancelRequest),
                 ),
               ),
             ),
@@ -330,11 +292,7 @@ class _IconTextRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic text color for subtitles
-    final color = Theme.of(context).brightness == Brightness.dark 
-        ? Colors.white60 
-        : Colors.grey;
-
+    final color = Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.grey;
     return Row(
       children: [
         Icon(icon, size: 14, color: color),
@@ -350,11 +308,7 @@ class _FilterChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _FilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _FilterChip({required this.label, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -369,24 +323,14 @@ class _FilterChip extends StatelessWidget {
         onSelected: (bool value) => onTap(),
         selectedColor: const Color(0xFF5D3A99),
         checkmarkColor: Colors.white,
-        
-        // Dynamic Label Style
         labelStyle: TextStyle(
-          color: isSelected 
-              ? Colors.white 
-              : (isDark ? Colors.white70 : Colors.black87),
+          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
-        
-        // Dynamic Background
         backgroundColor: theme.cardColor,
-        
-        // Dynamic Border
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: isDark ? Colors.white12 : Colors.black12,
-          ),
+          side: BorderSide(color: isDark ? Colors.white12 : Colors.black12),
         ),
       ),
     );

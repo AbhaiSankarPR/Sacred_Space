@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// Ensure these match your actual file paths
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
@@ -10,7 +10,7 @@ class EventData {
   final String title;
   final DateTime dateTime;
   final String location;
-  final String category; // e.g., "Youth", "Worship", "Community"
+  final String category;
   bool isRegistered;
 
   EventData({
@@ -34,7 +34,6 @@ class EventsScreen extends StatefulWidget {
 class _EventsScreenState extends State<EventsScreen> {
   String _selectedFilter = "Upcoming";
 
-  // Mock Data
   final List<EventData> _allEvents = [
     EventData(
       id: '1',
@@ -70,7 +69,6 @@ class _EventsScreenState extends State<EventsScreen> {
     ),
   ];
 
-  // Logic to filter the list
   List<EventData> get _filteredEvents {
     final now = DateTime.now();
     if (_selectedFilter == "Upcoming") {
@@ -83,37 +81,42 @@ class _EventsScreenState extends State<EventsScreen> {
     return _allEvents;
   }
 
-  // Toggle RSVP
   void _toggleRegistration(String id) {
+    final loc = AppLocalizations.of(context)!;
     setState(() {
       final event = _allEvents.firstWhere((e) => e.id == id);
       event.isRegistered = !event.isRegistered;
     });
     
-    // Optional: Show snackbar feedback
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("RSVP status updated!")),
+      SnackBar(content: Text(loc.rsvpUpdated)),
     );
+  }
+
+  String _getLocalizedStatus(AppLocalizations loc) {
+    if (_selectedFilter == "Upcoming") return loc.upcoming;
+    if (_selectedFilter == "Past") return loc.past;
+    return loc.myEvents;
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
-    // Safety check
+
     if (user == null) {
       Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Access dynamic theme
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Church Events", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(loc.eventsTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -124,24 +127,24 @@ class _EventsScreenState extends State<EventsScreen> {
         children: [
           // --- Filter Tabs ---
           Container(
-            color: theme.cardColor, // Dynamic bar background
+            color: theme.cardColor,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   _FilterTab(
-                    label: "Upcoming",
+                    label: loc.upcoming,
                     isSelected: _selectedFilter == "Upcoming",
                     onTap: () => setState(() => _selectedFilter = "Upcoming"),
                   ),
                   _FilterTab(
-                    label: "My Events",
+                    label: loc.myEvents,
                     isSelected: _selectedFilter == "My Events",
                     onTap: () => setState(() => _selectedFilter = "My Events"),
                   ),
                   _FilterTab(
-                    label: "Past",
+                    label: loc.past,
                     isSelected: _selectedFilter == "Past",
                     onTap: () => setState(() => _selectedFilter = "Past"),
                   ),
@@ -160,7 +163,7 @@ class _EventsScreenState extends State<EventsScreen> {
                         Icon(Icons.event_busy, size: 60, color: theme.hintColor),
                         const SizedBox(height: 16),
                         Text(
-                          "No $_selectedFilter events found",
+                          loc.noEventsFound(_getLocalizedStatus(loc)),
                           style: TextStyle(color: theme.hintColor, fontSize: 16),
                         ),
                       ],
@@ -192,26 +195,30 @@ class _EventCard extends StatelessWidget {
 
   const _EventCard({required this.event, required this.onRSVP});
 
+  String _getLocalizedMonth(int month, AppLocalizations loc) {
+    final months = [
+      loc.jan, loc.feb, loc.mar, loc.apr, loc.may, loc.jun,
+      loc.jul, loc.aug, loc.sep, loc.oct, loc.nov, loc.dec
+    ];
+    return months[month - 1];
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Dynamic Colors
+    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.white70 : Colors.grey[600];
 
-    // Formatting Date
-    final months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    final month = months[event.dateTime.month - 1];
+    final month = _getLocalizedMonth(event.dateTime.month, loc);
     final day = event.dateTime.day.toString();
-    
-    // Formatting Time
     final timeStr = "${event.dateTime.hour > 12 ? event.dateTime.hour - 12 : event.dateTime.hour}:${event.dateTime.minute.toString().padLeft(2, '0')} ${event.dateTime.hour >= 12 ? 'PM' : 'AM'}";
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: theme.cardColor, // Dynamic Card Background
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -223,19 +230,16 @@ class _EventCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Top Row: Date Badge + Title
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date Badge
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   decoration: BoxDecoration(
                     color: const Color(0xFF5D3A99).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    // Light border for dark mode visibility
                     border: isDark ? Border.all(color: Colors.white12) : null,
                   ),
                   child: Column(
@@ -245,7 +249,6 @@ class _EventCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 20, 
                           fontWeight: FontWeight.bold, 
-                          // Brighter purple in dark mode for readability
                           color: isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)
                         ),
                       ),
@@ -261,13 +264,10 @@ class _EventCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                
-                // Details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Category Tag
                       Container(
                         margin: const EdgeInsets.only(bottom: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -290,7 +290,7 @@ class _EventCard extends StatelessWidget {
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
                           height: 1.2,
-                          color: textColor, // Dynamic text color
+                          color: textColor,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -317,11 +317,7 @@ class _EventCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Divider
           Divider(height: 1, color: isDark ? Colors.white10 : Colors.black12),
-
-          // Bottom Action Bar
           InkWell(
             onTap: onRSVP,
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
@@ -347,7 +343,7 @@ class _EventCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    event.isRegistered ? "REGISTERED - GOING" : "REGISTER NOW",
+                    event.isRegistered ? loc.registeredGoing : loc.registerNow,
                     style: TextStyle(
                       color: event.isRegistered 
                           ? Colors.green 
@@ -375,7 +371,6 @@ class _FilterTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic Colors
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
