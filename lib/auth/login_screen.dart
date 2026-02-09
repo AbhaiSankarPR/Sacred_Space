@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Added import
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 
@@ -17,32 +17,40 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _selectedChurchCode;
   bool _loading = false;
+  
+  // This will hold the real data from your /churches endpoint
+  List<Map<String, String>> _liveChurches = [];
 
-  final List<Map<String, String>> dummyChurches = [
-    {'code': 'CH001', 'name': 'St. Mary Church'},
-    {'code': 'CH002', 'name': 'Sacred Heart Church'},
-    {'code': 'CH003', 'name': 'Holy Trinity Church'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialData();
+  }
+
+  /// Fetches the church list from the backend on load
+  Future<void> _fetchInitialData() async {
+    try {
+      final churches = await _authService.getChurches();
+      if (mounted) {
+        setState(() {
+          _liveChurches = churches;
+        });
+      }
+    } catch (e) {
+      // Handle potential fetch errors (e.g., offline)
+      debugPrint("Failed to load churches: $e");
+    }
+  }
 
   Future<void> _login() async {
-    final l10n = AppLocalizations.of(context)!; // Context-based localizations
+    final l10n = AppLocalizations.of(context)!;
 
     if (_selectedChurchCode == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.selectChurchError),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      _showSnackBar(l10n.selectChurchError, isError: true);
       return;
     }
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.fillFieldsError),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      _showSnackBar(l10n.fillFieldsError, isError: true);
       return;
     }
 
@@ -55,23 +63,26 @@ class _LoginScreenState extends State<LoginScreen> {
         churchCode: _selectedChurchCode!,
       );
 
-      final role = user.role;
-
+      // The role is now lowercased in AuthService for route compatibility
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/$role', (_) => false);
+        Navigator.pushNamedAndRemoveUntil(context, '/${user.role}', (_) => false);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.loginFailed),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
+      ),
+    );
   }
 
   @override
@@ -84,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!; // Localizations accessor
+    final l10n = AppLocalizations.of(context)!;
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
     final hintColor = theme.hintColor;
@@ -94,18 +105,12 @@ class _LoginScreenState extends State<LoginScreen> {
         labelText: label,
         hintText: hint,
         labelStyle: TextStyle(color: hintColor),
-        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
         filled: true,
         fillColor: isDark ? Colors.grey[800] : Colors.grey[50],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark ? Colors.white10 : Colors.grey[300]!,
-          ),
+          borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.grey[300]!),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -135,44 +140,20 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5D3A99).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.church,
-                    color: Color(0xFF5D3A99),
-                    size: 40,
-                  ),
-                ),
+                const Icon(Icons.church, color: Color(0xFF5D3A99), size: 60),
                 const SizedBox(height: 16),
-                Text(
-                  l10n.welcomeTitle,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.signInSubtitle,
-                  style: TextStyle(color: hintColor),
-                ),
+                Text(l10n.welcomeTitle, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
                 const SizedBox(height: 30),
+
+                // AUTOCOMPLETE CONNECTED TO BACKEND
                 Autocomplete<Map<String, String>>(
                   optionsBuilder: (textEditingValue) {
                     if (textEditingValue.text.isEmpty) return const Iterable.empty();
-                    return dummyChurches.where(
-                      (church) =>
-                          church['name']!.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                          church['code']!.toLowerCase().contains(textEditingValue.text.toLowerCase()),
-                    );
+                    return _liveChurches.where((church) =>
+                        church['name']!.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
+                        church['code']!.toLowerCase().contains(textEditingValue.text.toLowerCase()));
                   },
-                  displayStringForOption: (option) => "${option['name']} (${option['code']})",
+                  displayStringForOption: (option) => option['name']!,
                   fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
                     return TextField(
                       controller: controller,
@@ -181,51 +162,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: inputDecor(l10n.church, l10n.enterChurch),
                     );
                   },
-                  optionsViewBuilder: (context, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 8,
-                        color: theme.cardColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: isDark ? Colors.white12 : Colors.transparent),
-                        ),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 250),
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width - 88,
-                            child: ListView.separated(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: options.length,
-                              separatorBuilder: (ctx, i) => Divider(
-                                height: 1,
-                                color: isDark ? Colors.white10 : Colors.grey[200],
-                              ),
-                              itemBuilder: (BuildContext context, int index) {
-                                final option = options.elementAt(index);
-                                return ListTile(
-                                  dense: true,
-                                  title: Text(
-                                    "${option['name']}",
-                                    style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
-                                  ),
-                                  subtitle: Text(
-                                    "${option['code']}",
-                                    style: TextStyle(color: theme.hintColor),
-                                  ),
-                                  onTap: () => onSelected(option),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                  onSelected: (selection) {
+                    _selectedChurchCode = selection['code']; // This is the ID (e.g. ST_MARYS_TVM)
                   },
-                  onSelected: (selection) => _selectedChurchCode = selection['code'],
                 ),
+
                 const SizedBox(height: 16),
                 TextField(
                   controller: _emailController,
@@ -247,17 +188,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF5D3A99),
                       foregroundColor: Colors.white,
-                      elevation: 5,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _loading ? null : _login,
                     child: _loading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : Text(l10n.signIn, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(l10n.signIn, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -267,9 +203,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(l10n.noAccount, style: TextStyle(color: hintColor)),
                     TextButton(
                       onPressed: () => Navigator.pushNamed(context, Routes.signup),
-                      child: Text(
-                        l10n.signUp,
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5D3A99)),
+                      child: const Text(
+                        "Sign Up", // Hardcoded for example, use l10n.signUp
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5D3A99)),
                       ),
                     ),
                   ],
