@@ -166,5 +166,9 @@
   "faqA3": "You can reset your password from the 'Settings' menu under 'Account', or use the 'Forgot Password' link on the login screen.",
   "faqQ4": "Who sees my emergency alerts?",
   "faqA4": "Emergency alerts are broadcasted immediately to all registered Church Admins and Priests.",
-  "appTagline": "Connecting Faith and Community"
+  "appTagline": "Connecting Faith and Community",
+  "completeProfile": "Complete Your Profile",
+  "completeDetailsSubtitle": "Please provide the following details to continue.",
+  "saveAndContinue": "Save and Continue",
+  "fieldRequired": "This field is required"
 }
