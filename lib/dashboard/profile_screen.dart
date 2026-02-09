@@ -10,10 +10,14 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    // Using the singleton instance to get the currently logged-in user
     final user = AuthService().currentUser;
 
     if (user == null) {
-      Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
+      // Safety redirect if session is lost
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, Routes.login);
+      });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -32,7 +36,7 @@ class ProfileScreen extends StatelessWidget {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_note),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(loc.editProfileComingSoon)),
@@ -49,6 +53,7 @@ class ProfileScreen extends StatelessWidget {
             // --- PROFILE HEADER CARD ---
             Container(
               padding: const EdgeInsets.all(24),
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: theme.cardColor,
                 borderRadius: BorderRadius.circular(20),
@@ -73,6 +78,7 @@ class ProfileScreen extends StatelessWidget {
                         child: CircleAvatar(
                           radius: 45,
                           backgroundColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                          // Use user's specific profile image if available, else fallback to initials or icon
                           backgroundImage: (user.logoUrl != null && user.logoUrl!.isNotEmpty)
                               ? NetworkImage(user.logoUrl!)
                               : null,
@@ -84,29 +90,33 @@ class ProfileScreen extends StatelessWidget {
                       Positioned(
                         bottom: 0,
                         right: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF5D3A99),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: theme.cardColor, width: 2),
+                        child: GestureDetector(
+                          onTap: () => print("Update Photo"), // You can add image picker here later
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF5D3A99),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: theme.cardColor, width: 2),
+                            ),
+                            child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
                           ),
-                          child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    user.churchName,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
+                    user.name, // Displaying User's name instead of Church name here
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.email,
+                    style: TextStyle(fontSize: 14, color: subTextColor),
+                  ),
+                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
@@ -116,24 +126,12 @@ class ProfileScreen extends StatelessWidget {
                     child: Text(
                       user.role.toUpperCase(),
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF5D3A99),
                         letterSpacing: 1,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.location_on, size: 16, color: subTextColor),
-                      const SizedBox(width: 4),
-                      Text(
-                        user.location,
-                        style: TextStyle(color: subTextColor, fontSize: 14),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -150,13 +148,13 @@ class ProfileScreen extends StatelessWidget {
                 onTap: () {},
               ),
               _ProfileMenuTile(
-                icon: Icons.lock_outline,
-                title: loc.changePassword,
+                icon: Icons.church_outlined,
+                title: user.churchName, // Display assigned church
                 onTap: () {},
               ),
               _ProfileMenuTile(
-                icon: Icons.notifications_none,
-                title: loc.notificationPreferences,
+                icon: Icons.lock_outline,
+                title: loc.changePassword,
                 onTap: () {},
               ),
             ]),
@@ -191,21 +189,23 @@ class ProfileScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   side: BorderSide(color: Colors.red.withOpacity(0.2)),
                 ),
-                onPressed: () async {
-                  await AuthService().logout();
-                  if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(context, Routes.login, (_) => false);
-                  }
-                },
+                onPressed: () => _handleLogout(context),
                 icon: const Icon(Icons.logout),
                 label: Text(loc.logOut, style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
+  }
+
+  void _handleLogout(BuildContext context) async {
+    // Clear user data
+    AuthService().logout();
+    // Wipe navigation stack and return to login
+    Navigator.pushNamedAndRemoveUntil(context, Routes.login, (_) => false);
   }
 
   Widget _buildSectionTitle(String title, ThemeData theme) {
@@ -213,9 +213,9 @@ class ProfileScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.only(bottom: 10, left: 4),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           color: theme.hintColor,
           letterSpacing: 1.2,
@@ -257,9 +257,6 @@ class _ProfileMenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -271,11 +268,10 @@ class _ProfileMenuTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor),
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       ),
-      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: theme.hintColor),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
 }

@@ -7,6 +7,9 @@ class User {
   final String role;
   final String churchId;
   final String name;
+  final String? logoUrl;
+  final String churchName;
+  final String location;
 
   User({
     required this.id,
@@ -14,16 +17,22 @@ class User {
     required this.role,
     required this.churchId,
     required this.name,
+    this.logoUrl,
+    required this.churchName,
+    required this.location,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
       email: json['email'],
-      // Normalizing "MEMBER" to "member" to match Navigator routes
       role: json['role'].toString().toLowerCase(),
       churchId: json['churchId'],
-      name: json['name'],
+      name: json['name'] ?? '',
+      logoUrl: json['logoUrl'],
+      // Fallbacks if backend doesn't provide these yet
+      churchName: json['churchName'] ?? "Sacred Space",
+      location: json['location'] ?? "Community",
     );
   }
 }
@@ -33,13 +42,13 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  // Replace with your actual backend URL (e.g., http://10.0.2.2:3000 for Android emulator)
   final String _baseUrl = 'https://your-api-url.com'; 
-  
   User? _currentUser;
   String? _token;
 
-  /// Fetch dynamic church list for the Autocomplete
+  User? get currentUser => _currentUser;
+  bool get isAuthenticated => _currentUser != null;
+
   Future<List<Map<String, String>>> getChurches() async {
     try {
       final response = await http.get(Uri.parse('$_baseUrl/churches'));
@@ -51,70 +60,45 @@ class AuthService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      return [];
-    }
+    } catch (e) { return []; }
   }
 
-  Future<User> login({
-    required String email,
-    required String password,
-    required String churchCode,
-  }) async {
+  Future<User> login({required String email, required String password, required String churchCode}) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-        'churchId': churchCode,
-      }),
+      body: jsonEncode({'email': email, 'password': password, 'churchId': churchCode}),
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
       _token = data['token'];
       _currentUser = User.fromJson(data['user']);
       return _currentUser!;
     } else {
-      final errorData = jsonDecode(response.body);
-      throw Exception(errorData['message'] ?? 'Login failed');
+      throw Exception(jsonDecode(response.body)['message'] ?? 'Login failed');
     }
   }
 
-  User? get currentUser => _currentUser;
-  bool get isAuthenticated => _currentUser != null;
-
-  Future<void> logout() async {
-    _currentUser = null;
-    _token = null;
-  }
-  
-  Future<User> register({
-    required String name,
-    required String email,
-    required String password,
-    required String churchId,
-  }) async {
+  Future<User> register({required String name, required String email, required String password, required String churchId}) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/register'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'churchId': churchId,
-        'name': name,
-        'email': email,
-        'password': password,
-      }),
+      body: jsonEncode({'name': name, 'email': email, 'password': password, 'churchId': churchId}),
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
       _token = data['token'];
       _currentUser = User.fromJson(data['user']);
       return _currentUser!;
     } else {
-      final errorData = jsonDecode(response.body);
-      throw Exception(errorData['message'] ?? 'Registration failed');
+      throw Exception(jsonDecode(response.body)['message'] ?? 'Signup failed');
     }
+  }
+
+  void logout() {
+    _currentUser = null;
+    _token = null;
   }
 }
