@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../auth/auth_service.dart';
-import '../core/routes.dart';
-import '../widgets/app_drawer.dart';
+import '../../auth/auth_service.dart';
+import '../../core/routes.dart';
+import '../../widgets/app_drawer.dart';
 
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});

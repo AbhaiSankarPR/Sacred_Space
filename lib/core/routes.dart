@@ -10,14 +10,14 @@ import '../dashboard/profile_screen.dart';
 // import '../dashboard/personal_info_screen.dart';
 // Priest-Specific Features
 import '../screens/priest/member_directory_screen.dart'; // Create these files
-import '../screens/priest/gallery_management_screen.dart';
+import '../gallery/priest/gallery_management_screen.dart';
 // Shared Feature Screens
 import '../announcements/announcements_screen.dart';
 import '../bookings/bookings_screen.dart';
 import '../bookings/newbooking_screen.dart';
 import '../emergency/emergency_alerts_screen.dart';
 import '../events/events_screen.dart';
-import '../gallery/gallery_screen.dart';
+import '../gallery/member/gallery_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/about_screen.dart';
 import '../settings/support_screen.dart';
