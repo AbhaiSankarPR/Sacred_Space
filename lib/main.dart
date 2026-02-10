@@ -4,11 +4,12 @@ import 'core/theme_provider.dart';
 import 'core/locale_provider.dart'; 
 import 'core/routes.dart';
 import 'app.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   // Ensure Flutter engine is ready before any async calls
   WidgetsFlutterBinding.ensureInitialized();
-
+    await dotenv.load(fileName: ".env");
   runApp(
     MultiProvider(
       providers: [

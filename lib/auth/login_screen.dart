@@ -17,8 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _selectedChurchCode;
   bool _loading = false;
-  
-  // This will hold the real data from your /churches endpoint
   List<Map<String, String>> _liveChurches = [];
 
   @override
@@ -27,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _fetchInitialData();
   }
 
-  /// Fetches the church list from the backend on load
   Future<void> _fetchInitialData() async {
     try {
       final churches = await _authService.getChurches();
@@ -37,12 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     } catch (e) {
-      // Handle potential fetch errors (e.g., offline)
       debugPrint("Failed to load churches: $e");
     }
   }
 
-  Future<void> _login() async {
+ Future<void> _login() async {
     final l10n = AppLocalizations.of(context)!;
 
     if (_selectedChurchCode == null) {
@@ -57,15 +53,26 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
 
     try {
-      final user = await _authService.login(
+      // Step 1: Perform the basic login to get the token
+      await _authService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         churchCode: _selectedChurchCode!,
       );
 
-      // The role is now lowercased in AuthService for route compatibility
+      // Step 2: Use your new fetchCurrentUser() to get the full profile object
+      // This maps the nested 'profile' field and updates _currentUser
+      final user = await _authService.fetchCurrentUser();
+
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/${user.role}', (_) => false);
+        // Step 3: THE GATEKEEPER LOGIC
+        // isProfileIncomplete checks if gender, houseName, etc. are null
+        if (user.isProfileIncomplete) {
+          Navigator.pushReplacementNamed(context, Routes.completeDetails);
+        } else {
+          // If complete, go to /priest or /member dashboard
+          Navigator.pushNamedAndRemoveUntil(context, '/${user.role}', (_) => false);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -145,7 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(l10n.welcomeTitle, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
                 const SizedBox(height: 30),
 
-                // AUTOCOMPLETE CONNECTED TO BACKEND
                 Autocomplete<Map<String, String>>(
                   optionsBuilder: (textEditingValue) {
                     if (textEditingValue.text.isEmpty) return const Iterable.empty();
@@ -162,9 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: inputDecor(l10n.church, l10n.enterChurch),
                     );
                   },
-                  onSelected: (selection) {
-                    _selectedChurchCode = selection['code']; // This is the ID (e.g. ST_MARYS_TVM)
-                  },
+                  onSelected: (selection) => _selectedChurchCode = selection['code'],
                 ),
 
                 const SizedBox(height: 16),
@@ -192,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     onPressed: _loading ? null : _login,
                     child: _loading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                         : Text(l10n.signIn, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
@@ -203,9 +207,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(l10n.noAccount, style: TextStyle(color: hintColor)),
                     TextButton(
                       onPressed: () => Navigator.pushNamed(context, Routes.signup),
-                      child: const Text(
-                        "Sign Up", // Hardcoded for example, use l10n.signUp
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5D3A99)),
+                      child: Text(
+                        l10n.signUp,
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5D3A99)),
                       ),
                     ),
                   ],

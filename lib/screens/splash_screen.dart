@@ -30,18 +30,27 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _navigateToNext() async {
-    // Wait for animation/loading
-    await Future.delayed(const Duration(seconds: 3));
+    // 1. Start the auto-login process (Restoring from SharedPreferences)
+    final authService = AuthService();
+    final bool isLoggedIn = await authService.tryAutoLogin();
+
+    // 2. Ensure the splash screen stays visible for at least 2-3 seconds for branding
+    await Future.delayed(const Duration(seconds: 2));
     
     if (!mounted) return;
 
-    final user = AuthService().currentUser;
-    
-    if (user != null) {
-      // Navigate to dashboard based on role
-      final String role = user.role ?? 'member';
-      Navigator.pushReplacementNamed(context, '/$role');
+    if (isLoggedIn) {
+      final user = authService.currentUser!;
+      
+      // 3. Check if profile is incomplete before going to dashboard
+      if (user.isProfileIncomplete) {
+        Navigator.pushReplacementNamed(context, Routes.completeDetails);
+      } else {
+        // Navigate to dashboard based on role (e.g., /member)
+        Navigator.pushReplacementNamed(context, '/${user.role}');
+      }
     } else {
+      // 4. No stored token found, go to Login
       Navigator.pushReplacementNamed(context, Routes.login);
     }
   }
@@ -59,7 +68,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      // Gradient background that adapts to Dark Mode
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -76,7 +84,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo Container
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -91,7 +98,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 24),
-              // App Name
               const Text(
                 "Sacred Space",
                 style: TextStyle(
@@ -102,7 +108,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 8),
-              // Localized Tagline
               Text(
                 loc.appTagline,
                 style: TextStyle(
@@ -112,7 +117,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 60),
-              // Loading Indicator
               const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 strokeWidth: 3,

@@ -3,7 +3,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
-
+import '../screens/aboutUsScreen.dart';
+import '../screens/personal_info_screen.dart';
+import '../screens/PrivacyPolicyScreen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -29,7 +31,10 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(loc.myProfile, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          loc.myProfile,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -73,33 +78,53 @@ class ProfileScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF5D3A99).withOpacity(0.2), width: 2),
+                          border: Border.all(
+                            color: const Color(0xFF5D3A99).withOpacity(0.2),
+                            width: 2,
+                          ),
                         ),
                         child: CircleAvatar(
                           radius: 45,
-                          backgroundColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                          backgroundColor:
+                              isDark ? Colors.grey[800] : Colors.grey[100],
                           // Use user's specific profile image if available, else fallback to initials or icon
-                          backgroundImage: (user.logoUrl != null && user.logoUrl!.isNotEmpty)
-                              ? NetworkImage(user.logoUrl!)
-                              : null,
-                          child: (user.logoUrl == null || user.logoUrl!.isEmpty)
-                              ? const Icon(Icons.person, size: 45, color: Color(0xFF5D3A99))
-                              : null,
+                          backgroundImage:
+                              (user.logoUrl != null && user.logoUrl!.isNotEmpty)
+                                  ? NetworkImage(user.logoUrl!)
+                                  : null,
+                          child:
+                              (user.logoUrl == null || user.logoUrl!.isEmpty)
+                                  ? const Icon(
+                                    Icons.person,
+                                    size: 45,
+                                    color: Color(0xFF5D3A99),
+                                  )
+                                  : null,
                         ),
                       ),
                       Positioned(
                         bottom: 0,
                         right: 4,
                         child: GestureDetector(
-                          onTap: () => print("Update Photo"), // You can add image picker here later
+                          onTap:
+                              () => print(
+                                "Update Photo",
+                              ), // You can add image picker here later
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: const Color(0xFF5D3A99),
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.cardColor, width: 2),
+                              border: Border.all(
+                                color: theme.cardColor,
+                                width: 2,
+                              ),
                             ),
-                            child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -108,7 +133,11 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     user.name, // Displaying User's name instead of Church name here
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
@@ -118,7 +147,10 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF5D3A99).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -145,7 +177,14 @@ class ProfileScreen extends StatelessWidget {
               _ProfileMenuTile(
                 icon: Icons.person_outline,
                 title: loc.personalInformation,
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PersonalInfoScreen(),
+                    ),
+                  );
+                },
               ),
               _ProfileMenuTile(
                 icon: Icons.church_outlined,
@@ -166,12 +205,22 @@ class ProfileScreen extends StatelessWidget {
               _ProfileMenuTile(
                 icon: Icons.info_outline,
                 title: loc.aboutUs,
-                onTap: () {},
+                onTap:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AboutUsScreen()),
+                    ),
               ),
               _ProfileMenuTile(
                 icon: Icons.privacy_tip_outlined,
                 title: loc.privacyPolicy,
-                onTap: () {},
+                onTap:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PrivacyPolicyScreen(),
+                      ),
+                    ),
               ),
             ]),
 
@@ -186,12 +235,17 @@ class ProfileScreen extends StatelessWidget {
                   backgroundColor: Colors.red.shade50,
                   foregroundColor: Colors.red,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   side: BorderSide(color: Colors.red.withOpacity(0.2)),
                 ),
                 onPressed: () => _handleLogout(context),
                 icon: const Icon(Icons.logout),
-                label: Text(loc.logOut, style: const TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(
+                  loc.logOut,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             const SizedBox(height: 40),

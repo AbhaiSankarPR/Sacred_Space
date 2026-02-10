@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../core/locale_provider.dart'; // Ensure this path is correct
+import '../core/locale_provider.dart'; 
 
 class NewBookingScreen extends StatefulWidget {
   const NewBookingScreen({super.key});
@@ -14,7 +14,6 @@ class NewBookingScreen extends StatefulWidget {
 class _NewBookingScreenState extends State<NewBookingScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  // Form State
   String? _selectedType;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -32,7 +31,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
     if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null) {
       setState(() => _isLoading = true);
 
-      // Simulate network request
+      // Simulate network request to your backend
       await Future.delayed(const Duration(seconds: 2));
 
       if (mounted) {
@@ -43,7 +42,8 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.pleaseSelectDateTime),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
@@ -56,59 +56,64 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Column(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 60),
+            const Icon(Icons.check_circle_outline, color: Colors.green, size: 80),
+            const SizedBox(height: 20),
+            Text(loc.requestSent, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            Text(loc.requestSent, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(loc.bookingSuccessMessage, textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5D3A99),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx); 
+                  Navigator.pop(context); 
+                },
+                child: Text(loc.ok, style: const TextStyle(color: Colors.white)),
+              ),
+            ),
           ],
         ),
-        content: Text(
-          loc.bookingSuccessMessage,
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx); 
-              Navigator.pop(context); 
-            },
-            child: Text(loc.ok, style: const TextStyle(fontSize: 16)),
-          ),
-        ],
       ),
     );
   }
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: now,
-      lastDate: DateTime(now.year + 2),
+  // --- UI Helpers ---
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(
+        text.toUpperCase(),
+        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 11, letterSpacing: 1),
+      ),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
   }
 
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
+  BoxDecoration _fieldDecoration(ThemeData theme) {
+    return BoxDecoration(
+      color: theme.cardColor,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+      boxShadow: [
+        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
+      ],
     );
-    if (picked != null) setState(() => _selectedTime = picked);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Localization and Theme access
     final loc = AppLocalizations.of(context)!;
     final localeProvider = Provider.of<LocaleProvider>(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
 
-    // Localized options list
     final List<Map<String, String>> bookingTypes = [
       {'val': 'Marriage', 'label': loc.marriageCeremony},
       {'val': 'Baptism', 'label': loc.baptism},
@@ -120,49 +125,37 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.newRequest),
+        title: Text(loc.newRequest, style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF5D3A99),
+        foregroundColor: Colors.white,
         centerTitle: true,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                loc.bookingDetails,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
-              ),
-              const SizedBox(height: 16),
-
-              // 1. Booking Type Dropdown
               _buildLabel(loc.eventType),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: _fieldDecoration(theme),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButtonFormField<String>(
-                    dropdownColor: theme.cardColor,
-                    decoration: const InputDecoration(border: InputBorder.none),
-                    hint: Text(loc.selectEventType, style: TextStyle(color: theme.hintColor, fontSize: 14)),
-                    value: _selectedType,
-                    icon: Icon(Icons.keyboard_arrow_down, color: theme.colorScheme.primary),
-                    items: bookingTypes.map((type) {
-                      return DropdownMenuItem(
-                        value: type['val'], 
-                        child: Text(type['label']!, style: TextStyle(color: textColor, fontSize: 14)),
-                      );
-                    }).toList(),
-                    onChanged: (val) => setState(() => _selectedType = val),
-                    validator: (val) => val == null ? loc.typeRequired : null,
-                  ),
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: theme.cardColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
+                hint: Text(loc.selectEventType),
+                value: _selectedType,
+                items: bookingTypes.map((type) => DropdownMenuItem(
+                  value: type['val'], 
+                  child: Text(type['label']!),
+                )).toList(),
+                onChanged: (val) => setState(() => _selectedType = val),
+                validator: (val) => val == null ? loc.typeRequired : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // 2. Date & Time Row
               Row(
                 children: [
                   Expanded(
@@ -170,30 +163,25 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildLabel(loc.date),
-                        GestureDetector(
-                          onTap: _pickDate,
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 730)),
+                            );
+                            if (picked != null) setState(() => _selectedDate = picked);
+                          },
                           child: Container(
                             height: 56,
                             decoration: _fieldDecoration(theme),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                            alignment: Alignment.centerLeft,
                             child: Row(
                               children: [
-                                Icon(Icons.calendar_today, size: 18, color: theme.colorScheme.primary),
+                                const Icon(Icons.calendar_month, size: 20, color: Color(0xFF5D3A99)),
                                 const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _selectedDate == null
-                                        ? loc.selectDate
-                                        : DateFormat.yMMMd(localeProvider.locale.languageCode).format(_selectedDate!),
-                                    style: TextStyle(
-                                      color: _selectedDate == null ? theme.hintColor : textColor,
-                                      fontSize: 13,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
+                                Text(_selectedDate == null ? loc.selectDate : DateFormat.yMMMd(localeProvider.locale.languageCode).format(_selectedDate!)),
                               ],
                             ),
                           ),
@@ -201,36 +189,26 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildLabel(loc.time),
-                        GestureDetector(
-                          onTap: _pickTime,
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+                            if (picked != null) setState(() => _selectedTime = picked);
+                          },
                           child: Container(
                             height: 56,
                             decoration: _fieldDecoration(theme),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
-                            alignment: Alignment.centerLeft,
                             child: Row(
                               children: [
-                                Icon(Icons.access_time, size: 18, color: theme.colorScheme.primary),
+                                const Icon(Icons.access_time, size: 20, color: Color(0xFF5D3A99)),
                                 const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _selectedTime == null
-                                        ? loc.selectTime
-                                        : _selectedTime!.format(context),
-                                    style: TextStyle(
-                                      color: _selectedTime == null ? theme.hintColor : textColor,
-                                      fontSize: 13,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
+                                Text(_selectedTime == null ? loc.selectTime : _selectedTime!.format(context)),
                               ],
                             ),
                           ),
@@ -240,84 +218,43 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // 3. Purpose / Description
               _buildLabel(loc.purposeNotes),
-              Container(
-                decoration: _fieldDecoration(theme),
-                child: TextFormField(
-                  controller: _noteController,
-                  maxLines: 4,
-                  style: TextStyle(color: textColor, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: loc.describeEvent,
-                    hintStyle: TextStyle(color: theme.hintColor),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return loc.fieldRequired;
-                    return null;
-                  },
+              TextFormField(
+                controller: _noteController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: loc.describeEvent,
+                  filled: true,
+                  fillColor: theme.cardColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
+                validator: (val) => (val == null || val.isEmpty) ? loc.fieldRequired : null,
               ),
 
               const SizedBox(height: 40),
 
-              // 4. Submit Button
               SizedBox(
                 width: double.infinity,
-                height: 54,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitBooking,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
+                    backgroundColor: const Color(0xFF5D3A99),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 5,
-                    shadowColor: theme.colorScheme.primary.withOpacity(0.4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(
-                          width: 24, height: 24, 
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                        )
-                      : Text(
-                          loc.submitRequest,
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                        ),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(loc.submitRequest, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  // --- UI Helpers ---
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey, fontSize: 13),
-      ),
-    );
-  }
-
-  BoxDecoration _fieldDecoration(ThemeData theme) {
-    return BoxDecoration(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
     );
   }
 }

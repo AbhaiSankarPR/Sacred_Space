@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
@@ -6,7 +7,6 @@ import 'announcement_service.dart';
 import 'announcement.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
-  // 1. Remove 'final User user' from constructor
   const AnnouncementsScreen({super.key});
 
   @override
@@ -19,12 +19,18 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   @override
   void initState() {
     super.initState();
-    announcements = AnnouncementService().fetchAnnouncements();
+    _refreshAnnouncements();
+  }
+
+  void _refreshAnnouncements() {
+    setState(() {
+      announcements = AnnouncementService().fetchAnnouncements();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // 2. Fetch user securely
+    final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
 
     if (user == null) {
@@ -32,16 +38,16 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Access dynamic theme
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final bool isPriest = user.role.toLowerCase() == 'priest';
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // Dynamic Background
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          'Announcements', 
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          loc.announcements, 
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
@@ -49,6 +55,15 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         elevation: 0,
       ),
       drawer: AppDrawer(user: user),
+      
+      // --- PRIEST FACILITY: FLOAT BUTTON (Localized) ---
+      floatingActionButton: isPriest ? FloatingActionButton.extended(
+        onPressed: () => _showCreateAnnouncementSheet(context, theme, loc),
+        backgroundColor: const Color(0xFF5D3A99),
+        icon: const Icon(Icons.add_comment_rounded, color: Colors.white),
+        label: Text(loc.newNotice, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ) : null,
+
       body: FutureBuilder<List<Announcement>>(
         future: announcements,
         builder: (context, snapshot) {
@@ -60,7 +75,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Failed to load announcements',
+                loc.failedToLoadAnnouncements,
                 style: TextStyle(color: theme.hintColor),
               ),
             );
@@ -74,7 +89,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   Icon(Icons.notifications_off_outlined, size: 60, color: theme.hintColor),
                   const SizedBox(height: 16),
                   Text(
-                    'No announcements available',
+                    loc.noAnnouncementsAvailable,
                     style: TextStyle(color: theme.hintColor, fontSize: 16),
                   ),
                 ],
@@ -88,7 +103,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             separatorBuilder: (ctx, i) => const SizedBox(height: 16),
             itemBuilder: (context, index) {
               final item = data[index];
-              // Highlight the first item as "Important/Latest"
               final isLatest = index == 0; 
               
               return _AnnouncementCard(
@@ -96,6 +110,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 isLatest: isLatest,
                 theme: theme,
                 isDark: isDark,
+                loc: loc,
               );
             },
           );
@@ -103,32 +118,117 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       ),
     );
   }
-}
 
-// --- Custom Announcement Card ---
+  // --- PRIEST FACILITY: COMPOSE BOTTOM SHEET (Localized) ---
+  void _showCreateAnnouncementSheet(BuildContext context, ThemeData theme, AppLocalizations loc) {
+    final titleController = TextEditingController();
+    final messageController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          left: 24,
+          right: 24,
+          top: 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  loc.composeNotice,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  icon: const Icon(Icons.close),
+                )
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: titleController,
+              decoration: InputDecoration(
+                labelText: loc.title,
+                hintText: loc.enterAnnouncementHeading,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: messageController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                labelText: loc.message,
+                hintText: loc.shareWithParishHint,
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Logic for backend integration goes here
+                  Navigator.pop(ctx);
+                  _refreshAnnouncements();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(loc.announcementPublishedSuccess),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: const Color(0xFF5D3A99),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5D3A99),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(loc.postToParish, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _AnnouncementCard extends StatelessWidget {
   final Announcement item;
   final bool isLatest;
   final ThemeData theme;
   final bool isDark;
+  final AppLocalizations loc;
 
   const _AnnouncementCard({
     required this.item,
     required this.isLatest,
     required this.theme,
     required this.isDark,
+    required this.loc,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic text colors
     final titleColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.white70 : Colors.grey[700];
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.cardColor, // Dynamic Card Background
+        color: theme.cardColor, 
         borderRadius: BorderRadius.circular(16),
         border: isLatest 
             ? Border.all(color: const Color(0xFF5D3A99), width: 1.5) 
@@ -144,7 +244,6 @@ class _AnnouncementCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header (Icon + Title + Date)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -199,9 +298,9 @@ class _AnnouncementCard extends StatelessWidget {
                       color: Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      "NEW",
-                      style: TextStyle(
+                    child: Text(
+                      loc.newBadge,
+                      style: const TextStyle(
                         fontSize: 10, 
                         fontWeight: FontWeight.bold, 
                         color: Colors.red
@@ -212,10 +311,8 @@ class _AnnouncementCard extends StatelessWidget {
             ),
           ),
           
-          // Divider if not latest (latest has background distinction)
           if (!isLatest) Divider(height: 1, color: isDark ? Colors.white12 : Colors.grey[200]),
 
-          // Message Body
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(

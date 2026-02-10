@@ -15,68 +15,148 @@ class AppDrawer extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    // Role-Based Logic
+    final bool isPriest = user.role.toLowerCase() == 'priest';
+
     return Drawer(
       backgroundColor: theme.cardColor,
       child: Column(
         children: [
-          _buildHeader(theme),
+          _buildHeader(theme, isPriest),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
               children: [
+                // DASHBOARD: Points to the dynamic dashboard route
                 _DrawerItem(
                   icon: Icons.dashboard_outlined,
                   title: loc.dashboard,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.member),
-                  isSelected: currentRoute == Routes.member,
+                  onTap:
+                      () => Navigator.pushReplacementNamed(
+                        context,
+                        isPriest ? Routes.priest : Routes.member,
+                      ),
+                  isSelected:
+                      currentRoute == Routes.member ||
+                      currentRoute == Routes.priest,
                 ),
+
+                // BOOKINGS: Specialized label for Priest
                 _DrawerItem(
                   icon: Icons.bookmark_border_rounded,
-                  title: loc.bookings,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.bookings),
+                  title: isPriest ? loc.manageRequests : loc.bookings,
+                  onTap:
+                      () => Navigator.pushReplacementNamed(
+                        context,
+                        Routes.bookings,
+                      ),
                   isSelected: currentRoute == Routes.bookings,
                 ),
+
                 _DrawerItem(
                   icon: Icons.campaign_outlined,
                   title: loc.announcements,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.announcements),
+                  onTap:
+                      () => Navigator.pushReplacementNamed(
+                        context,
+                        Routes.announcements,
+                      ),
                   isSelected: currentRoute == Routes.announcements,
                 ),
+
                 _DrawerItem(
                   icon: Icons.calendar_month_outlined,
                   title: loc.events,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.events),
+                  onTap:
+                      () => Navigator.pushReplacementNamed(
+                        context,
+                        Routes.events,
+                      ),
                   isSelected: currentRoute == Routes.events,
                 ),
-                _DrawerItem(
-                  icon: Icons.photo_library_outlined,
-                  title: loc.gallery,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.gallery),
-                  isSelected: currentRoute == Routes.gallery,
-                ),
+
+                // --- PRIEST EXCLUSIVE TOOLS ---
+                if (isPriest) ...[
+                  Divider(
+                    height: 32,
+                    color: isDark ? Colors.white24 : Colors.black12,
+                  ),
+                  _DrawerItem(
+                    icon: Icons.groups_outlined,
+                    title: loc.memberDirectory, // Ensure this exists in .arb
+                    onTap:
+                        () => Navigator.pushReplacementNamed(
+                          context,
+                          Routes.memberDirectory,
+                        ),
+                    isSelected: currentRoute == Routes.memberDirectory,
+                  ),
+                  _DrawerItem(
+                    icon: Icons.settings_applications_outlined,
+                    title: loc.galleryAdmin, // Ensure this exists in .arb
+                    onTap:
+                        () => Navigator.pushReplacementNamed(
+                          context,
+                          Routes.galleryAdmin,
+                        ),
+                    isSelected: currentRoute == Routes.galleryAdmin,
+                  ),
+                ] else ...[
+                  // --- MEMBER ONLY TOOLS ---
+                  _DrawerItem(
+                    icon: Icons.photo_library_outlined,
+                    title: loc.gallery,
+                    onTap:
+                        () => Navigator.pushReplacementNamed(
+                          context,
+                          Routes.gallery,
+                        ),
+                    isSelected: currentRoute == Routes.gallery,
+                  ),
+                ],
+
                 _DrawerItem(
                   icon: Icons.warning_amber_rounded,
                   title: loc.emergencyAlerts,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.emergency),
+                  onTap:
+                      () => Navigator.pushReplacementNamed(
+                        context,
+                        Routes.emergency,
+                      ),
                   isSelected: currentRoute == Routes.emergency,
                   isAlert: true,
                 ),
-                Divider(height: 32, color: isDark ? Colors.white24 : Colors.black12),
+
+                Divider(
+                  height: 32,
+                  color: isDark ? Colors.white24 : Colors.black12,
+                ),
+
                 _DrawerItem(
                   icon: Icons.person_outline,
                   title: loc.profile,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.profile),
+                  onTap:
+                      () => Navigator.pushReplacementNamed(
+                        context,
+                        Routes.profile,
+                      ),
                   isSelected: currentRoute == Routes.profile,
                 ),
                 _DrawerItem(
                   icon: Icons.settings_outlined,
                   title: loc.settings,
-                  onTap: () => Navigator.pushReplacementNamed(context, Routes.settings),
+                  onTap:
+                      () => Navigator.pushReplacementNamed(
+                        context,
+                        Routes.settings,
+                      ),
                   isSelected: currentRoute == Routes.settings,
                 ),
               ],
             ),
           ),
+
+          // LOGOUT SECTION
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             child: _LogoutButton(
@@ -84,7 +164,11 @@ class AppDrawer extends StatelessWidget {
               onTap: () async {
                 await AuthService().logout();
                 if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(context, Routes.login, (_) => false);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    Routes.login,
+                    (_) => false,
+                  );
                 }
               },
             ),
@@ -94,7 +178,7 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
+  Widget _buildHeader(ThemeData theme, bool isPriest) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
@@ -118,12 +202,18 @@ class AppDrawer extends StatelessWidget {
             child: CircleAvatar(
               radius: 32,
               backgroundColor: Colors.white,
-              backgroundImage: (user.logoUrl != null && user.logoUrl!.isNotEmpty)
-                  ? NetworkImage(user.logoUrl!)
-                  : null,
-              child: (user.logoUrl == null || user.logoUrl!.isEmpty)
-                  ? const Icon(Icons.church, size: 32, color: Color(0xFF5D3A99))
-                  : null,
+              backgroundImage:
+                  (user.logoUrl != null && user.logoUrl!.isNotEmpty)
+                      ? NetworkImage(user.logoUrl!)
+                      : null,
+              child:
+                  (user.logoUrl == null || user.logoUrl!.isEmpty)
+                      ? Icon(
+                        isPriest ? Icons.person : Icons.church,
+                        size: 32,
+                        color: const Color(0xFF5D3A99),
+                      )
+                      : null,
             ),
           ),
           const SizedBox(height: 16),
@@ -180,22 +270,40 @@ class _DrawerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isSelected ? const Color(0xFF9B59B6) : (isDark ? Colors.white70 : Colors.black87);
-    final iconColor = isAlert ? Colors.red : (isSelected ? const Color(0xFF9B59B6) : (isDark ? Colors.white60 : Colors.grey[700]));
-    final bgColor = isSelected ? const Color(0xFF5D3A99).withOpacity(isDark ? 0.2 : 0.1) : Colors.transparent;
+
+    // Theme-Aware Coloring
+    final Color activeColor = const Color(0xFF9B59B6);
+    // Use ?? to provide a default color if the map lookup returns null
+    final Color textColor =
+        isSelected
+            ? const Color(0xFF9B59B6)
+            : (isDark ? Colors.white70 : Colors.black87);
+
+    final Color iconColor =
+        isAlert
+            ? Colors.red
+            : (isSelected
+                ? const Color(0xFF9B59B6)
+                : (isDark
+                    ? Colors.white60
+                    : (Colors.grey[700] ?? Colors.grey)));
+    final Color bgColor =
+        isSelected
+            ? const Color(0xFF5D3A99).withOpacity(isDark ? 0.2 : 0.1)
+            : Colors.transparent;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 4),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         tileColor: bgColor,
-        leading: Icon(icon, color: iconColor, size: 26),
+        leading: Icon(icon, color: iconColor, size: 24),
         title: Text(
           title,
           style: TextStyle(
             color: textColor,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 15,
+            fontSize: 14,
           ),
         ),
         onTap: onTap,
@@ -220,19 +328,19 @@ class _LogoutButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           alignment: Alignment.center,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.logout_rounded, color: Colors.red.shade700, size: 22),
+              Icon(Icons.logout_rounded, color: Colors.red.shade700, size: 20),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: TextStyle(
                   color: Colors.red.shade700,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
               ),
             ],
