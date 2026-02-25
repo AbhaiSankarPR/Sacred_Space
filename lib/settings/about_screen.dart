@@ -103,8 +103,8 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   _LinkTile(
                     icon: Icons.language,
-                    title: loc.website,
-                    subtitle: "www.sacredspace.com",
+                    title: "Company Name",
+                    subtitle: "Sandox Solutions",
                     textColor: textColor,
                     onTap: () {},
                   ),
