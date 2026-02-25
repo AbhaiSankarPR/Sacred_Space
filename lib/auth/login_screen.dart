@@ -39,49 +39,50 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
  Future<void> _login() async {
-    final l10n = AppLocalizations.of(context)!;
+  final l10n = AppLocalizations.of(context)!;
 
-    if (_selectedChurchCode == null) {
-      _showSnackBar(l10n.selectChurchError, isError: true);
-      return;
-    }
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showSnackBar(l10n.fillFieldsError, isError: true);
-      return;
-    }
-
-    setState(() => _loading = true);
-
-    try {
-      // Step 1: Perform the basic login to get the token
-      await _authService.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-        churchCode: _selectedChurchCode!,
-      );
-
-      // Step 2: Use your new fetchCurrentUser() to get the full profile object
-      // This maps the nested 'profile' field and updates _currentUser
-      final user = await _authService.fetchCurrentUser();
-
-      if (mounted) {
-        // Step 3: THE GATEKEEPER LOGIC
-        // isProfileIncomplete checks if gender, houseName, etc. are null
-        if (user.isProfileIncomplete) {
-          Navigator.pushReplacementNamed(context, Routes.completeDetails);
-        } else {
-          // If complete, go to /priest or /member dashboard
-          Navigator.pushNamedAndRemoveUntil(context, '/${user.role}', (_) => false);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+  // Validation checks...
+  if (_selectedChurchCode == null || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    _showSnackBar(l10n.fillFieldsError, isError: true);
+    return;
   }
+
+  setState(() => _loading = true);
+
+  try {
+    // SINGLE CALL: This now gets the token AND the user profile details
+    final user = await _authService.login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+      churchCode: _selectedChurchCode!,
+    );
+
+    if (mounted) {
+      // THE GATEKEEPER LOGIC
+      if (user.isProfileIncomplete) {
+        // Redirect if fields like gender or phone are null
+        Navigator.pushReplacementNamed(context, Routes.completeDetails);
+      } else {
+        // Build route name (e.g., /member)
+        final String routeName = user.role.startsWith('/') ? user.role : '/${user.role}';
+        
+        Navigator.pushNamedAndRemoveUntil(
+          context, 
+          routeName, 
+          (_) => false,
+        );
+      }
+    }
+  } catch (e) {
+    if (mounted) {
+      // Handling the potential "null" error string
+      String error = e.toString().contains('null') ? "Invalid Login Credentials" : e.toString().replaceAll('Exception: ', '');
+      _showSnackBar(error, isError: true);
+    }
+  } finally {
+    if (mounted) setState(() => _loading = false);
+  }
+}
 
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
