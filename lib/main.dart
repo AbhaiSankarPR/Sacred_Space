@@ -5,7 +5,7 @@ import 'core/locale_provider.dart';
 import 'core/routes.dart';
 import 'app.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'auth/auth_service.dart'; // Adjust path accordingly
 void main() async {
   // Ensure Flutter engine is ready before any async calls
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +15,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => AuthService()),
       ],
       // We set initialRoute to Routes.splash to show our new loading screen
       child: const SacredSpaceApp(initialRoute: Routes.splash),

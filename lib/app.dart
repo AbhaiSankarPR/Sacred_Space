@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
+import './core/navigator_key.dart'; // Import the key
 import 'core/theme.dart';
 import 'core/routes.dart';
 import 'core/theme_provider.dart';
@@ -39,6 +39,7 @@ class SacredSpaceApp extends StatelessWidget {
     }
 
     return MaterialApp(
+      navigatorKey: navigatorKey, // <--- Add this line here
       debugShowCheckedModeBanner: false,
       initialRoute: initialRoute,
       routes: Routes.map,
