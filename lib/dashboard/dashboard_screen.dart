@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../core/routes.dart';
 import 'package:provider/provider.dart'; // Added Provider
 import '../auth/auth_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; 
 import '../widgets/app_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -22,14 +23,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // --- NOTIFICATION SYNC TRIGGER ---
     // This catches if the user enabled notifications in Phone Settings
     // or if the app needs to prompt for permission on the first arrival.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final loc = AppLocalizations.of(context)!; // Define loc here
       if (mounted) {
         // Calls the method we added to AuthService
-        context.read<AuthService>().checkPermissionsAndSync();
-      }
+final authService = context.read<AuthService>();
+        
+        // 1. Run the silent check (Syncs only if token/status changed since last run)
+        await authService.checkPermissionsAndSync();
+
+        // 2. Check current status to see if we should prompt the user
+        NotificationSettings settings = await FirebaseMessaging.instance.getNotificationSettings();
+        
+        if (settings.authorizationStatus == AuthorizationStatus.denied) {
+          _showNotificationPrompt(loc);
+        }      }
     });
   }
+void _showNotificationPrompt(AppLocalizations loc) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(loc.notificationsDisabled ?? "Enable notifications to stay updated!"),
+        backgroundColor: const Color(0xFF5D3A99),
+        duration: const Duration(seconds: 10),
+        action: SnackBarAction(
+          label: loc.enable ?? "ENABLE",
+          textColor: Colors.white,
+          onPressed: () async {
+            // Trigger the system permission popup
+            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
 
+            if (settings.authorizationStatus == AuthorizationStatus.authorized || 
+                settings.authorizationStatus == AuthorizationStatus.provisional) {
+              // Now that they granted permission, trigger the sync
+              if (mounted) {
+                context.read<AuthService>().checkPermissionsAndSync();
+              }
+            }
+          },
+        ),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;

@@ -207,5 +207,7 @@
   "announcementPublishedSuccess": "Announcement published successfully",
   "noAnnouncementsAvailable": "No announcements available",
   "failedToLoadAnnouncements": "Failed to load announcements",
-  "newBadge": "NEW"
+  "newBadge": "NEW",
+  "notificationsDisabled": "Enable notifications to stay updated!",
+"enable": "ENABLE"
 }
