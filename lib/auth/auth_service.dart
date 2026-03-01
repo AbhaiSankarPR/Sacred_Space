@@ -20,33 +20,53 @@ class AuthService extends ChangeNotifier {
     initializeTokenListeners();
   }
   Future<void> checkPermissionsAndSync() async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // 1. Request permissions
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+  // 1. Get CURRENT settings (this does NOT show a popup)
+  NotificationSettings settings = await messaging.getNotificationSettings();
+  String currentStatus = settings.authorizationStatus.toString();
+  
+  // 2. Get LAST SAVED settings and token
+  String? lastStatus = prefs.getString('last_notification_status');
+  String? lastSyncedToken = prefs.getString('lastSyncedToken');
+
+  // 3. Get the current token
+  String? currentToken = await messaging.getToken();
+
+  // 4. CHECK FOR CHANGES
+  // We sync if: Status changed OR the token itself changed
+  bool hasStatusChanged = currentStatus != lastStatus;
+  bool hasTokenChanged = currentToken != lastSyncedToken;
+
+  if (hasStatusChanged || hasTokenChanged) {
+    debugPrint("Notification Change Detected. Syncing...");
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
-      // 2. Get the current token
-      String? token = await messaging.getToken();
-
-      if (token != null) {
-        // 3. Store in Local Storage
-        await prefs.setString('deviceToken', token);
-        debugPrint("Token saved to local storage: $token");
-
-        // 4. Sync with backend if user is logged in
-        if (_currentUser != null) {
-          await syncDeviceToken(token);
-        }
+      
+      if (currentToken != null && _currentUser != null) {
+        // Sync with backend
+        await syncDeviceToken(currentToken);
+        
+        // Update local storage to remember this state
+        await prefs.setString('last_notification_status', currentStatus);
+        await prefs.setString('lastSyncedToken', currentToken);
+        await prefs.setString('deviceToken', currentToken); // Keep your original key too
       }
+    } 
+    // Handle the case where they REVOKED permission (Optional but recommended)
+    else if (settings.authorizationStatus == AuthorizationStatus.denied) {
+       if (lastSyncedToken != null) {
+         await unregisterDevice(lastSyncedToken);
+         await prefs.remove('last_notification_status');
+         await prefs.remove('lastSyncedToken');
+       }
     }
+  } else {
+    debugPrint("Notifications in sync. No network call needed.");
   }
+}
 
   // Restores session from local storage and triggers sync
   Future<bool> tryAutoLogin() async {
@@ -274,6 +294,28 @@ class AuthService extends ChangeNotifier {
         }
       }
     });
+  }
+  // 1. Fetch all members for the Priest
+  Future<List<dynamic>> getAllMembers() async {
+    try {
+      final response = await apiService.get('/priest/users');
+      // The backend returns a List of user objects
+      return response.data as List<dynamic>;
+    } catch (e) {
+      debugPrint("Error fetching members: $e");
+      rethrow; 
+    }
+  }
+
+  // 2. Delete a specific member
+  Future<void> removeMember(String userId) async {
+    try {
+      await apiService.delete('/priest/$userId');
+      debugPrint("Member $userId deleted successfully.");
+    } catch (e) {
+      debugPrint("Error deleting member: $e");
+      rethrow;
+    }
   }
 }
 
