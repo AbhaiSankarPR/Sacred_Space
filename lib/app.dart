@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import './core/navigator_key.dart'; // Import the key
+import 'announcements/announcement_detail_screen.dart';
 import 'core/theme.dart';
 import 'core/routes.dart';
 import 'core/theme_provider.dart';
@@ -43,7 +44,19 @@ class SacredSpaceApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: initialRoute,
       routes: Routes.map,
-
+      onGenerateRoute: (settings) {
+        if (settings.name == Routes.announcementDetail) {
+          // Cast the arguments passed from main.dart back to a String
+          final String announcementId = settings.arguments as String;
+          
+          return MaterialPageRoute(
+            builder: (context) => AnnouncementDetailScreen(
+              announcementId: announcementId,
+            ),
+          );
+        }
+        return null; // Fallback to the 'routes' map for everything else
+      },
       // Theme logic with Dynamic Font injection
       theme: AppTheme.lightTheme.copyWith(
         textTheme: getDynamicTextTheme(AppTheme.lightTheme.textTheme),

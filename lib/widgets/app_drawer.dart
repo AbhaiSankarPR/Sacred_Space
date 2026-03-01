@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../core/routes.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -162,14 +163,9 @@ class AppDrawer extends StatelessWidget {
             child: _LogoutButton(
               title: loc.signOut,
               onTap: () async {
-                await AuthService().logout();
-                if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    Routes.login,
-                    (_) => false,
-                  );
-                }
+                // Get the token first so the backend can unregister it
+                String? token = await FirebaseMessaging.instance.getToken();
+                AuthService().logout(token);
               },
             ),
           ),

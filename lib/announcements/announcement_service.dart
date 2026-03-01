@@ -1,29 +1,42 @@
 import 'announcement.dart';
+import '../auth/api_service.dart';
 
 class AnnouncementService {
-  Future<List<Announcement>> fetchAnnouncements() async {
-    // simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
+  static final AnnouncementService _instance = AnnouncementService._internal();
+  factory AnnouncementService() => _instance;
+  AnnouncementService._internal();
 
-    return [
-      Announcement(
-        id: 1,
-        title: 'Sunday Mass',
-        message: 'Mass at 7:00 AM',
-        date: '15 Jan 2026',
-      ),
-      Announcement(
-        id: 2,
-        title: 'Youth Meeting',
-        message: 'Meeting after evening mass',
-        date: '18 Jan 2026',
-      ),
-      Announcement(
-        id: 3,
-        title: 'Feast Day',
-        message: 'Parish feast celebrations all day',
-        date: '25 Jan 2026',
-      ),
-    ];
+  // Get all announcements for the user's church
+  Future<List<Announcement>> getAnnouncements() async {
+    try {
+      final response = await apiService.get('/user/announcements');
+      final List<dynamic> data = response.data;
+      return data.map((item) => Announcement.fromJson(item)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Priest only: Post new announcement
+  Future<Announcement> postAnnouncement(String title, String message) async {
+    try {
+      final response = await apiService.post('/priest/announcement', {
+        'title': title,
+        'message': message,
+      });
+      return Announcement.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+  Future<Announcement> getAnnouncementById(String id) async {
+  try {
+    final response = await apiService.get('/user/announcements/$id');
+    // Your API returns a single object, so we parse it directly
+    return Announcement.fromJson(response.data);
+  } catch (e) {
+    rethrow;
   }
 }
+}
+

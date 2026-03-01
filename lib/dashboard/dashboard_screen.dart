@@ -2,11 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../core/routes.dart';
+import 'package:provider/provider.dart'; // Added Provider
 import '../auth/auth_service.dart';
 import '../widgets/app_drawer.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
+  // Changed to StatefulWidget
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    // --- NOTIFICATION SYNC TRIGGER ---
+    // This catches if the user enabled notifications in Phone Settings
+    // or if the app needs to prompt for permission on the first arrival.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Calls the method we added to AuthService
+        context.read<AuthService>().checkPermissionsAndSync();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +36,9 @@ class DashboardScreen extends StatelessWidget {
     final user = AuthService().currentUser;
 
     if (user == null) {
-      Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
+      Future.microtask(
+        () => Navigator.pushReplacementNamed(context, Routes.login),
+      );
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -36,7 +60,12 @@ class DashboardScreen extends StatelessWidget {
   }
 
   // --- 1. HEADER SECTION ---
-  Widget _buildSliverAppBar(BuildContext context, User user, AppLocalizations loc, bool isPriest) {
+  Widget _buildSliverAppBar(
+    BuildContext context,
+    User user,
+    AppLocalizations loc,
+    bool isPriest,
+  ) {
     return SliverAppBar(
       expandedHeight: 220.0,
       pinned: true,
@@ -79,7 +108,11 @@ class DashboardScreen extends StatelessWidget {
   }
 
   // --- 2. DYNAMIC MENU GRID ---
-  Widget _buildDynamicMenuGrid(BuildContext context, AppLocalizations loc, bool isPriest) {
+  Widget _buildDynamicMenuGrid(
+    BuildContext context,
+    AppLocalizations loc,
+    bool isPriest,
+  ) {
     return SliverPadding(
       padding: const EdgeInsets.all(20),
       sliver: SliverGrid.count(
@@ -168,12 +201,18 @@ class DashboardScreen extends StatelessWidget {
       child: CircleAvatar(
         radius: 38,
         backgroundColor: Colors.white,
-        backgroundImage: (user.logoUrl != null && user.logoUrl!.isNotEmpty)
-            ? NetworkImage(user.logoUrl!)
-            : null,
-        child: (user.logoUrl == null || user.logoUrl!.isEmpty)
-            ? Icon(isPriest ? Icons.person : Icons.church, color: const Color(0xFF5D3A99), size: 36)
-            : null,
+        backgroundImage:
+            (user.logoUrl != null && user.logoUrl!.isNotEmpty)
+                ? NetworkImage(user.logoUrl!)
+                : null,
+        child:
+            (user.logoUrl == null || user.logoUrl!.isEmpty)
+                ? Icon(
+                  isPriest ? Icons.person : Icons.church,
+                  color: const Color(0xFF5D3A99),
+                  size: 36,
+                )
+                : null,
       ),
     );
   }
@@ -187,7 +226,11 @@ class DashboardScreen extends StatelessWidget {
       ),
       child: Text(
         loc.accessType(role.toUpperCase()),
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -200,7 +243,13 @@ class _DashboardMenuItem extends StatelessWidget {
   final VoidCallback onTap;
   final bool isAlert;
 
-  const _DashboardMenuItem({required this.title, required this.icon, required this.color, required this.onTap, this.isAlert = false});
+  const _DashboardMenuItem({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+    this.isAlert = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -220,11 +269,22 @@ class _DashboardMenuItem extends StatelessWidget {
             Container(
               height: 50,
               width: 50,
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 12),
-            Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : Colors.grey[800])),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : Colors.grey[800],
+              ),
+            ),
           ],
         ),
       ),
