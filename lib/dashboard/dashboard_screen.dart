@@ -123,7 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           // ANNOUNCEMENTS
           _DashboardMenuItem(
-            title: isPriest ? loc.manageRequests : loc.announcements,
+            title: loc.announcements,
             icon: Icons.campaign_outlined,
             color: Colors.orange,
             onTap: () => Navigator.pushNamed(context, Routes.announcements),

@@ -49,7 +49,7 @@ void main() async {
     final data = message.data;
 
     // --- SELF-NOTIFICATION CHECK ---
-    final String? senderId = data['senderId'];
+    final String? senderId = message.data['senderId'];
 
     // Fetch from Local Storage
     final SharedPreferences prefs = await SharedPreferences.getInstance();

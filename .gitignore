@@ -43,6 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
 .env
 
 /lib/firebase_options.dart
@@ -51,3 +52,6 @@ app.*.map.json
 firestore.indexes.json
 firestore.rules
 storage.rules
+
+
+/android/app/google-services.json
