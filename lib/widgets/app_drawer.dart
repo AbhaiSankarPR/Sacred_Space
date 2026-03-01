@@ -168,6 +168,7 @@ class AppDrawer extends StatelessWidget {
                 // 1. Get SharedPreferences instance
                 final prefs = await SharedPreferences.getInstance();
                 String? token = prefs.getString('deviceToken');
+
                 // 4. Pass the token to your updated logout method
                 await context.read<AuthService>().logout(token);
               },

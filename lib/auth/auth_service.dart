@@ -221,6 +221,7 @@ class AuthService extends ChangeNotifier {
   // 2. Updated Logout Method
   Future<void> logout(String? deviceToken) async {
     // Call the logout API with the deviceToken in the body
+    print(deviceToken);
     try {
       await apiService.post("/user/logout", {
         "deviceToken": deviceToken, // Sending device token along with logout
