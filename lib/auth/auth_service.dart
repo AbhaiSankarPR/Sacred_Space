@@ -78,6 +78,7 @@ class AuthService extends ChangeNotifier {
     _currentUser = User.fromJson(response.data);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_data', jsonEncode(_currentUser!.toJson()));
+    await prefs.setString('userId', _currentUser!.id);
     notifyListeners();
     return _currentUser!;
   }
@@ -182,6 +183,7 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await _storage.write(key: 'token', value: token);
     await prefs.setString('user_data', jsonEncode(user.toJson()));
+    await prefs.setString('userId', user.id); 
     _currentUser = user;
     notifyListeners();
   }
