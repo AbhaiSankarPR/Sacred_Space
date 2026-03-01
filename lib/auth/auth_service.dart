@@ -17,33 +17,37 @@ class AuthService extends ChangeNotifier {
 
   AuthService._internal() {
     apiService.onSessionExpired = () => logout(null);
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      if (_currentUser != null) {
-        syncDeviceToken(newToken);
-      }
-    });
+    initializeTokenListeners();
   }
-Future<void> checkPermissionsAndSync() async {
+  Future<void> checkPermissionsAndSync() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
-    
-    // Check current status (or request if not asked yet)
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // 1. Request permissions
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized || 
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
-      
+      // 2. Get the current token
       String? token = await messaging.getToken();
-      print("Token is $token");
-      if (token != null &&_currentUser != null) {
-        // This triggers your /notification/sync call
-        await syncDeviceToken(token);
+
+      if (token != null) {
+        // 3. Store in Local Storage
+        await prefs.setString('deviceToken', token);
+        debugPrint("Token saved to local storage: $token");
+
+        // 4. Sync with backend if user is logged in
+        if (_currentUser != null) {
+          await syncDeviceToken(token);
+        }
       }
     }
   }
+
   // Restores session from local storage and triggers sync
   Future<bool> tryAutoLogin() async {
     final token = await _storage.read(key: 'token');
@@ -57,10 +61,12 @@ Future<void> checkPermissionsAndSync() async {
       notifyListeners();
 
       // Sync user data and notification token in background
-      fetchCurrentUser().then((_) async {
-        String? fcmToken = await FirebaseMessaging.instance.getToken();
-        if (fcmToken != null) syncDeviceToken(fcmToken);
-      }).catchError((e) => debugPrint("Sync failed: $e"));
+      fetchCurrentUser()
+          .then((_) async {
+            String? fcmToken = await FirebaseMessaging.instance.getToken();
+            if (fcmToken != null) syncDeviceToken(fcmToken);
+          })
+          .catchError((e) => debugPrint("Sync failed: $e"));
 
       return true;
     }
@@ -123,7 +129,6 @@ Future<void> checkPermissionsAndSync() async {
     required String password,
     required String churchId,
     String? deviceToken,
-
   }) async {
     final response = await apiService.post('/auth/register', {
       'name': name,
@@ -131,7 +136,6 @@ Future<void> checkPermissionsAndSync() async {
       'password': password,
       'churchId': churchId,
       if (deviceToken != null) 'deviceToken': deviceToken,
-
     });
     final user = User.fromJson(response.data['user']);
     await _saveAuthData(response.data['accessToken'], user);
@@ -186,45 +190,87 @@ Future<void> checkPermissionsAndSync() async {
     if (_currentUser == null) return;
     try {
       await apiService.post('/notification/sync', {'deviceToken': deviceToken});
-      
+
       // Topic: church_ST_JOSEPHS_KOCHI
       String topic = "church_${_currentUser!.churchId}";
       await FirebaseMessaging.instance.subscribeToTopic(topic);
-      
+
       debugPrint("Subscribed to topic: $topic");
     } catch (e) {
       debugPrint("Token sync failed: $e");
     }
   }
 
-  Future<void> logout(String? deviceToken) async {
-    // Unsubscribe from church topic before clearing user data
-    if (_currentUser != null) {
-      try {
-        await FirebaseMessaging.instance.unsubscribeFromTopic("church_${_currentUser!.churchId}");
-      } catch (_) {}
-    }
-
-    if (deviceToken != null) {
-      try {
-        await apiService.post("/notification/unregister", {"deviceToken": deviceToken});
-      } catch (_) {}
-    }
-
-    _currentUser = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('user_data');
-    await _storage.delete(key: 'token');
-    notifyListeners();
+  // 1. Separate Unregister Method
+  Future<void> unregisterDevice(String? deviceToken) async {
+    if (deviceToken == null || deviceToken.isEmpty) return;
 
     try {
-      await apiService.post("/user/logout", {});
+      await apiService.post("/notification/unregister", {
+        "deviceToken": deviceToken,
+      });
+      debugPrint("Device token unregistered successfully.");
+    } catch (e) {
+      debugPrint("Error unregistering device: $e");
+      // We don't throw here so logout can still proceed even if network fails
+    }
+  }
+
+  // 2. Updated Logout Method
+  Future<void> logout(String? deviceToken) async {
+    // Call the logout API with the deviceToken in the body
+    try {
+      await apiService.post("/user/logout", {
+        "deviceToken": deviceToken, // Sending device token along with logout
+      });
     } catch (_) {}
 
+    // Local Cleanup
+    _currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+
+    // Make sure 'userId' is also removed if you're using it for self-notification filters
+    await prefs.remove('user_data');
+    await prefs.remove('userId');
+
+    await _storage.delete(key: 'token');
+
+    notifyListeners();
+
+    // Navigate to Login and clear stack
     navigatorKey.currentState?.pushNamedAndRemoveUntil(
       Routes.login,
       (route) => false,
     );
+  }
+
+  void initializeTokenListeners() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      // 1. Get the OLD token from storage before overwriting it
+      String? oldToken = prefs.getString('deviceToken');
+
+      // 2. If we have an old token and a user is logged in, unregister it
+      if (_currentUser != null && oldToken != null && oldToken != newToken) {
+        debugPrint("Refreshing token: Unregistering old token...");
+        await unregisterDevice(oldToken);
+      }
+
+      // 3. Update Local Storage with the NEW token
+      await prefs.setString('deviceToken', newToken);
+      debugPrint("New token saved locally: $newToken");
+
+      // 4. Sync the NEW token with the backend
+      if (_currentUser != null) {
+        try {
+          await syncDeviceToken(newToken);
+          debugPrint("New token synced with backend.");
+        } catch (e) {
+          debugPrint("Failed to sync new token: $e");
+        }
+      }
+    });
   }
 }
 
@@ -287,22 +333,22 @@ class User {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'email': email,
-        'role': role,
-        'churchId': churchId,
-        'name': name,
-        'logoUrl': logoUrl,
-        'churchName': churchName,
-        'location': location,
-        'gender': gender,
-        'dob': dob,
-        'permanentAddress': permanentAddress,
-        'houseNumber': houseNumber,
-        'residenceType': residenceType,
-        'houseName': houseName,
-        'phone': phone,
-      };
+    'id': id,
+    'email': email,
+    'role': role,
+    'churchId': churchId,
+    'name': name,
+    'logoUrl': logoUrl,
+    'churchName': churchName,
+    'location': location,
+    'gender': gender,
+    'dob': dob,
+    'permanentAddress': permanentAddress,
+    'houseNumber': houseNumber,
+    'residenceType': residenceType,
+    'houseName': houseName,
+    'phone': phone,
+  };
 
   factory User.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'] as Map<String, dynamic>? ?? json;

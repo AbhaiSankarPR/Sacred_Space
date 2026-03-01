@@ -3,6 +3,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../core/routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 class AppDrawer extends StatelessWidget {
   final User user;
@@ -163,9 +165,11 @@ class AppDrawer extends StatelessWidget {
             child: _LogoutButton(
               title: loc.signOut,
               onTap: () async {
-                // Get the token first so the backend can unregister it
-                String? token = await FirebaseMessaging.instance.getToken();
-                AuthService().logout(token);
+                // 1. Get SharedPreferences instance
+                final prefs = await SharedPreferences.getInstance();
+                String? token = prefs.getString('deviceToken');
+                // 4. Pass the token to your updated logout method
+                await context.read<AuthService>().logout(token);
               },
             ),
           ),
