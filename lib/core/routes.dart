@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sacred_space/announcements/announcement_detail_screen.dart';
+import 'package:sacred_space/bookings/parish_calendar_screen.dart';
 // Core Screens
 import '../screens/splash_screen.dart';
 import '../auth/login_screen.dart';
@@ -57,6 +58,8 @@ class Routes {
 
   static const announcementDetail = '/announcementdetail';
 
+  static const parishCalendar = '/parish-calendar';
+
   static Map<String, WidgetBuilder> get map => {
         // Auth & Splash
         splash: (_) => const SplashScreen(),
@@ -89,6 +92,6 @@ class Routes {
         about: (_) => const AboutScreen(),
         support: (_) => const SupportScreen(),
         privacyPolicy: (_) => const PrivacyPolicyScreen(),
-
+parishCalendar: (_) => const ParishCalendarScreen(),
       };
 }

@@ -60,5 +60,18 @@ class BookingService {
       return 0;
     }
   }
-  
+  Future<List<BookingData>> fetchCalendarEvents(int month, int year) async {
+  try {
+    final response = await apiService.get('/booking/calendar', params: {
+      'month': month,
+      'year': year,
+    });
+    
+    final List<dynamic> eventsJson = response.data['events'] ?? [];
+    return eventsJson.map((json) => BookingData.fromJson(json)).toList();
+  } catch (e) {
+    debugPrint('Calendar Fetch Error: $e');
+    return [];
+  }
+}
 }

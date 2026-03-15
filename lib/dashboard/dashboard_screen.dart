@@ -167,9 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _DashboardMenuItem(
             title: loc.parishCalendar ?? "Parish Calendar",
-            icon:
-                Icons
-                    .event_available_rounded, // Professional "Available Event" icon
+            icon: Icons.event_available_rounded,
             color: const Color(0xFF2E7D32), // Deep Church Green
             onTap: () => Navigator.pushNamed(context, Routes.parishCalendar),
           ),
