@@ -317,6 +317,7 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
+  
 }
 
 class User {

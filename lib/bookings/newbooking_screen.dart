@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../core/locale_provider.dart'; 
+import 'package:sacred_space/auth/auth_service.dart';
+import 'booking_service.dart';
 
 class NewBookingScreen extends StatefulWidget {
   const NewBookingScreen({super.key});
@@ -13,122 +13,113 @@ class NewBookingScreen extends StatefulWidget {
 
 class _NewBookingScreenState extends State<NewBookingScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+  final _service = BookingService();
+
   String? _selectedType;
   DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
+  TimeOfDay? _selectedStartTime;
+  TimeOfDay? _selectedEndTime;
   final TextEditingController _noteController = TextEditingController();
   bool _isLoading = false;
 
-  @override
-  void dispose() {
-    _noteController.dispose();
-    super.dispose();
-  }
-
   void _submitBooking() async {
+    final auth = AuthService();
     final loc = AppLocalizations.of(context)!;
-    if (_formKey.currentState!.validate() && _selectedDate != null && _selectedTime != null) {
+
+    if (_formKey.currentState!.validate() &&
+        _selectedDate != null &&
+        _selectedStartTime != null &&
+        _selectedEndTime != null) {
+      
       setState(() => _isLoading = true);
 
-      // Simulate network request to your backend
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-        _showSuccessDialog();
-      }
-    } else if (_selectedDate == null || _selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.pleaseSelectDateTime),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
+      final start = DateTime(
+        _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
+        _selectedStartTime!.hour, _selectedStartTime!.minute,
       );
+
+      final end = DateTime(
+        _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
+        _selectedEndTime!.hour, _selectedEndTime!.minute,
+      );
+
+      // Validation: End time must be after start time
+      if (end.isBefore(start) || end.isAtSameMomentAs(start)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.errorOccurred)), // Or a specific "End time error" key
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      try {
+        await _service.createBooking({
+          "title": _selectedType,
+          "description": _noteController.text,
+          "startTime": start.toIso8601String(),
+          "endTime": end.toIso8601String(),
+          "churchId": auth.currentUser?.churchId,
+        });
+
+        if (mounted) _showSuccessDialog(loc);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.errorOccurred)),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
-  void _showSuccessDialog() {
-    final loc = AppLocalizations.of(context)!;
+  void _showSuccessDialog(AppLocalizations loc) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_outline, color: Colors.green, size: 80),
+            const Icon(Icons.check_circle, color: Colors.green, size: 60),
             const SizedBox(height: 20),
-            Text(loc.requestSent, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Text(loc.bookingSuccessMessage, textAlign: TextAlign.center),
-            const SizedBox(height: 24),
+            Text(loc.requestSent,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF5D3A99),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: () {
-                  Navigator.pop(ctx); 
-                  Navigator.pop(context); 
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
                 },
                 child: Text(loc.ok, style: const TextStyle(color: Colors.white)),
               ),
-            ),
+            )
           ],
         ),
       ),
     );
   }
 
-  // --- UI Helpers ---
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
-      child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 11, letterSpacing: 1),
-      ),
-    );
-  }
-
-  BoxDecoration _fieldDecoration(ThemeData theme) {
-    return BoxDecoration(
-      color: theme.cardColor,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final localeProvider = Provider.of<LocaleProvider>(context);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    final List<Map<String, String>> bookingTypes = [
-      {'val': 'Marriage', 'label': loc.marriageCeremony},
-      {'val': 'Baptism', 'label': loc.baptism},
-      {'val': 'Prayer', 'label': loc.prayerMeeting},
-      {'val': 'Counseling', 'label': loc.counseling},
-      {'val': 'Community', 'label': loc.communityEvent},
-      {'val': 'Other', 'label': loc.other},
-    ];
+    final locale = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.newRequest, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(loc.newRequest),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -137,22 +128,46 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildLabel(loc.eventType),
+              _buildSectionLabel(loc.eventType),
               DropdownButtonFormField<String>(
+                value: _selectedType,
+                hint: Text(loc.selectEventType),
+                items: [
+                  DropdownMenuItem(value: "Marriage", child: Text(loc.marriageCeremony)),
+                  DropdownMenuItem(value: "Baptism", child: Text(loc.baptism)),
+                  DropdownMenuItem(value: "Prayer", child: Text(loc.prayerMeeting)),
+                ],
+                onChanged: (val) => setState(() => _selectedType = val),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: theme.cardColor,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
-                hint: Text(loc.selectEventType),
-                value: _selectedType,
-                items: bookingTypes.map((type) => DropdownMenuItem(
-                  value: type['val'], 
-                  child: Text(type['label']!),
-                )).toList(),
-                onChanged: (val) => setState(() => _selectedType = val),
-                validator: (val) => val == null ? loc.typeRequired : null,
+                validator: (val) => val == null ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 24),
+
+              _buildSectionLabel(loc.selectDate),
+              _buildPickerTile(
+                label: loc.selectDate,
+                value: _selectedDate == null 
+                    ? null 
+                    : DateFormat.yMMMd(locale).format(_selectedDate!),
+                icon: Icons.calendar_today_rounded,
+                isFullWidth: true,
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null) setState(() => _selectedDate = d);
+                },
               ),
               const SizedBox(height: 24),
 
@@ -162,56 +177,45 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildLabel(loc.date),
-                        InkWell(
+                        _buildSectionLabel(loc.startTime),
+                        _buildPickerTile(
+                          label: loc.selectTime,
+                          value: _selectedStartTime?.format(context),
+                          icon: Icons.access_time_rounded,
                           onTap: () async {
-                            final picked = await showDatePicker(
+                            final t = await showTimePicker(
                               context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(const Duration(days: 730)),
+                              initialTime: TimeOfDay.now(),
                             );
-                            if (picked != null) setState(() => _selectedDate = picked);
+                            if (t != null) {
+                              setState(() {
+                                _selectedStartTime = t;
+                                // Auto-set end time to 1 hour later as a suggestion
+                                _selectedEndTime = TimeOfDay(hour: t.hour + 1, minute: t.minute);
+                              });
+                            }
                           },
-                          child: Container(
-                            height: 56,
-                            decoration: _fieldDecoration(theme),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_month, size: 20, color: Color(0xFF5D3A99)),
-                                const SizedBox(width: 8),
-                                Text(_selectedDate == null ? loc.selectDate : DateFormat.yMMMd(localeProvider.locale.languageCode).format(_selectedDate!)),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildLabel(loc.time),
-                        InkWell(
+                        _buildSectionLabel(loc.endTime),
+                        _buildPickerTile(
+                          label: loc.selectTime,
+                          value: _selectedEndTime?.format(context),
+                          icon: Icons.update_rounded,
                           onTap: () async {
-                            final picked = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                            if (picked != null) setState(() => _selectedTime = picked);
+                            final t = await showTimePicker(
+                              context: context,
+                              initialTime: _selectedStartTime ?? TimeOfDay.now(),
+                            );
+                            if (t != null) setState(() => _selectedEndTime = t);
                           },
-                          child: Container(
-                            height: 56,
-                            decoration: _fieldDecoration(theme),
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.access_time, size: 20, color: Color(0xFF5D3A99)),
-                                const SizedBox(width: 8),
-                                Text(_selectedTime == null ? loc.selectTime : _selectedTime!.format(context)),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -220,24 +224,26 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               ),
               const SizedBox(height: 24),
 
-              _buildLabel(loc.purposeNotes),
+              _buildSectionLabel(loc.purposeNotes),
               TextFormField(
                 controller: _noteController,
-                maxLines: 4,
                 decoration: InputDecoration(
                   hintText: loc.describeEvent,
                   filled: true,
-                  fillColor: theme.cardColor,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
+                maxLines: 4,
                 validator: (val) => (val == null || val.isEmpty) ? loc.fieldRequired : null,
               ),
-
               const SizedBox(height: 40),
 
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 55,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitBooking,
                   style: ElevatedButton.styleFrom(
@@ -248,11 +254,64 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(loc.submitRequest, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      : Text(loc.submitRequest.toUpperCase(), 
+                          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ),
-              ),
+              )
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+      ),
+    );
+  }
+
+  Widget _buildPickerTile({
+    required String label,
+    String? value,
+    required IconData icon,
+    required VoidCallback onTap,
+    bool isFullWidth = false,
+  }) {
+    final bool hasValue = value != null;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: isFullWidth ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasValue ? const Color(0xFF5D3A99).withOpacity(0.3) : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF5D3A99), size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                value ?? label,
+                style: TextStyle(
+                  color: hasValue ? Colors.black87 : Colors.grey[600],
+                  fontWeight: hasValue ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );

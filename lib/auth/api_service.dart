@@ -61,6 +61,7 @@ class ApiService {
   Future<Response> post(String url, dynamic data) => _dio.post(url, data: data);
   Future<Response> put(String url, dynamic data) => _dio.put(url, data: data);
   Future<Response> delete(String url) => _dio.delete(url);
+  Future<Response> patch(String url, dynamic data) => _dio.patch(url, data: data);
 }
 
 final apiService = ApiService();

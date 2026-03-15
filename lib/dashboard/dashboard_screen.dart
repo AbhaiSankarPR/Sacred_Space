@@ -4,7 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../core/routes.dart';
 import 'package:provider/provider.dart'; // Added Provider
 import '../auth/auth_service.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../widgets/app_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -27,23 +27,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final loc = AppLocalizations.of(context)!; // Define loc here
       if (mounted) {
         // Calls the method we added to AuthService
-final authService = context.read<AuthService>();
-        
+        final authService = context.read<AuthService>();
+
         // 1. Run the silent check (Syncs only if token/status changed since last run)
         await authService.checkPermissionsAndSync();
 
         // 2. Check current status to see if we should prompt the user
-        NotificationSettings settings = await FirebaseMessaging.instance.getNotificationSettings();
-        
+        NotificationSettings settings =
+            await FirebaseMessaging.instance.getNotificationSettings();
+
         if (settings.authorizationStatus == AuthorizationStatus.denied) {
           _showNotificationPrompt(loc);
-        }      }
+        }
+      }
     });
   }
-void _showNotificationPrompt(AppLocalizations loc) {
+
+  void _showNotificationPrompt(AppLocalizations loc) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(loc.notificationsDisabled ?? "Enable notifications to stay updated!"),
+        content: Text(
+          loc.notificationsDisabled ?? "Enable notifications to stay updated!",
+        ),
         backgroundColor: const Color(0xFF5D3A99),
         duration: const Duration(seconds: 10),
         action: SnackBarAction(
@@ -51,14 +56,13 @@ void _showNotificationPrompt(AppLocalizations loc) {
           textColor: Colors.white,
           onPressed: () async {
             // Trigger the system permission popup
-            NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
+            NotificationSettings settings = await FirebaseMessaging.instance
+                .requestPermission(alert: true, badge: true, sound: true);
 
-            if (settings.authorizationStatus == AuthorizationStatus.authorized || 
-                settings.authorizationStatus == AuthorizationStatus.provisional) {
+            if (settings.authorizationStatus ==
+                    AuthorizationStatus.authorized ||
+                settings.authorizationStatus ==
+                    AuthorizationStatus.provisional) {
               // Now that they granted permission, trigger the sync
               if (mounted) {
                 context.read<AuthService>().checkPermissionsAndSync();
@@ -69,6 +73,7 @@ void _showNotificationPrompt(AppLocalizations loc) {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -160,6 +165,14 @@ void _showNotificationPrompt(AppLocalizations loc) {
         mainAxisSpacing: 16,
         childAspectRatio: 1.1,
         children: [
+          _DashboardMenuItem(
+            title: loc.parishCalendar ?? "Parish Calendar",
+            icon:
+                Icons
+                    .event_available_rounded, // Professional "Available Event" icon
+            color: const Color(0xFF2E7D32), // Deep Church Green
+            onTap: () => Navigator.pushNamed(context, Routes.parishCalendar),
+          ),
           // ANNOUNCEMENTS
           _DashboardMenuItem(
             title: loc.announcements,
