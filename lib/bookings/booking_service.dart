@@ -51,15 +51,15 @@ class BookingService {
     throw Exception('Failed to update booking: $e');
   }
 }
-  // GET: Check for scheduling conflicts
-  Future<int> checkConflicts(String id) async {
-    try {
-      final response = await apiService.get('/booking/$id/conflicts');
-      return response.data['conflictCount'] ?? 0;
-    } catch (e) {
-      return 0;
-    }
+  Future<List<BookingData>> checkConflicts(String bookingId) async {
+  try {
+    final response = await apiService.get('/booking/$bookingId/conflicts');
+    final List<dynamic> conflictsJson = response.data['conflicts'] ?? [];
+    return conflictsJson.map((json) => BookingData.fromJson(json)).toList();
+  } catch (e) {
+    return [];
   }
+}
   Future<List<BookingData>> fetchCalendarEvents(int month, int year) async {
   try {
     final response = await apiService.get('/booking/calendar', params: {
