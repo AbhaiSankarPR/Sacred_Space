@@ -81,7 +81,7 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor, 
       appBar: AppBar(
-        title: Text(loc.parishCalendar ?? "Parish Calendar"),
+        title: Text(loc.parishCalendar),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
