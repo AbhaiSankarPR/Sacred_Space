@@ -112,22 +112,35 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 
   Widget _buildFilterBar(AppLocalizations loc, ThemeData theme) {
-    final filters = ["All", "Pending", "Approved", "Rejected"];
+  final filters = ["All", "Pending", "Approved", "Rejected"];
+  final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+  return Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: theme.cardColor,
+      border: Border(
+        bottom: BorderSide(
+          color: theme.dividerColor.withValues(alpha: 0.1),
+        ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    ),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      // Change: Added physics to prevent awkward bouncing when centered
+      physics: const ClampingScrollPhysics(), 
+      child: Container(
+        // Change: Constraints ensure the content is at least the screen width
+        // which allows Center to actually position the Row in the middle.
+        constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center, // Change: Align items to center
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: filters.map((f) {
             final isSelected = _selectedFilter == f;
             return Padding(
-              padding: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 5), // Change: Balanced spacing
               child: ChoiceChip(
                 label: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -140,26 +153,30 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: isSelected ? Colors.white : Colors.black87,
+                      color: isSelected 
+                          ? Colors.white 
+                          : theme.textTheme.bodyMedium?.color,
                     ),
                   ),
                 ),
                 selected: isSelected,
                 onSelected: (val) => setState(() => _selectedFilter = f),
                 selectedColor: const Color(0xFF5D3A99),
-                backgroundColor: Colors.grey[100],
+                backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                side: BorderSide(color: isSelected ? const Color(0xFF5D3A99) : Colors.transparent),
+                side: BorderSide(
+                  color: isSelected ? const Color(0xFF5D3A99) : Colors.transparent,
+                ),
                 showCheckmark: false,
               ),
             );
           }).toList(),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
-
+}
 class BookingCard extends StatelessWidget {
   final BookingData data;
   final bool isPriest;
@@ -174,7 +191,6 @@ class BookingCard extends StatelessWidget {
 
   // --- Handle Approval with Conflict Check ---
   void _handlePriestApproval(BuildContext context, AppLocalizations loc) async {
-    // Show a small loading indicator while checking
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -200,14 +216,17 @@ class BookingCard extends StatelessWidget {
   }
 
   void _showConflictDialog(BuildContext context, List<BookingData> conflicts, AppLocalizations loc) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: theme.dialogBackgroundColor,
         title: Row(
           children: [
             const Icon(Icons.warning_amber_rounded, color: Colors.orange),
             const SizedBox(width: 10),
-            Text(loc.conflictDetected ?? "Schedule Conflict"),
+            Text(loc.conflictDetected ?? "Schedule Conflict", 
+              style: TextStyle(color: theme.textTheme.titleLarge?.color)),
           ],
         ),
         content: SizedBox(
@@ -216,7 +235,8 @@ class BookingCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("The following events overlap with this request:"),
+              Text("The following events overlap with this request:",
+                style: TextStyle(color: theme.textTheme.bodyMedium?.color)),
               const SizedBox(height: 10),
               Flexible(
                 child: ListView.builder(
@@ -232,9 +252,11 @@ class BookingCard extends StatelessWidget {
                         size: 10,
                         color: conflict.status == BookingStatus.approved ? Colors.green : Colors.orange,
                       ),
-                      title: Text(conflict.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      title: Text(conflict.title, 
+                        style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color)),
                       subtitle: Text(
                         "${DateFormat.jm().format(conflict.startTime.toLocal())} (${conflict.status.name})",
+                        style: TextStyle(color: theme.textTheme.bodySmall?.color),
                       ),
                     );
                   },
@@ -265,6 +287,7 @@ class BookingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final bool isRejected = data.status == BookingStatus.rejected;
     final Color statusColor =
         data.status == BookingStatus.approved
@@ -276,10 +299,10 @@ class BookingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -288,7 +311,7 @@ class BookingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatusHeader(statusColor, loc),
+          _buildStatusHeader(statusColor, loc, theme),
           InkWell(
             onTap: () => _showDetailsSheet(context, loc, theme),
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
@@ -300,7 +323,7 @@ class BookingCard extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDateIcon(data.startTime, context),
+                      _buildDateIcon(data.startTime, context, theme),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
@@ -308,10 +331,10 @@ class BookingCard extends StatelessWidget {
                           children: [
                             Text(
                               data.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: theme.textTheme.titleMedium?.color,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -338,7 +361,7 @@ class BookingCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.grey[700],
+                                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                                 height: 1.3,
                               ),
                             ),
@@ -369,7 +392,7 @@ class BookingCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             data.rejectionReason!,
-                            style: TextStyle(color: Colors.red[900], fontSize: 12, fontStyle: FontStyle.italic),
+                            style: TextStyle(color: isDark ? Colors.red[200] : Colors.red[900], fontSize: 12, fontStyle: FontStyle.italic),
                           ),
                         ],
                       ),
@@ -379,11 +402,11 @@ class BookingCard extends StatelessWidget {
             ),
           ),
           if (data.status == BookingStatus.pending) ...[
-            const Divider(height: 1, thickness: 0.5),
+            Divider(height: 1, thickness: 0.5, color: theme.dividerColor),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: isPriest
-                  ? _buildPriestActions(context, loc)
+                  ? _buildPriestActions(context, loc, theme)
                   : _buildMemberActions(loc, theme),
             ),
           ] else
@@ -394,15 +417,16 @@ class BookingCard extends StatelessWidget {
   }
 
   void _showDetailsSheet(BuildContext context, AppLocalizations loc, ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     final bool isRejected = data.status == BookingStatus.rejected;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -413,7 +437,7 @@ class BookingCard extends StatelessWidget {
               child: Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey[300], borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 20),
@@ -427,18 +451,18 @@ class BookingCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.calendar_today, loc.selectDate, DateFormat.yMMMMd().format(data.startTime)),
-            _buildDetailRow(Icons.access_time, loc.startTime, DateFormat.jm().format(data.startTime.toLocal())),
-            _buildDetailRow(Icons.update, loc.endTime, DateFormat.jm().format(data.endTime.toLocal())),
-            const Divider(height: 32),
-            Text(loc.purposeNotes, style: const TextStyle(fontWeight: FontWeight.bold)),
+            _buildDetailRow(Icons.calendar_today, loc.selectDate, DateFormat.yMMMMd().format(data.startTime), theme),
+            _buildDetailRow(Icons.access_time, loc.startTime, DateFormat.jm().format(data.startTime.toLocal()), theme),
+            _buildDetailRow(Icons.update, loc.endTime, DateFormat.jm().format(data.endTime.toLocal()), theme),
+            Divider(height: 32, color: theme.dividerColor),
+            Text(loc.purposeNotes, style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.titleMedium?.color)),
             const SizedBox(height: 8),
-            Text(data.description, style: TextStyle(color: Colors.grey[800], height: 1.5)),
+            Text(data.description, style: TextStyle(color: theme.textTheme.bodyLarge?.color?.withValues(alpha: 0.8), height: 1.5)),
             if (isRejected && data.rejectionReason != null) ...[
               const SizedBox(height: 20),
               Text(loc.rejected.toUpperCase(), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 11)),
               const SizedBox(height: 4),
-              Text(data.rejectionReason!, style: TextStyle(color: Colors.red[900], fontStyle: FontStyle.italic)),
+              Text(data.rejectionReason!, style: TextStyle(color: isDark ? Colors.red[200] : Colors.red[900], fontStyle: FontStyle.italic)),
             ],
             const SizedBox(height: 30),
             SizedBox(
@@ -469,21 +493,21 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _buildDetailRow(IconData icon, String label, String value, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Icon(icon, size: 20, color: const Color(0xFF5D3A99)),
           const SizedBox(width: 12),
-          Text("$label: ", style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text("$label: ", style: TextStyle(color: theme.textTheme.bodySmall?.color)),
+          Expanded(child: Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color))),
         ],
       ),
     );
   }
 
-  Widget _buildStatusHeader(Color color, AppLocalizations loc) {
+  Widget _buildStatusHeader(Color color, AppLocalizations loc, ThemeData theme) {
     String statusText = data.status == BookingStatus.approved ? loc.approved : (data.status == BookingStatus.rejected ? loc.rejected : loc.pending);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -502,7 +526,7 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDateIcon(DateTime date, BuildContext context) {
+  Widget _buildDateIcon(DateTime date, BuildContext context, ThemeData theme) {
     final locale = Localizations.localeOf(context).languageCode;
     return Container(
       width: 50,
@@ -522,7 +546,7 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPriestActions(BuildContext context, AppLocalizations loc) {
+  Widget _buildPriestActions(BuildContext context, AppLocalizations loc, ThemeData theme) {
     return Row(
       children: [
         Expanded(
@@ -554,14 +578,21 @@ class BookingCard extends StatelessWidget {
   }
 
   void _showRejectionDialog(BuildContext context, AppLocalizations loc) {
+    final theme = Theme.of(context);
     final TextEditingController reasonController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(loc.reject),
+        backgroundColor: theme.dialogBackgroundColor,
+        title: Text(loc.reject, style: TextStyle(color: theme.textTheme.titleLarge?.color)),
         content: TextField(
           controller: reasonController,
-          decoration: InputDecoration(hintText: loc.describeEvent, border: const OutlineInputBorder()),
+          style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+          decoration: InputDecoration(
+            hintText: loc.describeEvent, 
+            hintStyle: TextStyle(color: theme.textTheme.bodySmall?.color),
+            border: const OutlineInputBorder()
+          ),
           maxLines: 3,
         ),
         actions: [
@@ -586,7 +617,7 @@ class BookingCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         TextButton.icon(
-          onPressed: () {}, // Implementation for cancellation
+          onPressed: () {}, 
           icon: const Icon(Icons.cancel_outlined, size: 18, color: Colors.red),
           label: Text(loc.cancelRequest, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 13)),
           style: TextButton.styleFrom(

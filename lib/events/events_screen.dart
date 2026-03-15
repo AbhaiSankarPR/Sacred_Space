@@ -315,30 +315,27 @@ class _EventsScreenState extends State<EventsScreen> {
     );
   }
 
-  Widget _buildFilterTabs(AppLocalizations loc) {
-    final tabs = ["Upcoming", "My Events", "Past"];
-    return Container(
-      width: double.infinity, // Ensures the container takes full width
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      color: Colors.white,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center, // This centers the tabs
-        children:
-            tabs
-                .map(
-                  (tab) => _FilterTab(
-                    label:
-                        tab == "Upcoming"
-                            ? loc.upcoming
-                            : (tab == "Past" ? loc.past : loc.myEvents),
-                    isSelected: _selectedFilter == tab,
-                    onTap: () => setState(() => _selectedFilter = tab),
-                  ),
-                )
-                .toList(),
-      ),
-    );
-  }
+ Widget _buildFilterTabs(AppLocalizations loc) {
+  final theme = Theme.of(context);
+  final tabs = ["Upcoming", "My Events", "Past"];
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(vertical: 12),
+    // Use cardColor to automatically switch between white (Light) and dark grey (Dark)
+    color: theme.cardColor, 
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: tabs.map((tab) => _FilterTab(
+        label: tab == "Upcoming"
+            ? loc.upcoming
+            : (tab == "Past" ? loc.past : loc.myEvents),
+        isSelected: _selectedFilter == tab,
+        onTap: () => setState(() => _selectedFilter = tab),
+      )).toList(),
+    ),
+  );
+}
 }
 
 class _FilterTab extends StatelessWidget {
@@ -353,19 +350,27 @@ class _FilterTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF5D3A99) : Colors.grey[200],
+          color: isSelected
+              ? const Color(0xFF5D3A99)
+              // In dark mode, we use a subtle white opacity instead of light grey
+              : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[200]),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
+            color: isSelected 
+                ? Colors.white 
+                : (isDark ? Colors.white70 : Colors.black87),
             fontWeight: FontWeight.bold,
           ),
         ),

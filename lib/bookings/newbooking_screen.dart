@@ -16,7 +16,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
   final _service = BookingService();
 
   String? _selectedType;
-  final TextEditingController _customTypeController = TextEditingController(); // New controller
+  final TextEditingController _customTypeController = TextEditingController();
   DateTime? _selectedDate;
   TimeOfDay? _selectedStartTime;
   TimeOfDay? _selectedEndTime;
@@ -34,7 +34,6 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       
       setState(() => _isLoading = true);
 
-      // Determine the final title (either from dropdown or custom field)
       final String finalTitle = (_selectedType == "Other") 
           ? _customTypeController.text.trim() 
           : (_selectedType ?? "");
@@ -80,10 +79,12 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
   }
 
   void _showSuccessDialog(AppLocalizations loc) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
+        backgroundColor: theme.dialogBackgroundColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -91,7 +92,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
             const Icon(Icons.check_circle, color: Colors.green, size: 60),
             const SizedBox(height: 20),
             Text(loc.requestSent,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.textTheme.titleLarge?.color)),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -117,8 +118,10 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
+    final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(loc.newRequest),
         backgroundColor: const Color(0xFF5D3A99),
@@ -133,20 +136,22 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionLabel(loc.eventType),
+              _buildSectionLabel(loc.eventType, theme),
               DropdownButtonFormField<String>(
+                dropdownColor: theme.cardColor,
                 value: _selectedType,
-                hint: Text(loc.selectEventType ?? "Select Event Type"),
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                hint: Text(loc.selectEventType ?? "Select Event Type", style: TextStyle(color: theme.hintColor)),
                 items: [
                   DropdownMenuItem(value: "Marriage", child: Text(loc.marriageCeremony)),
                   DropdownMenuItem(value: "Baptism", child: Text(loc.baptism)),
                   DropdownMenuItem(value: "Prayer", child: Text(loc.prayerMeeting)),
-                  DropdownMenuItem(value: "Other", child: Text(loc.other ?? "Other")), // Added Other
+                  DropdownMenuItem(value: "Other", child: Text(loc.other ?? "Other")),
                 ],
                 onChanged: (val) => setState(() => _selectedType = val),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -156,16 +161,17 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                 validator: (val) => val == null ? loc.fieldRequired : null,
               ),
               
-              // Dynamic Custom Event Field
               if (_selectedType == "Other") ...[
                 const SizedBox(height: 16),
-                _buildSectionLabel(loc.customEventName ?? "Event Name"),
+                _buildSectionLabel(loc.customEventName ?? "Event Name", theme),
                 TextFormField(
                   controller: _customTypeController,
+                  style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
                     hintText: loc.enterEventName ?? "e.g. Anniversary, House Blessing",
+                    hintStyle: TextStyle(color: theme.hintColor),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -178,8 +184,9 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               
               const SizedBox(height: 24),
 
-              _buildSectionLabel(loc.selectDate),
+              _buildSectionLabel(loc.selectDate, theme),
               _buildPickerTile(
+                theme: theme,
                 label: loc.selectDate,
                 value: _selectedDate == null 
                     ? null 
@@ -204,8 +211,9 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionLabel(loc.startTime),
+                        _buildSectionLabel(loc.startTime, theme),
                         _buildPickerTile(
+                          theme: theme,
                           label: loc.selectTime,
                           value: _selectedStartTime?.format(context),
                           icon: Icons.access_time_rounded,
@@ -230,8 +238,9 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionLabel(loc.endTime),
+                        _buildSectionLabel(loc.endTime, theme),
                         _buildPickerTile(
+                          theme: theme,
                           label: loc.selectTime,
                           value: _selectedEndTime?.format(context),
                           icon: Icons.update_rounded,
@@ -250,13 +259,15 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               ),
               const SizedBox(height: 24),
 
-              _buildSectionLabel(loc.purposeNotes),
+              _buildSectionLabel(loc.purposeNotes, theme),
               TextFormField(
                 controller: _noteController,
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                 decoration: InputDecoration(
                   hintText: loc.describeEvent,
+                  hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -291,17 +302,18 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
     );
   }
 
-  Widget _buildSectionLabel(String label) {
+  Widget _buildSectionLabel(String label, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         label,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textTheme.titleMedium?.color),
       ),
     );
   }
 
   Widget _buildPickerTile({
+    required ThemeData theme,
     required String label,
     String? value,
     required IconData icon,
@@ -309,13 +321,16 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
     bool isFullWidth = false,
   }) {
     final bool hasValue = value != null;
+    final isDark = theme.brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         width: isFullWidth ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: hasValue ? const Color(0xFF5D3A99).withOpacity(0.3) : Colors.transparent,
@@ -330,7 +345,9 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               child: Text(
                 value ?? label,
                 style: TextStyle(
-                  color: hasValue ? Colors.black87 : Colors.grey[600],
+                  color: hasValue 
+                      ? theme.textTheme.bodyLarge?.color 
+                      : theme.hintColor,
                   fontWeight: hasValue ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
                 ),

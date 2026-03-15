@@ -6,10 +6,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return StaticContentLayout(
       title: "Privacy Policy",
       children: [
-        const Text("Last Updated: February 2026", style: TextStyle(fontStyle: FontStyle.italic)),
+        Text(
+          "Last Updated: February 2026",
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: theme.textTheme.bodySmall?.color, // Themed italic text
+          ),
+        ),
         const SizedBox(height: 20),
         const PolicySection(
           title: "1. Information We Collect",
@@ -31,7 +39,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
         const Center(
           child: Text(
             "For questions, contact: support@sacredspace.com",
-            style: TextStyle(color: Color(0xFF5D3A99), fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Color(0xFF5D3A99), // Brand color usually stays consistent
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -46,14 +57,30 @@ class PolicySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.titleMedium?.color, // Adapts to Light/Dark
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(body, style: const TextStyle(fontSize: 15, height: 1.4, color: Colors.black87)),
+          Text(
+            body,
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.4,
+              color: theme.textTheme.bodyMedium?.color, // Adapts to Light/Dark
+            ),
+          ),
         ],
       ),
     );
