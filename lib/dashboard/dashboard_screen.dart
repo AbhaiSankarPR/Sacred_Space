@@ -202,15 +202,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () => Navigator.pushNamed(context, Routes.galleryAdmin),
             ),
           ],
-
-          // MEMBER-ONLY (EVENTS & PROFILE)
-          if (!isPriest) ...[
-            _DashboardMenuItem(
+_DashboardMenuItem(
               title: loc.events,
               icon: Icons.calendar_month_outlined,
               color: Colors.green,
               onTap: () => Navigator.pushNamed(context, Routes.events),
             ),
+          // MEMBER-ONLY (EVENTS & PROFILE)
+          if (!isPriest) ...[
+            
             _DashboardMenuItem(
               title: loc.myProfile,
               icon: Icons.person_outline,

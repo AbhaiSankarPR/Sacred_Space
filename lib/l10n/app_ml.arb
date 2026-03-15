@@ -250,5 +250,11 @@
   "customEventName": "ചടങ്ങിന്റെ പേര്",
   "enterEventName": "ഉദാ: വാർഷികം, വീട് വെഞ്ചരിപ്പ്",
   "parishCalendar": "പള്ളി കലണ്ടർ",
-  "events": "ചടങ്ങുകൾ"
+  "events": "ചടങ്ങുകൾ",
+  "conflictDetected": "സമയക്രമത്തിൽ മാറ്റം",
+  "conflictWarning": "താഴെ പറയുന്ന ചടങ്ങുകൾ ഈ സമയത്ത് നടക്കുന്നുണ്ട്:",
+  "approveAnyway": "എന്തായാലും അനുവദിക്കുക",
+  "church": "പള്ളി",
+  "purposeNotes": "വിവരങ്ങൾ",
+  "ok": "ശരി"
 }

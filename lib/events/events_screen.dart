@@ -1,29 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 import '../auth/auth_service.dart';
-import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
+import 'event_model.dart';
+import './event_card.dart';
 
-// 1. Data Model
-class EventData {
-  final String id;
-  final String title;
-  final DateTime dateTime;
-  final String location;
-  final String category;
-  bool isRegistered;
-
-  EventData({
-    required this.id,
-    required this.title,
-    required this.dateTime,
-    required this.location,
-    required this.category,
-    this.isRegistered = false,
-  });
-}
-
-// 2. Stateful Screen
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
 
@@ -33,330 +15,327 @@ class EventsScreen extends StatefulWidget {
 
 class _EventsScreenState extends State<EventsScreen> {
   String _selectedFilter = "Upcoming";
-
   final List<EventData> _allEvents = [
+    // 1. UPCOMING EVENT (Member is NOT registered)
     EventData(
-      id: '1',
-      title: "Annual Charity Gala",
-      dateTime: DateTime(2026, 3, 15, 18, 0),
-      location: "Grand Ballroom",
-      category: "Community",
-      isRegistered: true,
-    ),
-    EventData(
-      id: '2',
-      title: "Sunday Worship Service",
-      dateTime: DateTime(2026, 2, 12, 9, 0),
+      id: 'test-1',
+      title: "Easter Sunday Service",
+      description:
+          "Join us for a special morning worship service celebrating the resurrection. Choir performance starts at 8:45 AM.",
+      startTime: DateTime(2026, 4, 5, 9, 0),
+      endTime: DateTime(2026, 4, 5, 11, 30),
       location: "Main Sanctuary",
       category: "Worship",
       isRegistered: false,
+      registeredMembers: ["Naveen", "Akhil", "Jerin", "Sneha"], // Test data
     ),
+
+    // 2. REGISTERED EVENT (Upcoming)
     EventData(
-      id: '3',
-      title: "Youth Music Night",
-      dateTime: DateTime(2026, 2, 20, 19, 30),
+      id: 'test-2',
+      title: "Parish Youth Meetup",
+      description:
+          "Monthly gathering for the youth ministry. Games, music, and refreshment followed by a short meditation session.",
+      startTime: DateTime(2026, 3, 25, 17, 30),
+      endTime: DateTime(2026, 3, 25, 20, 0),
       location: "Youth Hall",
       category: "Youth",
-      isRegistered: false,
+      isRegistered: true, // This will show up in "My Events"
     ),
+
+    // 3. PAST EVENT
     EventData(
-      id: '4',
-      title: "Past Leadership Summit",
-      dateTime: DateTime(2025, 12, 10, 10, 0),
-      location: "Conference Room B",
-      category: "Leadership",
+      id: 'test-3',
+      title: "Ash Wednesday Mass",
+      description: "Lenten season commencement with the imposition of ashes.",
+      startTime: DateTime(2026, 2, 18, 18, 0),
+      endTime: DateTime(2026, 2, 18, 19, 30),
+      location: "Chapel",
+      category: "Worship",
+      isRegistered: false, // This will show up in "Past"
+    ),
+
+    // 4. ANOTHER UPCOMING (For scroll testing)
+    EventData(
+      id: 'test-4',
+      title: "Community Outreach Program",
+      description:
+          "Distribution of food packets and basic necessities to the neighborhood. Volunteers are requested to arrive 30 mins early.",
+      startTime: DateTime(2026, 5, 10, 10, 0),
+      endTime: DateTime(2026, 5, 10, 16, 0),
+      location: "Church Grounds",
+      category: "Charity",
       isRegistered: false,
     ),
   ];
-
   List<EventData> get _filteredEvents {
     final now = DateTime.now();
     if (_selectedFilter == "Upcoming") {
-      return _allEvents.where((e) => e.dateTime.isAfter(now)).toList();
+      return _allEvents.where((e) => e.startTime.isAfter(now)).toList();
     } else if (_selectedFilter == "My Events") {
-      return _allEvents.where((e) => e.isRegistered && e.dateTime.isAfter(now)).toList();
+      return _allEvents
+          .where((e) => e.isRegistered && e.startTime.isAfter(now))
+          .toList();
     } else if (_selectedFilter == "Past") {
-      return _allEvents.where((e) => e.dateTime.isBefore(now)).toList();
+      return _allEvents.where((e) => e.startTime.isBefore(now)).toList();
     }
     return _allEvents;
   }
 
-  void _toggleRegistration(String id) {
+  void _showCreateEventDialog() {
     final loc = AppLocalizations.of(context)!;
-    setState(() {
-      final event = _allEvents.firstWhere((e) => e.id == id);
-      event.isRegistered = !event.isRegistered;
-    });
-    
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(loc.rsvpUpdated)),
-    );
-  }
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    final locController = TextEditingController();
+    DateTime? selectedDate;
+    TimeOfDay? startTime;
+    TimeOfDay? endTime;
 
-  String _getLocalizedStatus(AppLocalizations loc) {
-    if (_selectedFilter == "Upcoming") return loc.upcoming;
-    if (_selectedFilter == "Past") return loc.past;
-    return loc.myEvents;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder:
+          (ctx) => StatefulBuilder(
+            builder:
+                (context, setModalState) => Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                    left: 24,
+                    right: 24,
+                    top: 24,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          loc.newBooking,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: titleController,
+                          decoration: InputDecoration(labelText: loc.eventType),
+                        ),
+                        TextField(
+                          controller: locController,
+                          decoration: const InputDecoration(
+                            labelText: "Location",
+                          ),
+                        ),
+                        TextField(
+                          controller: descController,
+                          decoration: InputDecoration(
+                            labelText: loc.describeEvent,
+                          ),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 16),
+                        ListTile(
+                          leading: const Icon(Icons.calendar_today),
+                          title: Text(
+                            selectedDate == null
+                                ? loc.selectDate
+                                : DateFormat.yMMMd().format(selectedDate!),
+                          ),
+                          onTap: () async {
+                            final d = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2030),
+                            );
+                            if (d != null)
+                              setModalState(() => selectedDate = d);
+                          },
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ListTile(
+                                title: Text(
+                                  startTime == null
+                                      ? "Start"
+                                      : startTime!.format(context),
+                                ),
+                                onTap: () async {
+                                  final t = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
+                                  );
+                                  if (t != null)
+                                    setModalState(() => startTime = t);
+                                },
+                              ),
+                            ),
+                            Expanded(
+                              child: ListTile(
+                                title: Text(
+                                  endTime == null
+                                      ? "End"
+                                      : endTime!.format(context),
+                                ),
+                                onTap: () async {
+                                  final t = await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
+                                  );
+                                  if (t != null)
+                                    setModalState(() => endTime = t);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5D3A99),
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            if (titleController.text.isNotEmpty &&
+                                selectedDate != null &&
+                                startTime != null &&
+                                endTime != null) {
+                              setState(() {
+                                _allEvents.add(
+                                  EventData(
+                                    id: DateTime.now().toString(),
+                                    title: titleController.text,
+                                    description: descController.text,
+                                    location: locController.text,
+                                    startTime: DateTime(
+                                      selectedDate!.year,
+                                      selectedDate!.month,
+                                      selectedDate!.day,
+                                      startTime!.hour,
+                                      startTime!.minute,
+                                    ),
+                                    endTime: DateTime(
+                                      selectedDate!.year,
+                                      selectedDate!.month,
+                                      selectedDate!.day,
+                                      endTime!.hour,
+                                      endTime!.minute,
+                                    ),
+                                    category: "Church Event",
+                                  ),
+                                );
+                              });
+                              Navigator.pop(ctx);
+                            }
+                          },
+                          child: Text(
+                            loc.ok,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+          ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final user = AuthService().currentUser;
-
-    if (user == null) {
-      Future.microtask(() => Navigator.pushReplacementNamed(context, Routes.login));
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final bool isPriest = user?.role.toLowerCase() == 'priest';
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(loc.eventsTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          loc.eventsTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
-      drawer: AppDrawer(user: user),
+      drawer: AppDrawer(user: user!),
+      floatingActionButton:
+          isPriest
+              ? FloatingActionButton(
+                backgroundColor: const Color(0xFF5D3A99),
+                onPressed: _showCreateEventDialog,
+                child: const Icon(Icons.add, color: Colors.white),
+              )
+              : null,
       body: Column(
         children: [
-          // --- Filter Tabs ---
-          Container(
-            color: theme.cardColor,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _FilterTab(
-                    label: loc.upcoming,
-                    isSelected: _selectedFilter == "Upcoming",
-                    onTap: () => setState(() => _selectedFilter = "Upcoming"),
-                  ),
-                  _FilterTab(
-                    label: loc.myEvents,
-                    isSelected: _selectedFilter == "My Events",
-                    onTap: () => setState(() => _selectedFilter = "My Events"),
-                  ),
-                  _FilterTab(
-                    label: loc.past,
-                    isSelected: _selectedFilter == "Past",
-                    onTap: () => setState(() => _selectedFilter = "Past"),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // --- Event List ---
+          _buildFilterTabs(loc),
           Expanded(
-            child: _filteredEvents.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.event_busy, size: 60, color: theme.hintColor),
-                        const SizedBox(height: 16),
-                        Text(
-                          loc.noEventsFound(_getLocalizedStatus(loc)),
-                          style: TextStyle(color: theme.hintColor, fontSize: 16),
-                        ),
-                      ],
+            child:
+                _filteredEvents.isEmpty
+                    ? Center(child: Text(loc.noBookingsFound))
+                    : ListView.builder(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: _filteredEvents.length,
+                      itemBuilder: (ctx, index) {
+                        final event = _filteredEvents[index];
+                        return EventCard(
+                          event: event,
+                          isPriest: isPriest,
+                          onRSVP: () {
+                            setState(
+                              () => event.isRegistered = !event.isRegistered,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(loc.rsvpUpdated)),
+                            );
+                          },
+                          onDelete:
+                              () => setState(
+                                () => _allEvents.removeWhere(
+                                  (e) => e.id == event.id,
+                                ),
+                              ),
+                        );
+                      },
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _filteredEvents.length,
-                    itemBuilder: (ctx, index) {
-                      final event = _filteredEvents[index];
-                      return _EventCard(
-                        event: event,
-                        onRSVP: () => _toggleRegistration(event.id),
-                      );
-                    },
-                  ),
           ),
         ],
       ),
     );
   }
-}
 
-// 3. UI Components
-
-class _EventCard extends StatelessWidget {
-  final EventData event;
-  final VoidCallback onRSVP;
-
-  const _EventCard({required this.event, required this.onRSVP});
-
-  String _getLocalizedMonth(int month, AppLocalizations loc) {
-    final months = [
-      loc.jan, loc.feb, loc.mar, loc.apr, loc.may, loc.jun,
-      loc.jul, loc.aug, loc.sep, loc.oct, loc.nov, loc.dec
-    ];
-    return months[month - 1];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final subTextColor = isDark ? Colors.white70 : Colors.grey[600];
-
-    final month = _getLocalizedMonth(event.dateTime.month, loc);
-    final day = event.dateTime.day.toString();
-    final timeStr = "${event.dateTime.hour > 12 ? event.dateTime.hour - 12 : event.dateTime.hour}:${event.dateTime.minute.toString().padLeft(2, '0')} ${event.dateTime.hour >= 12 ? 'PM' : 'AM'}";
-
+  Widget _buildFilterTabs(AppLocalizations loc) {
+    final tabs = ["Upcoming", "My Events", "Past"];
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5D3A99).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: isDark ? Border.all(color: Colors.white12) : null,
+      width: double.infinity, // Ensures the container takes full width
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      color: Colors.white,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center, // This centers the tabs
+        children:
+            tabs
+                .map(
+                  (tab) => _FilterTab(
+                    label:
+                        tab == "Upcoming"
+                            ? loc.upcoming
+                            : (tab == "Past" ? loc.past : loc.myEvents),
+                    isSelected: _selectedFilter == tab,
+                    onTap: () => setState(() => _selectedFilter = tab),
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        day,
-                        style: TextStyle(
-                          fontSize: 20, 
-                          fontWeight: FontWeight.bold, 
-                          color: isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)
-                        ),
-                      ),
-                      Text(
-                        month,
-                        style: TextStyle(
-                          fontSize: 12, 
-                          fontWeight: FontWeight.bold, 
-                          color: isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          event.category.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10, 
-                            fontWeight: FontWeight.bold, 
-                            color: Colors.orange[800]
-                          ),
-                        ),
-                      ),
-                      Text(
-                        event.title,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.access_time, size: 14, color: subTextColor),
-                          const SizedBox(width: 4),
-                          Text(timeStr, style: TextStyle(fontSize: 13, color: subTextColor)),
-                          const SizedBox(width: 12),
-                          Icon(Icons.location_on_outlined, size: 14, color: subTextColor),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              event.location, 
-                              style: TextStyle(fontSize: 13, color: subTextColor),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: isDark ? Colors.white10 : Colors.black12),
-          InkWell(
-            onTap: onRSVP,
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              width: double.infinity,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: event.isRegistered 
-                    ? Colors.green.withOpacity(0.1) 
-                    : Colors.transparent,
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    event.isRegistered ? Icons.check_circle : Icons.person_add_alt_1,
-                    size: 18,
-                    color: event.isRegistered 
-                        ? Colors.green 
-                        : (isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    event.isRegistered ? loc.registeredGoing : loc.registerNow,
-                    style: TextStyle(
-                      color: event.isRegistered 
-                          ? Colors.green 
-                          : (isDark ? const Color(0xFF9B59B6) : const Color(0xFF5D3A99)),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+                )
+                .toList(),
       ),
     );
   }
@@ -366,32 +345,28 @@ class _FilterTab extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-
-  const _FilterTab({required this.label, required this.isSelected, required this.onTap});
+  const _FilterTab({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFF5D3A99) 
-              : (isDark ? Colors.grey[800] : Colors.grey[200]),
+          color: isSelected ? const Color(0xFF5D3A99) : Colors.grey[200],
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected 
-                ? Colors.white 
-                : (isDark ? Colors.white70 : Colors.grey[700]),
-            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

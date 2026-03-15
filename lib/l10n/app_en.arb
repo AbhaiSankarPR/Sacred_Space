@@ -250,5 +250,11 @@
   "customEventName": "Event Name",
   "enterEventName": "e.g. Anniversary, House Blessing",
   "parishCalendar": "Parish Calendar",
-  "events": "Events"
+  "events": "Events",
+  "conflictDetected": "Schedule Conflict",
+  "conflictWarning": "The following events overlap with this request:",
+  "approveAnyway": "Approve Anyway",
+  "church": "Church",
+  "purposeNotes": "Purpose / Notes",
+  "ok": "OK"
 }
