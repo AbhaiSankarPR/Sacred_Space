@@ -16,6 +16,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
   final _service = BookingService();
 
   String? _selectedType;
+  final TextEditingController _customTypeController = TextEditingController(); // New controller
   DateTime? _selectedDate;
   TimeOfDay? _selectedStartTime;
   TimeOfDay? _selectedEndTime;
@@ -33,6 +34,11 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       
       setState(() => _isLoading = true);
 
+      // Determine the final title (either from dropdown or custom field)
+      final String finalTitle = (_selectedType == "Other") 
+          ? _customTypeController.text.trim() 
+          : (_selectedType ?? "");
+
       final start = DateTime(
         _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
         _selectedStartTime!.hour, _selectedStartTime!.minute,
@@ -43,10 +49,9 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
         _selectedEndTime!.hour, _selectedEndTime!.minute,
       );
 
-      // Validation: End time must be after start time
       if (end.isBefore(start) || end.isAtSameMomentAs(start)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.errorOccurred)), // Or a specific "End time error" key
+          SnackBar(content: Text(loc.errorOccurred)), 
         );
         setState(() => _isLoading = false);
         return;
@@ -54,7 +59,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
 
       try {
         await _service.createBooking({
-          "title": _selectedType,
+          "title": finalTitle,
           "description": _noteController.text,
           "startTime": start.toIso8601String(),
           "endTime": end.toIso8601String(),
@@ -131,11 +136,12 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               _buildSectionLabel(loc.eventType),
               DropdownButtonFormField<String>(
                 value: _selectedType,
-                hint: Text(loc.selectEventType),
+                hint: Text(loc.selectEventType ?? "Select Event Type"),
                 items: [
                   DropdownMenuItem(value: "Marriage", child: Text(loc.marriageCeremony)),
                   DropdownMenuItem(value: "Baptism", child: Text(loc.baptism)),
                   DropdownMenuItem(value: "Prayer", child: Text(loc.prayerMeeting)),
+                  DropdownMenuItem(value: "Other", child: Text(loc.other ?? "Other")), // Added Other
                 ],
                 onChanged: (val) => setState(() => _selectedType = val),
                 decoration: InputDecoration(
@@ -149,6 +155,27 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                 ),
                 validator: (val) => val == null ? loc.fieldRequired : null,
               ),
+              
+              // Dynamic Custom Event Field
+              if (_selectedType == "Other") ...[
+                const SizedBox(height: 16),
+                _buildSectionLabel(loc.customEventName ?? "Event Name"),
+                TextFormField(
+                  controller: _customTypeController,
+                  decoration: InputDecoration(
+                    hintText: loc.enterEventName ?? "e.g. Anniversary, House Blessing",
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  validator: (val) => (_selectedType == "Other" && (val == null || val.isEmpty)) 
+                      ? loc.fieldRequired : null,
+                ),
+              ],
+              
               const SizedBox(height: 24),
 
               _buildSectionLabel(loc.selectDate),
@@ -190,7 +217,6 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                             if (t != null) {
                               setState(() {
                                 _selectedStartTime = t;
-                                // Auto-set end time to 1 hour later as a suggestion
                                 _selectedEndTime = TimeOfDay(hour: t.hour + 1, minute: t.minute);
                               });
                             }

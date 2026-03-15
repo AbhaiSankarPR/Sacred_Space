@@ -43,7 +43,13 @@ class AppDrawer extends StatelessWidget {
                       currentRoute == Routes.member ||
                       currentRoute == Routes.priest,
                 ),
-
+            _DrawerItem(
+                  icon: Icons.calendar_month,
+                  title: loc.parishCalendar,
+                  onTap:
+                      () => Navigator.pushNamed(context, Routes.parishCalendar),
+                  isSelected: currentRoute == Routes.parishCalendar,
+                ),
                 // BOOKINGS: Specialized label for Priest
                 _DrawerItem(
                   icon: Icons.bookmark_border_rounded,

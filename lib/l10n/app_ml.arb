@@ -245,5 +245,10 @@
   "selectTime": "സമയം തിരഞ്ഞെടുക്കുക",
   "endTimeError": "അവസാന സമയം തുടങ്ങുന്ന സമയത്തിന് ശേഷമായിരിക്കണം",
   "parishCalendar": "പള്ളി കലണ്ടർ",
-"churchSchedule": "പള്ളിയിലെ ചടങ്ങുകൾ"
+"churchSchedule": "പള്ളിയിലെ ചടങ്ങുകൾ",
+"other": "മറ്റുള്ളവ",
+  "customEventName": "ചടങ്ങിന്റെ പേര്",
+  "enterEventName": "ഉദാ: വാർഷികം, വീട് വെഞ്ചരിപ്പ്",
+  "parishCalendar": "പള്ളി കലണ്ടർ",
+  "events": "ചടങ്ങുകൾ"
 }

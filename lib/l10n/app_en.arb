@@ -245,5 +245,10 @@
   "startTime": "Start Time",
   "endTime": "End Time",
   "parishCalendar": "Parish Calendar",
-"churchSchedule": "Church Schedule"
+"churchSchedule": "Church Schedule",
+"other": "Other",
+  "customEventName": "Event Name",
+  "enterEventName": "e.g. Anniversary, House Blessing",
+  "parishCalendar": "Parish Calendar",
+  "events": "Events"
 }
