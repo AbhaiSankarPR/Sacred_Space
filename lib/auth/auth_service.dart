@@ -317,7 +317,21 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
-  
+  Future<void> changePassword({
+  required String currentPassword,
+  required String newPassword,
+}) async {
+  try {
+    // Assuming your backend route is /user/change-password
+    await apiService.post('/user/me/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+  } catch (e) {
+    // This will catch 401 (wrong current password) or other server errors
+    rethrow;
+  }
+}
 }
 
 class User {

@@ -44,9 +44,7 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.edit_note),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(loc.editProfileComingSoon)),
-              );
+             Navigator.pushNamed(context, Routes.editProfile);
             },
           ),
         ],

@@ -6,6 +6,7 @@ import '../screens/splash_screen.dart';
 import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
 import '../screens/complete_details_screen.dart';
+import '../settings/changePasswordScreen.dart';
 // Dashboard & Profile
 import '../dashboard/dashboard_screen.dart';
 import '../dashboard/profile_screen.dart';
@@ -24,6 +25,8 @@ import '../settings/settings_screen.dart';
 import '../settings/about_screen.dart';
 import '../settings/support_screen.dart';
 import '../screens/PrivacyPolicyScreen.dart';
+import '../screens/editProfile.dart';
+
 
 class Routes {
   // Authentication & Onboarding
@@ -31,6 +34,7 @@ class Routes {
   static const login = '/login';
   static const signup = '/signup';
   static const completeDetails = '/complete-details';
+  static const String changePassword = '/change-password';
 
   // Role-Based Dashboards (Both point to Dynamic Dashboard)
   static const member = '/member';
@@ -45,6 +49,7 @@ class Routes {
   static const emergency = '/emergency';
   static const events = '/events';
   static const gallery = '/gallery';
+  static const String editProfile = '/edit-profile'; 
 
   // Priest-Exclusive Features
   static const memberDirectory = '/priest/member-directory';
@@ -66,13 +71,14 @@ class Routes {
         login: (_) => const LoginScreen(),
         signup: (_) => const SignupScreen(),
         completeDetails: (_) => const CompleteDetailsScreen(),
-
+        changePassword: (context) => const ChangePasswordScreen(),
         // Unified Dashboard (Logic inside handles role differences)
         member: (_) => const DashboardScreen(),
         priest: (_) => const DashboardScreen(),
 
         // Profile & Personal Data
         profile: (_) => const ProfileScreen(),
+        editProfile: (_) => const EditProfileScreen(),
         // personalInfo: (_) => const PersonalInfoScreen(),
 
         // Shared Functional Routes
