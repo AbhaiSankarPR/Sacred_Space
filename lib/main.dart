@@ -11,7 +11,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// IMPORTANT: Global navigator key for navigation
 import 'core/navigator_key.dart';
 
 @pragma('vm:entry-point')
@@ -20,106 +19,107 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
 }
 
+// 1. UPDATED NAVIGATION HANDLER
+void handleNotificationNavigation(Map<String, dynamic> data) {
+  final String? type = data['type'];
+  final String? id = data['id'] ?? data['announcementId'] ?? data['eventId'] ?? data['bookingId'];
+
+  switch (type) {
+    case "ANNOUNCEMENT":
+      if (id != null) {
+        navigatorKey.currentState?.pushNamed(Routes.announcementDetail, arguments: id);
+      } else {
+        navigatorKey.currentState?.pushNamed(Routes.announcements);
+      }
+      break;
+
+    case "NEW_EVENT":
+      navigatorKey.currentState?.pushNamed(Routes.events);
+      break;
+
+    case "NEW_BOOKING_REQUEST":
+      // Priest navigates here to approve/reject
+      navigatorKey.currentState?.pushNamed(Routes.bookings);
+      break;
+
+    case "BOOKING_STATUS_UPDATE":
+      // Member navigates here to see confirmation
+      navigatorKey.currentState?.pushNamed(Routes.bookings);
+      break;
+
+    default:
+      debugPrint("Unknown notification type: $type");
+      // Fallback: send them to home or announcements
+      navigatorKey.currentState?.pushNamed(Routes.announcements);
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // 2. Handle Notification Clicks when app is TERMINATED (Closed)
-  RemoteMessage? initialMessage =
-      await FirebaseMessaging.instance.getInitialMessage();
+  // 2. Terminated State: Handle notification clicks
+  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
   if (initialMessage != null) {
-    final String? id = initialMessage.data['announcementId'];
-    if (id != null) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        navigatorKey.currentState?.pushNamed(
-          Routes.announcementDetail,
-          arguments: id,
-        );
-      });
-    }
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      handleNotificationNavigation(initialMessage.data);
+    });
   }
 
-  // 3. Foreground Notification Listener
+  // 3. Foreground State: Custom UI Popups
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-    // Added 'async' here
     final notification = message.notification;
     final data = message.data;
 
-    // --- SELF-NOTIFICATION CHECK ---
-    final String? senderId = message.data['senderId'];
-
-    // Fetch from Local Storage
+    // Self-notification check
+    final String? senderId = data['senderId'];
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? localUserId = prefs.getString('userId');
 
     if (senderId != null && localUserId != null && senderId == localUserId) {
-      debugPrint("Self-notification blocked.");
       return;
     }
-    // -------------------------------
 
     if (notification != null) {
       late OverlaySupportEntry notificationEntry;
-      void navigateToDetail() {
-        final String? id = data['announcementId'];
-        if (id != null) {
-          notificationEntry.dismiss();
-          navigatorKey.currentState?.pushNamed(
-            Routes.announcementDetail,
-            arguments: id,
-          );
-        }
-      }
+
+      Color background = const Color(0xFF5D3A99); // Default Purple
+      if (data['type'] == "BOOKING_STATUS_UPDATE") background = Colors.green;
+      if (data['type'] == "NEW_BOOKING_REQUEST") background = Colors.orange[800]!;
 
       notificationEntry = showSimpleNotification(
         Text(
-          notification.title ?? "New Announcement",
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          notification.title ?? "Sacred Space Update",
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         subtitle: Text(
           notification.body ?? "",
           style: const TextStyle(color: Colors.white, fontSize: 13),
         ),
         trailing: TextButton(
-          onPressed: navigateToDetail,
+          onPressed: () {
+            notificationEntry.dismiss();
+            handleNotificationNavigation(data);
+          },
           style: TextButton.styleFrom(
             backgroundColor: Colors.white.withOpacity(0.2),
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
           ),
-          child: const Text(
-            "VIEW",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          ),
+          child: const Text("VIEW", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
         ),
-        background: const Color(0xFF5D3A99),
+        background: background,
         duration: const Duration(seconds: 6),
       );
     }
   });
 
-  // 4. Background State: Handle notification clicks when app is MINIMIZED
+  // 4. Background State: Handle clicks when app is Minimized
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    final String? id = message.data['announcementId'];
-    if (id != null) {
-      navigatorKey.currentState?.pushNamed(
-        Routes.announcementDetail,
-        arguments: id,
-      );
-    } else {
-      navigatorKey.currentState?.pushNamed(Routes.announcements);
-    }
+    handleNotificationNavigation(message.data);
   });
 
-  // 5. Load Environment variables
   await dotenv.load(fileName: ".env");
 
   runApp(
