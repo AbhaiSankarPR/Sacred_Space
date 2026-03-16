@@ -10,14 +10,15 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Animation Setup
     _controller = AnimationController(
       vsync: this,
@@ -36,12 +37,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     // 2. Ensure the splash screen stays visible for at least 2-3 seconds for branding
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (!mounted) return;
 
     if (isLoggedIn) {
       final user = authService.currentUser!;
-      
+
       // 3. Check if profile is incomplete before going to dashboard
       if (user.isProfileIncomplete) {
         Navigator.pushReplacementNamed(context, Routes.completeDetails);
@@ -72,9 +73,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: isDark 
-              ? [const Color(0xFF1F1F1F), const Color(0xFF121212)]
-              : [const Color(0xFF5D3A99), const Color(0xFF9B59B6)],
+            colors:
+                isDark
+                    ? [const Color(0xFF1F1F1F), const Color(0xFF121212)]
+                    : [const Color(0xFF5D3A99), const Color(0xFF9B59B6)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -85,16 +87,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(
+                  24,
+                ), // Adjusted padding for the logo
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(isDark ? 0.05 : 0.2),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 2,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.church,
-                  size: 80,
-                  color: Colors.white,
+                child: Image.asset(
+                  'assets/Logo2.png', // Path to your asset
+                  width: 80, // Same size as your previous icon
+                  height: 80,
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 24),

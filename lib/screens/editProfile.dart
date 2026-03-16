@@ -156,10 +156,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               _buildSectionLabel("Residence Details", theme),
               _buildDropdownField(
   label: "Residence Type",
-  value: ["Own", "Rented", "Lease"].contains(_selectedResidence) 
+  value: ["OWNED", "RENTED"].contains(_selectedResidence) 
       ? _selectedResidence 
       : null,
-  items: ["Own", "Rented", "Lease"], // Ensure "Own" matches the logic above
+  items: ["OWNED", "RENTED"], // Ensure "Own" matches the logic above
   onChanged: (val) => setState(() => _selectedResidence = val),
   theme: theme,
 ),

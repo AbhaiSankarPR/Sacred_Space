@@ -193,7 +193,8 @@ class ProfileScreen extends StatelessWidget {
               _ProfileMenuTile(
                 icon: Icons.lock_outline,
                 title: loc.changePassword,
-                onTap: () {},
+                onTap: () {    Navigator.pushNamed(context, Routes.changePassword);
+},
               ),
             ]),
 

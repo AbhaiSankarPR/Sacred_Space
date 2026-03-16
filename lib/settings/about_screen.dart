@@ -16,7 +16,10 @@ class AboutScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(loc.aboutApp, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          loc.aboutApp,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -27,7 +30,7 @@ class AboutScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            
+
             // --- 1. App Logo & Version ---
             Container(
               padding: const EdgeInsets.all(20),
@@ -42,7 +45,12 @@ class AboutScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.church, size: 60, color: Color(0xFF5D3A99)),
+              child: Image.asset(
+                'assets/Logo2.png', // Or 'assets/images/logo.png'
+                height:
+                    80, // Slightly larger than the icon for better visibility
+                fit: BoxFit.contain,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
@@ -77,11 +85,7 @@ class AboutScreen extends StatelessWidget {
             Text(
               loc.appDescription,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                height: 1.5,
-                color: subTextColor,
-              ),
+              style: TextStyle(fontSize: 15, height: 1.5, color: subTextColor),
             ),
 
             const SizedBox(height: 40),
@@ -108,21 +112,30 @@ class AboutScreen extends StatelessWidget {
                     textColor: textColor,
                     onTap: () {},
                   ),
-                  Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey[200]),
+                  Divider(
+                    height: 1,
+                    color: isDark ? Colors.white10 : Colors.grey[200],
+                  ),
                   _LinkTile(
                     icon: Icons.privacy_tip_outlined,
                     title: loc.privacyPolicy,
                     textColor: textColor,
                     onTap: () {},
                   ),
-                  Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey[200]),
+                  Divider(
+                    height: 1,
+                    color: isDark ? Colors.white10 : Colors.grey[200],
+                  ),
                   _LinkTile(
                     icon: Icons.description_outlined,
                     title: loc.termsOfService,
                     textColor: textColor,
                     onTap: () {},
                   ),
-                  Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey[200]),
+                  Divider(
+                    height: 1,
+                    color: isDark ? Colors.white10 : Colors.grey[200],
+                  ),
                   _LinkTile(
                     icon: Icons.star_border_rounded,
                     title: loc.rateUs,
@@ -139,10 +152,7 @@ class AboutScreen extends StatelessWidget {
             Text(
               loc.allRightsReserved,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -179,10 +189,21 @@ class _LinkTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: textColor),
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          color: textColor,
+        ),
       ),
-      subtitle: subtitle != null ? Text(subtitle!, style: const TextStyle(fontSize: 12)) : null,
-      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey[400]),
+      subtitle:
+          subtitle != null
+              ? Text(subtitle!, style: const TextStyle(fontSize: 12))
+              : null,
+      trailing: Icon(
+        Icons.arrow_forward_ios,
+        size: 14,
+        color: Colors.grey[400],
+      ),
       onTap: onTap,
     );
   }

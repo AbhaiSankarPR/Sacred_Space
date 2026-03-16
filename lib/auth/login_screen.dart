@@ -38,51 +38,53 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
- Future<void> _login() async {
-  final l10n = AppLocalizations.of(context)!;
+  Future<void> _login() async {
+    final l10n = AppLocalizations.of(context)!;
 
-  // Validation checks...
-  if (_selectedChurchCode == null || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
-    _showSnackBar(l10n.fillFieldsError, isError: true);
-    return;
-  }
+    // Validation checks...
+    if (_selectedChurchCode == null ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      _showSnackBar(l10n.fillFieldsError, isError: true);
+      return;
+    }
 
-  setState(() => _loading = true);
+    setState(() => _loading = true);
 
-  try {
-    // SINGLE CALL: This now gets the token AND the user profile details
-    final user = await _authService.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-      churchCode: _selectedChurchCode!,
-    );
+    try {
+      // SINGLE CALL: This now gets the token AND the user profile details
+      final user = await _authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        churchCode: _selectedChurchCode!,
+      );
 
-    if (mounted) {
-      // THE GATEKEEPER LOGIC
-      if (user.isProfileIncomplete) {
-        // Redirect if fields like gender or phone are null
-        Navigator.pushReplacementNamed(context, Routes.completeDetails);
-      } else {
-        // Build route name (e.g., /member)
-        final String routeName = user.role.startsWith('/') ? user.role : '/${user.role}';
-        
-        Navigator.pushNamedAndRemoveUntil(
-          context, 
-          routeName, 
-          (_) => false,
-        );
+      if (mounted) {
+        // THE GATEKEEPER LOGIC
+        if (user.isProfileIncomplete) {
+          // Redirect if fields like gender or phone are null
+          Navigator.pushReplacementNamed(context, Routes.completeDetails);
+        } else {
+          // Build route name (e.g., /member)
+          final String routeName =
+              user.role.startsWith('/') ? user.role : '/${user.role}';
+
+          Navigator.pushNamedAndRemoveUntil(context, routeName, (_) => false);
+        }
       }
+    } catch (e) {
+      if (mounted) {
+        // Handling the potential "null" error string
+        String error =
+            e.toString().contains('null')
+                ? "Invalid Login Credentials"
+                : e.toString().replaceAll('Exception: ', '');
+        _showSnackBar(error, isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-  } catch (e) {
-    if (mounted) {
-      // Handling the potential "null" error string
-      String error = e.toString().contains('null') ? "Invalid Login Credentials" : e.toString().replaceAll('Exception: ', '');
-      _showSnackBar(error, isError: true);
-    }
-  } finally {
-    if (mounted) setState(() => _loading = false);
   }
-}
 
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -115,10 +117,15 @@ class _LoginScreenState extends State<LoginScreen> {
         labelStyle: TextStyle(color: hintColor),
         filled: true,
         fillColor: isDark ? Colors.grey[800] : Colors.grey[50],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: isDark ? Colors.white10 : Colors.grey[300]!),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white10 : Colors.grey[300]!,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -148,20 +155,44 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.church, color: Color(0xFF5D3A99), size: 60),
+                Image.asset(
+                  'assets/Logo2.png', // Or 'assets/images/logo.png'
+                  height:
+                      80, // Slightly larger than the icon for better visibility
+                  fit: BoxFit.contain,
+                ),
                 const SizedBox(height: 16),
-                Text(l10n.welcomeTitle, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor)),
+                Text(
+                  l10n.welcomeTitle,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
                 const SizedBox(height: 30),
 
                 Autocomplete<Map<String, String>>(
                   optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty) return const Iterable.empty();
-                    return _liveChurches.where((church) =>
-                        church['name']!.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                        church['code']!.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                    if (textEditingValue.text.isEmpty)
+                      return const Iterable.empty();
+                    return _liveChurches.where(
+                      (church) =>
+                          church['name']!.toLowerCase().contains(
+                            textEditingValue.text.toLowerCase(),
+                          ) ||
+                          church['code']!.toLowerCase().contains(
+                            textEditingValue.text.toLowerCase(),
+                          ),
+                    );
                   },
                   displayStringForOption: (option) => option['name']!,
-                  fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                  fieldViewBuilder: (
+                    context,
+                    controller,
+                    focusNode,
+                    onEditingComplete,
+                  ) {
                     return TextField(
                       controller: controller,
                       focusNode: focusNode,
@@ -169,7 +200,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: inputDecor(l10n.church, l10n.enterChurch),
                     );
                   },
-                  onSelected: (selection) => _selectedChurchCode = selection['code'],
+                  onSelected:
+                      (selection) => _selectedChurchCode = selection['code'],
                 ),
 
                 const SizedBox(height: 16),
@@ -193,12 +225,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF5D3A99),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: _loading ? null : _login,
-                    child: _loading
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(l10n.signIn, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child:
+                        _loading
+                            ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : Text(
+                              l10n.signIn,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -207,10 +254,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(l10n.noAccount, style: TextStyle(color: hintColor)),
                     TextButton(
-                      onPressed: () => Navigator.pushNamed(context, Routes.signup),
+                      onPressed:
+                          () => Navigator.pushNamed(context, Routes.signup),
                       child: Text(
                         l10n.signUp,
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF5D3A99)),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF5D3A99),
+                        ),
                       ),
                     ),
                   ],
