@@ -256,5 +256,20 @@
   "approveAnyway": "Approve Anyway",
   "church": "Church",
   "purposeNotes": "Purpose / Notes",
-  "ok": "OK"
+  "ok": "OK",
+  "slotsAvailable": "{count} slots available",
+  "@slotsAvailable": {
+    "description": "Label for max slots in event",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "eventCreatedSuccess": "Event created and members notified",
+  "registerNow": "Register Now",
+  "registeredGoing": "Going",
+  "ok": "OK",
+  "past": "Past Event",
+  "deleteEvent": "Delete Event",
+"cancel": "Cancel",
+"confirmDelete": "Are you sure you want to delete this event?"
 }

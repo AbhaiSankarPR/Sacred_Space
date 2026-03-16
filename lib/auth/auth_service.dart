@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart'; // Added Firebase d
 import './api_service.dart';
 import '../core/navigator_key.dart';
 import '../core/routes.dart';
+import '../events/event_model.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -332,7 +333,109 @@ class AuthService extends ChangeNotifier {
     rethrow;
   }
 }
+// --- EVENT SERVICE METHODS ---
+
+  /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
+  /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
+Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
+  try {
+    // Manually append the query parameter to the URL string
+    final response = await apiService.get('/event?type=$type');
+    
+    final List<dynamic> data = response.data;
+    return data.map((json) => EventData.fromJson(json)).toList();
+  } catch (e) {
+    debugPrint("Error fetching events: $e");
+    rethrow;
+  }
 }
+
+  /// 2. Fetch User Registrations (GET /event/my-registrations)
+  Future<List<EventData>> getMyRegistrations() async {
+    try {
+      final response = await apiService.get('/event/my-registrations');
+      final List<dynamic> data = response.data;
+      
+      // Based on your JSON, we map the inner 'event' object and set isRegistered to true
+      return data.map((reg) {
+        final event = EventData.fromJson(reg['event']);
+        event.isRegistered = true; 
+        return event;
+      }).toList();
+    } catch (e) {
+      debugPrint("Error fetching registrations: $e");
+      rethrow;
+    }
+  }
+
+  /// 3. Register for Event (POST /event/:eventId/register)
+  Future<bool> registerForEvent(String eventId) async {
+    try {
+      final response = await apiService.post('/event/$eventId/register', {});
+      // Return true if status is 200 or 201
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint("Error registering for event: $e");
+      return false;
+    }
+  }
+
+  /// 4. Create Event (POST /event) - Priest Only
+  Future<bool> createEvent(Map<String, dynamic> eventData) async {
+    try {
+      final response = await apiService.post('/event', eventData);
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      debugPrint("Error creating event: $e");
+      rethrow;
+    }
+  }
+  
+  /// 5. Delete Event (DELETE /event/:id) - Priest Only
+  Future<void> deleteEvent(String eventId) async {
+    try {
+      await apiService.delete('/event/$eventId');
+    } catch (e) {
+      debugPrint("Error deleting event: $e");
+      rethrow;
+    }
+  }
+
+/// 6. Unregister from Event (DELETE /event/:eventId/unregister)
+  Future<bool> unregisterFromEvent(String eventId) async {
+    try {
+      final response = await apiService.delete('/event/$eventId/unregister');
+      // Return true if status is 200 or 204
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      debugPrint("Error unregistering from event: $e");
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> getEventAttendees(String eventId) async {
+    try {
+      // Hits GET /event/:eventId/attendees
+      final response = await apiService.get('/event/$eventId/attendees');
+      
+      // The backend returns a List of registration objects
+      if (response.data is List) {
+        return response.data as List<dynamic>;
+      }
+      return [];
+    } catch (e) {
+      debugPrint("Error fetching event attendees: $e");
+      // Return empty list so the UI doesn't crash
+      return [];
+    }
+  }
+}
+// Add this inside the AuthService class in auth_service.dart
+
+// --- ADD THIS METHOD ---
+  
+  /// Fetches the list of participants for a specific event
+  
 
 class User {
   final String id, email, role, churchId, name, churchName, location;

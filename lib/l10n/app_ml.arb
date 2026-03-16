@@ -256,5 +256,22 @@
   "approveAnyway": "എന്തായാലും അനുവദിക്കുക",
   "church": "പള്ളി",
   "purposeNotes": "വിവരങ്ങൾ",
-  "ok": "ശരി"
+  "ok": "ശരി",
+  
+  "slotsAvailable": "{count} ഒഴിവുകൾ ലഭ്യമാണ്",
+  "@slotsAvailable": {
+    "description": "Label for max slots in event",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "eventCreatedSuccess": "ഇവന്റ് സൃഷ്ടിച്ചു, അംഗങ്ങളെ അറിയിച്ചിട്ടുണ്ട്",
+  "registerNow": "രജിസ്റ്റർ ചെയ്യുക",
+  "registeredGoing": "പങ്കെടുക്കുന്നു",
+  "ok": "ശരി",
+  "past": "കഴിഞ്ഞുപോയവ",
+  "deleteEvent": "ഇവന്റ് നീക്കം ചെയ്യുക",
+  "cancel": "റദ്ദാക്കുക",
+  "confirmDelete": "ഈ ഇവന്റ് നീക്കം ചെയ്യണമെന്ന് നിങ്ങൾക്ക് ഉറപ്പാണോ?"
+
 }
