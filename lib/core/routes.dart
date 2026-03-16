@@ -7,6 +7,7 @@ import '../auth/login_screen.dart';
 import '../auth/signup_screen.dart';
 import '../screens/complete_details_screen.dart';
 import '../settings/changePasswordScreen.dart';
+import '../settings/forgot_password_screen.dart';
 // Dashboard & Profile
 import '../dashboard/dashboard_screen.dart';
 import '../dashboard/profile_screen.dart';
@@ -28,6 +29,7 @@ import '../screens/PrivacyPolicyScreen.dart';
 import '../screens/editProfile.dart';
 
 
+
 class Routes {
   // Authentication & Onboarding
   static const splash = '/';
@@ -35,7 +37,7 @@ class Routes {
   static const signup = '/signup';
   static const completeDetails = '/complete-details';
   static const String changePassword = '/change-password';
-
+static const String forgotPassword = '/forgot-password';
   // Role-Based Dashboards (Both point to Dynamic Dashboard)
   static const member = '/member';
   static const priest = '/priest';
@@ -72,6 +74,7 @@ class Routes {
         signup: (_) => const SignupScreen(),
         completeDetails: (_) => const CompleteDetailsScreen(),
         changePassword: (context) => const ChangePasswordScreen(),
+        forgotPassword: (_) => const ForgotPasswordScreen(),
         // Unified Dashboard (Logic inside handles role differences)
         member: (_) => const DashboardScreen(),
         priest: (_) => const DashboardScreen(),

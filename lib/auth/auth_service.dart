@@ -319,20 +319,21 @@ class AuthService extends ChangeNotifier {
     }
   }
   Future<void> changePassword({
-  required String currentPassword,
-  required String newPassword,
-}) async {
-  try {
-    // Assuming your backend route is /user/change-password
-    await apiService.post('/user/me/change-password', {
-      'currentPassword': currentPassword,
-      'newPassword': newPassword,
-    });
-  } catch (e) {
-    // This will catch 401 (wrong current password) or other server errors
-    rethrow;
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      // Endpoint: /auth/change-password
+      // Method: POST
+      await apiService.post('/auth/change-password', {
+        'oldPassword': currentPassword, // Mapping UI 'current' to API 'old'
+        'newPassword': newPassword,
+      });
+    } catch (e) {
+      // Re-throw the error message for the UI to display
+      throw e.toString();
+    }
   }
-}
 // --- EVENT SERVICE METHODS ---
 
   /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
@@ -430,8 +431,6 @@ Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
     }
   }
 }
-// Add this inside the AuthService class in auth_service.dart
-
 // --- ADD THIS METHOD ---
   
   /// Fetches the list of participants for a specific event

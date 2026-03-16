@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
+import '../core/routes.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -12,10 +13,12 @@ class ChangePasswordScreen extends StatefulWidget {
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _authService = AuthService();
-  
-  final TextEditingController _currentPasswordController = TextEditingController();
+
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _obscureCurrent = true;
   bool _obscureNew = true;
@@ -36,21 +39,29 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // This calls the POST /auth/change-password endpoint
       await _authService.changePassword(
         currentPassword: _currentPasswordController.text,
         newPassword: _newPasswordController.text,
       );
 
       if (mounted) {
-        Navigator.pop(context);
+        // Success feedback
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Password changed successfully")),
+          const SnackBar(
+            content: Text("Password updated successfully"),
+            backgroundColor: Colors.green,
+          ),
         );
+        Navigator.pop(context); // Go back after success
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${e.toString()}")),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -112,7 +123,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ],
             ),
           ),
-          
+
           // --- FORM SECTION ---
           Expanded(
             child: SingleChildScrollView(
@@ -126,7 +137,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       label: "Current Password",
                       controller: _currentPasswordController,
                       obscure: _obscureCurrent,
-                      onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                      onToggle:
+                          () => setState(
+                            () => _obscureCurrent = !_obscureCurrent,
+                          ),
                       theme: theme,
                     ),
                     const SizedBox(height: 24),
@@ -135,7 +149,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         Expanded(child: Divider()),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 10),
-                          child: Text("NEW PASSWORD", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                          child: Text(
+                            "NEW PASSWORD",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ),
                         Expanded(child: Divider()),
                       ],
@@ -145,10 +166,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       label: "New Password",
                       controller: _newPasswordController,
                       obscure: _obscureNew,
-                      onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                      onToggle:
+                          () => setState(() => _obscureNew = !_obscureNew),
                       theme: theme,
                       validator: (val) {
-                        if (val == null || val.length < 6) return "Min. 6 characters required";
+                        if (val == null || val.length < 6)
+                          return "Min. 6 characters required";
                         return null;
                       },
                     ),
@@ -157,10 +180,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       label: "Confirm New Password",
                       controller: _confirmPasswordController,
                       obscure: _obscureConfirm,
-                      onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                      onToggle:
+                          () => setState(
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
                       theme: theme,
                       validator: (val) {
-                        if (val != _newPasswordController.text) return "Passwords do not match";
+                        if (val != _newPasswordController.text)
+                          return "Passwords do not match";
                         return null;
                       },
                     ),
@@ -173,14 +200,42 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF5D3A99),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
                           elevation: 2,
                         ),
-                        child: _isLoading 
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text("UPDATE PASSWORD", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        child:
+                            _isLoading
+                                ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                                : const Text(
+                                  "UPDATE PASSWORD",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, Routes.forgotPassword);
+                        },
+                        child: const Text(
+                          "Forgot Password?",
+                          style: TextStyle(
+                            color: Color(0xFF5D3A99),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
@@ -208,15 +263,29 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         labelText: label,
         labelStyle: TextStyle(color: theme.hintColor, fontSize: 14),
         filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-        prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: Color(0xFF5D3A99)),
+        fillColor:
+            isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        prefixIcon: const Icon(
+          Icons.lock_outline_rounded,
+          size: 20,
+          color: Color(0xFF5D3A99),
+        ),
         suffixIcon: IconButton(
-          icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey, size: 20),
+          icon: Icon(
+            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            color: Colors.grey,
+            size: 20,
+          ),
           onPressed: onToggle,
         ),
       ),
-      validator: validator ?? (val) => (val == null || val.isEmpty) ? "Field required" : null,
+      validator:
+          validator ??
+          (val) => (val == null || val.isEmpty) ? "Field required" : null,
     );
   }
 }
