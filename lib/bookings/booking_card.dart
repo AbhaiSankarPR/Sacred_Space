@@ -106,6 +106,40 @@ class BookingCard extends StatelessWidget {
     );
   }
 
+  // --- Handle Cancel (Member) ---
+  void _handleCancel(BuildContext context, AppLocalizations loc) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(loc.cancelRequest),
+        content: const Text("Are you sure you want to cancel this booking request? This action cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(loc.ok),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () async {
+              Navigator.pop(ctx); // Close dialog
+              try {
+                await BookingService().cancelBooking(data.id);
+                onRefresh(); // Refresh the list
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(loc.errorOccurred)),
+                  );
+                }
+              }
+            },
+            child: const Text("Confirm Cancel"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -187,7 +221,7 @@ class BookingCard extends StatelessWidget {
             Divider(height: 1, thickness: 0.5, color: theme.dividerColor),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: isPriest ? _buildPriestActions(context, loc, theme) : _buildMemberActions(loc, theme),
+              child: isPriest ? _buildPriestActions(context, loc, theme) : _buildMemberActions(context, loc, theme),
             ),
           ] else const SizedBox(height: 8),
         ],
@@ -347,15 +381,22 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMemberActions(AppLocalizations loc, ThemeData theme) {
+  Widget _buildMemberActions(BuildContext context, AppLocalizations loc, ThemeData theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         TextButton.icon(
-          onPressed: () {},
+          onPressed: () => _handleCancel(context, loc),
           icon: const Icon(Icons.cancel_outlined, size: 18, color: Colors.red),
-          label: Text(loc.cancelRequest, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 13)),
-          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16), backgroundColor: Colors.red.withValues(alpha: 0.05), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          label: Text(
+            loc.cancelRequest, 
+            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 13)
+          ),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16), 
+            backgroundColor: Colors.red.withValues(alpha: 0.05), 
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+          ),
         ),
       ],
     );

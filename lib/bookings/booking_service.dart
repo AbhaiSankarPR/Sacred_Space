@@ -60,6 +60,15 @@ class BookingService {
     return [];
   }
 }
+// DELETE: Cancel a booking request
+  Future<void> cancelBooking(String bookingId) async {
+    try {
+      await apiService.delete('/booking/$bookingId');
+    } catch (e) {
+      debugPrint('Cancel Booking Error: $e');
+      throw Exception('Failed to cancel booking');
+    }
+  }
   Future<List<BookingData>> fetchCalendarEvents(int month, int year) async {
   try {
     final response = await apiService.get('/booking/calendar', params: {
