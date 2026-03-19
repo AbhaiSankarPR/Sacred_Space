@@ -4,6 +4,7 @@ import 'core/theme_provider.dart';
 import 'core/locale_provider.dart';
 import 'core/routes.dart';
 import 'app.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'auth/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -56,6 +57,10 @@ void handleNotificationNavigation(Map<String, dynamic> data) {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
