@@ -161,7 +161,7 @@ class _EventsScreenState extends State<EventsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(loc.newBooking, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(loc.newEvent, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 TextField(controller: titleController, decoration: InputDecoration(labelText: loc.eventType)),
                 TextField(controller: locController, decoration: const InputDecoration(labelText: "Location")),
