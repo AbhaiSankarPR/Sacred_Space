@@ -6,6 +6,7 @@ import 'package:provider/provider.dart'; // Added Provider
 import '../auth/auth_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../widgets/app_drawer.dart';
+import 'package:marquee/marquee.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Changed to StatefulWidget
@@ -96,6 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           _buildSliverAppBar(context, user, loc, isPriest),
+          _buildLiveAnnouncementBar(context, loc),
           _buildDynamicMenuGrid(context, loc, isPriest),
           const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
@@ -284,6 +286,70 @@ _DashboardMenuItem(
       ),
     );
   }
+  Widget _buildLiveAnnouncementBar(BuildContext context, AppLocalizations loc) {
+  return SliverToBoxAdapter(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+      child: Container(
+        height: 45,
+        decoration: BoxDecoration(
+          color: Colors.white, // Or theme.cardColor
+          borderRadius: BorderRadius.circular(25), // Rounded pill shape
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Left "Label" Badge
+            Container(
+              margin: const EdgeInsets.only(left: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF5D3A99), Color(0xFF9B59B6)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                loc.announcements.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // The Marquee
+            Expanded(
+              child: Marquee(
+                text: "✨ New Parish feast dates announced! • Sunday School starts at 9 AM • Welcome our new members!    ",
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  color: Colors.grey[800],
+                ),
+                blankSpace: 50.0,
+                velocity: 40.0,
+                pauseAfterRound: const Duration(seconds: 2),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 }
 
 class _DashboardMenuItem extends StatelessWidget {
