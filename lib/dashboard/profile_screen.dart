@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
@@ -257,7 +258,10 @@ class ProfileScreen extends StatelessWidget {
 
  void _handleLogout(BuildContext context) async {
     // Get the token first so the backend can unregister it
-    String? token = await FirebaseMessaging.instance.getToken();
+    // String? token = await FirebaseMessaging.instance.getToken();
+    final prefs = await SharedPreferences.getInstance();
+                String? token = prefs.getString('deviceToken');
+print(token);
     AuthService().logout(token);
   }
 
