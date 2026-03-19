@@ -66,7 +66,7 @@ class AppDrawer extends StatelessWidget {
                   icon: Icons.campaign_outlined,
                   title: loc.announcements,
                   onTap:
-                      () => Navigator.pushReplacementNamed(
+                      () => Navigator.pushNamed(
                         context,
                         Routes.announcements,
                       ),
@@ -174,6 +174,7 @@ class AppDrawer extends StatelessWidget {
                 // 1. Get SharedPreferences instance
                 final prefs = await SharedPreferences.getInstance();
                 String? token = prefs.getString('deviceToken');
+print(token);
 
                 // 4. Pass the token to your updated logout method
                 await context.read<AuthService>().logout(token);
