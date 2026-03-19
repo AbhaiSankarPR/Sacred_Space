@@ -271,5 +271,6 @@
   "past": "Past Event",
   "deleteEvent": "Delete Event",
 "cancel": "Cancel",
-"confirmDelete": "Are you sure you want to delete this event?"
+"confirmDelete": "Are you sure you want to delete this event?",
+"newEvent":"New Event"
 }
