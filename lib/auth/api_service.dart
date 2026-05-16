@@ -16,6 +16,12 @@ class ApiService {
       receiveTimeout: const Duration(seconds: 10),
     ));
 
+    _dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      error: true,
+    ));
+
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         // Skip token for public endpoints like fetching churches
