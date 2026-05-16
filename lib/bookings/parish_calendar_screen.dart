@@ -14,7 +14,7 @@ class ParishCalendarScreen extends StatefulWidget {
 
 class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
   final BookingService _service = BookingService();
-  
+
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
@@ -51,10 +51,14 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
     setState(() => _isLoading = true);
     try {
       final events = await _service.fetchCalendarEvents(date.month, date.year);
-      
+
       Map<DateTime, List<BookingData>> grouped = {};
       for (var event in events) {
-        final dateKey = DateTime(event.startTime.year, event.startTime.month, event.startTime.day);
+        final dateKey = DateTime(
+          event.startTime.year,
+          event.startTime.month,
+          event.startTime.day,
+        );
         if (grouped[dateKey] == null) grouped[dateKey] = [];
         grouped[dateKey]!.add(event);
       }
@@ -79,7 +83,7 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
     final selectedEvents = _getEventsForDay(_selectedDay!);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, 
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(loc.parishCalendar),
         backgroundColor: const Color(0xFF5D3A99),
@@ -96,16 +100,21 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
               });
               _loadEvents(_focusedDay);
             },
-          )
+          ),
         ],
       ),
       body: Column(
         children: [
           _buildCalendarHeader(theme),
           Expanded(
-            child: _isLoading 
-              ? const Center(child: CircularProgressIndicator(color: Color(0xFF5D3A99)))
-              : _buildEventSection(selectedEvents, loc, theme),
+            child:
+                _isLoading
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF5D3A99),
+                      ),
+                    )
+                    : _buildEventSection(selectedEvents, loc, theme),
           ),
         ],
       ),
@@ -124,7 +133,7 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
-          )
+          ),
         ],
       ),
       child: TableCalendar(
@@ -158,7 +167,10 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
             color: const Color(0xFF5D3A99).withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
-          todayTextStyle: const TextStyle(color: Color(0xFF5D3A99), fontWeight: FontWeight.bold),
+          todayTextStyle: const TextStyle(
+            color: Color(0xFF5D3A99),
+            fontWeight: FontWeight.bold,
+          ),
           selectedDecoration: const BoxDecoration(
             color: Color(0xFF5D3A99),
             shape: BoxShape.circle,
@@ -169,18 +181,19 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
             if (events.isEmpty) return const SizedBox();
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: events.take(3).map((event) {
-                final booking = event as BookingData;
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 1),
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _getEventColor(booking.title),
-                  ),
-                );
-              }).toList(),
+              children:
+                  events.take(3).map((event) {
+                    final booking = event as BookingData;
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _getEventColor(booking.title),
+                      ),
+                    );
+                  }).toList(),
             );
           },
         ),
@@ -188,18 +201,28 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
           formatButtonVisible: false,
           titleCentered: true,
           titleTextStyle: TextStyle(
-            fontWeight: FontWeight.bold, 
-            fontSize: 18, 
-            color: theme.textTheme.titleLarge?.color
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: theme.textTheme.titleLarge?.color,
           ),
-          leftChevronIcon: Icon(Icons.chevron_left, color: theme.iconTheme.color),
-          rightChevronIcon: Icon(Icons.chevron_right, color: theme.iconTheme.color),
+          leftChevronIcon: Icon(
+            Icons.chevron_left,
+            color: theme.iconTheme.color,
+          ),
+          rightChevronIcon: Icon(
+            Icons.chevron_right,
+            color: theme.iconTheme.color,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildEventSection(List<BookingData> events, AppLocalizations loc, ThemeData theme) {
+  Widget _buildEventSection(
+    List<BookingData> events,
+    AppLocalizations loc,
+    ThemeData theme,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -208,20 +231,27 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
           child: Text(
             DateFormat('EEEE, MMMM d').format(_selectedDay!),
             style: TextStyle(
-              fontWeight: FontWeight.bold, 
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6) ?? Colors.grey, 
-              fontSize: 14
+              fontWeight: FontWeight.bold,
+              color:
+                  theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6) ??
+                  Colors.grey,
+              fontSize: 14,
             ),
           ),
         ),
         Expanded(
-          child: events.isEmpty
-              ? _buildEmptyState(loc)
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  itemCount: events.length,
-                  itemBuilder: (context, index) => _buildEventTile(events[index]),
-                ),
+          child:
+              events.isEmpty
+                  ? _buildEmptyState(loc)
+                  : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    itemCount: events.length,
+                    itemBuilder:
+                        (context, index) => _buildEventTile(events[index]),
+                  ),
         ),
       ],
     );
@@ -239,9 +269,11 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.2 : 0.03), 
-            blurRadius: 10, 
-            offset: const Offset(0, 4)
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.2 : 0.03,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -257,7 +289,10 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
                   width: 5,
                   decoration: BoxDecoration(
                     color: categoryColor,
-                    borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                    ),
                   ),
                 ),
                 Expanded(
@@ -272,14 +307,18 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
                             Text(
                               event.title,
                               style: TextStyle(
-                                fontWeight: FontWeight.bold, 
+                                fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: theme.textTheme.titleMedium?.color
+                                color: theme.textTheme.titleMedium?.color,
                               ),
                             ),
                             Text(
                               DateFormat.jm().format(event.startTime.toLocal()),
-                              style: TextStyle(color: categoryColor, fontWeight: FontWeight.bold, fontSize: 12),
+                              style: TextStyle(
+                                color: categoryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -287,9 +326,10 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
                         Text(
                           event.description,
                           style: TextStyle(
-                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7), 
-                            fontSize: 13, 
-                            height: 1.4
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.7),
+                            fontSize: 13,
+                            height: 1.4,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -306,121 +346,159 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
     );
   }
 
-  void _showDetailsSheet(BookingData data, AppLocalizations loc, ThemeData theme) {
+  void _showDetailsSheet(
+    BookingData data,
+    AppLocalizations loc,
+    ThemeData theme,
+  ) {
     final Color categoryColor = _getEventColor(data.title);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.dividerColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: categoryColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.church_rounded, color: categoryColor, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    data.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900, 
-                      fontSize: 20,
-                      color: theme.textTheme.titleLarge?.color
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: categoryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.church_rounded,
+                        color: categoryColor,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        data.title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                          color: theme.textTheme.titleLarge?.color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Divider(height: 32, color: theme.dividerColor),
+                _buildPopupDetailRow(
+                  Icons.calendar_today_rounded,
+                  loc.selectDate,
+                  DateFormat.yMMMMd().format(data.startTime),
+                  theme,
+                ),
+                _buildPopupDetailRow(
+                  Icons.access_time_filled_rounded,
+                  loc.startTime,
+                  "${DateFormat.jm().format(data.startTime.toLocal())} - ${DateFormat.jm().format(data.endTime.toLocal())}",
+                  theme,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  loc.purposeNotes,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.7,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  data.description,
+                  style: TextStyle(
+                    color: theme.textTheme.bodyMedium?.color,
+                    fontSize: 15,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5D3A99),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      loc.ok.toUpperCase(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
               ],
             ),
-            Divider(height: 32, color: theme.dividerColor),
-            _buildPopupDetailRow(Icons.calendar_today_rounded, loc.selectDate, DateFormat.yMMMMd().format(data.startTime), theme),
-            _buildPopupDetailRow(Icons.access_time_filled_rounded, loc.startTime, 
-                "${DateFormat.jm().format(data.startTime.toLocal())} - ${DateFormat.jm().format(data.endTime.toLocal())}", theme),
-            const SizedBox(height: 20),
-            Text(
-              loc.purposeNotes,
-              style: TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 14, 
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7)
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              data.description,
-              style: TextStyle(
-                color: theme.textTheme.bodyMedium?.color, 
-                fontSize: 15, 
-                height: 1.5
-              ),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5D3A99),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: Text(loc.ok.toUpperCase(), style:   TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
-  Widget _buildPopupDetailRow(IconData icon, String label, String value, ThemeData theme) {
+  Widget _buildPopupDetailRow(
+    IconData icon,
+    String label,
+    String value,
+    ThemeData theme,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-            Icon(icon, size: 18, color: Color(0xFF5D3A99)),
+          Icon(icon, size: 18, color: Color(0xFF5D3A99)),
           const SizedBox(width: 12),
           Text(
-            "$label: ", 
-            style: TextStyle(color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6), fontSize: 14)
+            "$label: ",
+            style: TextStyle(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+              fontSize: 14,
+            ),
           ),
           Expanded(
             child: Text(
-              value, 
+              value,
               style: TextStyle(
-                fontWeight: FontWeight.bold, 
+                fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: theme.textTheme.bodyLarge?.color
-              )
-            )
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
           ),
         ],
       ),
@@ -432,14 +510,18 @@ class _ParishCalendarScreenState extends State<ParishCalendarScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_note_outlined, size: 60, color: Colors.grey.withValues(alpha: 0.5)),
+          Icon(
+            Icons.event_note_outlined,
+            size: 60,
+            color: Colors.grey.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 12),
           Text(
-            loc.noBookingsFound, 
-            style:   TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)
+            loc.noBookingsFound,
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
           ),
         ],
       ),
-    ); 
+    );
   }
 }

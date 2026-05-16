@@ -285,8 +285,27 @@
 "requestFailed": "Failed to perform action",
 "copyId": "Copy ID",
 "idCopied": "ID copied to clipboard",
-"familyMembers": "Family Members"
-}
+"familyMembers": "Family Members",
 
- "errorOccurred": "An error occurred. Please try again."
+ "errorOccurred": "An error occurred. Please try again.",
+"eventCreatedSuccess": "Event created and members notified",
+  "pastEvent": "Past Event",
+  "deleteEvent": "Delete Event",
+  "confirmDelete": "Are you sure you want to delete this event?",
+  "newEvent": "New Event",
+  "familyConnections": "Family Connections",
+  "receivedRequests": "Received Requests",
+  "sentRequests": "Sent Requests",
+  "noRequests": "No requests found",
+  "addFamily": "Add Family Member",
+  "relation": "Relation",
+  "userId": "User ID",
+  "send": "Send",
+  "requestSent": "Request sent successfully",
+  "requestFailed": "Failed to perform action",
+  "copyId": "Copy ID",
+  "idCopied": "ID copied to clipboard",
+  "familyMembers": "Family Members",
+  "quickAccess": "Quick Access",
+  "errorOccurred": "An error occurred. Please try again."
 }

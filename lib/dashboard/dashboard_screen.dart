@@ -233,6 +233,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.blue,
               onTap: () => Navigator.pushNamed(context, Routes.profile),
             ),
+            _DashboardMenuItem(
+              title: loc.gallery,
+              icon: Icons.photo_library_outlined,
+              color: Colors.indigo,
+              onTap: () => Navigator.pushNamed(context, Routes.gallery),
+            ),
           ],
 
           // EMERGENCY (SHARED)
