@@ -113,19 +113,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool isPriest,
   ) {
     return SliverAppBar(
-      expandedHeight: 220.0,
+      expandedHeight: 260.0,
       pinned: true,
+      stretch: true,
       backgroundColor: const Color(0xFF5D3A99),
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.light,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+      ),
       flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF5D3A99), Color(0xFF9B59B6)],
+              colors: [Color(0xFF5D3A99), Color(0xFF7B1FA2)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
           ),
           child: SafeArea(
             child: Column(
@@ -138,12 +144,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   user.churchName,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
+                Text(
+                  "Welcome, ${user.name}",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _buildRoleBadge(loc, user.role),
               ],
             ),
@@ -204,15 +219,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () => Navigator.pushNamed(context, Routes.galleryAdmin),
             ),
           ],
-_DashboardMenuItem(
-              title: loc.events,
-              icon: Icons.calendar_month_outlined,
-              color: Colors.green,
-              onTap: () => Navigator.pushNamed(context, Routes.events),
-            ),
+          _DashboardMenuItem(
+            title: loc.events,
+            icon: Icons.calendar_month_outlined,
+            color: Colors.green,
+            onTap: () => Navigator.pushNamed(context, Routes.events),
+          ),
           // MEMBER-ONLY (EVENTS & PROFILE)
           if (!isPriest) ...[
-            
             _DashboardMenuItem(
               title: loc.myProfile,
               icon: Icons.person_outline,
@@ -238,6 +252,14 @@ _DashboardMenuItem(
               color: Colors.teal,
               onTap: () => Navigator.pushNamed(context, Routes.support),
             ),
+
+          // SETTINGS
+          _DashboardMenuItem(
+            title: loc.settings,
+            icon: Icons.settings_outlined,
+            color: Colors.blueGrey,
+            onTap: () => Navigator.pushNamed(context, Routes.settings),
+          ),
         ],
       ),
     );
@@ -286,70 +308,75 @@ _DashboardMenuItem(
       ),
     );
   }
+
   Widget _buildLiveAnnouncementBar(BuildContext context, AppLocalizations loc) {
-  return SliverToBoxAdapter(
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-      child: Container(
-        height: 45,
-        decoration: BoxDecoration(
-          color: Colors.white, // Or theme.cardColor
-          borderRadius: BorderRadius.circular(25), // Rounded pill shape
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Left "Label" Badge
-            Container(
-              margin: const EdgeInsets.only(left: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF5D3A99), Color(0xFF9B59B6)],
-                ),
-                borderRadius: BorderRadius.circular(20),
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+        child: Container(
+          height: 45,
+          decoration: BoxDecoration(
+            color: Colors.white, // Or theme.cardColor
+            borderRadius: BorderRadius.circular(25), // Rounded pill shape
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              child: Text(
-                loc.announcements.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+            ],
+          ),
+          child: Row(
+            children: [
+              // Left "Label" Badge
+              Container(
+                margin: const EdgeInsets.only(left: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF5D3A99), Color(0xFF9B59B6)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  loc.announcements.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            // The Marquee
-            Expanded(
-              child: Marquee(
-                text: "✨ New Parish feast dates announced! • Sunday School starts at 9 AM • Welcome our new members!    ",
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                  color: Colors.grey[800],
+              const SizedBox(width: 10),
+              // The Marquee
+              Expanded(
+                child: Marquee(
+                  text:
+                      "✨ New Parish feast dates announced! • Sunday School starts at 9 AM • Welcome our new members!    ",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                    color: Colors.grey[800],
+                  ),
+                  blankSpace: 50.0,
+                  velocity: 40.0,
+                  pauseAfterRound: const Duration(seconds: 2),
                 ),
-                blankSpace: 50.0,
-                velocity: 40.0,
-                pauseAfterRound: const Duration(seconds: 2),
               ),
-            ),
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.chevron_right, size: 16, color: Colors.grey),
-            ),
-          ],
+              const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _DashboardMenuItem extends StatelessWidget {
@@ -372,36 +399,52 @@ class _DashboardMenuItem extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: theme.cardColor,
-      elevation: 4,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              height: 50,
-              width: 50,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(isDark ? 0.15 : 0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                height: 56,
+                width: 56,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 30),
               ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : Colors.grey[800],
+              const SizedBox(height: 12),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white.withOpacity(0.9) : Colors.grey[800],
+                  letterSpacing: 0.2,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

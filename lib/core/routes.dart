@@ -30,9 +30,6 @@ import '../screens/editProfile.dart';
 import '../settings/family_connections_screen.dart';
 import '../screens/family_members_screen.dart';
 
-
-
-
 class Routes {
   // Authentication & Onboarding
   static const splash = '/';
@@ -40,7 +37,7 @@ class Routes {
   static const signup = '/signup';
   static const completeDetails = '/complete-details';
   static const String changePassword = '/change-password';
-static const String forgotPassword = '/forgot-password';
+  static const String forgotPassword = '/forgot-password';
   // Role-Based Dashboards (Both point to Dynamic Dashboard)
   static const member = '/member';
   static const priest = '/priest';
@@ -54,7 +51,7 @@ static const String forgotPassword = '/forgot-password';
   static const emergency = '/emergency';
   static const events = '/events';
   static const gallery = '/gallery';
-  static const String editProfile = '/edit-profile'; 
+  static const String editProfile = '/edit-profile';
 
   // Priest-Exclusive Features
   static const memberDirectory = '/priest/member-directory';
@@ -68,47 +65,46 @@ static const String forgotPassword = '/forgot-password';
   static const familyConnections = '/family-connections';
   static const familyMembers = '/family-members';
 
-
   static const announcementDetail = '/announcementdetail';
 
   static const parishCalendar = '/parish-calendar';
 
   static Map<String, WidgetBuilder> get map => {
-        // Auth & Splash
-        splash: (_) => const SplashScreen(),
-        login: (_) => const LoginScreen(),
-        signup: (_) => const SignupScreen(),
-        completeDetails: (_) => const CompleteDetailsScreen(),
-        changePassword: (context) => const ChangePasswordScreen(),
-        forgotPassword: (_) => const ForgotPasswordScreen(),
-        // Unified Dashboard (Logic inside handles role differences)
-        member: (_) => const DashboardScreen(),
-        priest: (_) => const DashboardScreen(),
+    // Auth & Splash
+    splash: (_) => const SplashScreen(),
+    login: (_) => const LoginScreen(),
+    signup: (_) => const SignupScreen(),
+    completeDetails: (_) => const CompleteDetailsScreen(),
+    changePassword: (context) => const ChangePasswordScreen(),
+    forgotPassword: (_) => const ForgotPasswordScreen(),
+    // Unified Dashboard (Logic inside handles role differences)
+    member: (_) => const DashboardScreen(),
+    priest: (_) => const DashboardScreen(),
 
-        // Profile & Personal Data
-        profile: (_) => const ProfileScreen(),
-        editProfile: (_) => const EditProfileScreen(),
-        // personalInfo: (_) => const PersonalInfoScreen(),
+    // Profile & Personal Data
+    profile: (_) => const ProfileScreen(),
+    editProfile: (_) => const EditProfileScreen(),
+    // personalInfo: (_) => const PersonalInfoScreen(),
 
-        // Shared Functional Routes
-        announcements: (_) => const AnnouncementsScreen(),
-        bookings: (_) => const BookingsScreen(),
-        newBooking: (_) => const NewBookingScreen(),
-        emergency: (_) => const EmergencyAlertsScreen(),
-        events: (_) => const EventsScreen(),
-        gallery: (_) => const GalleryScreen(),
+    // Shared Functional Routes
+    announcements: (_) => const AnnouncementsScreen(),
+    bookings: (_) => const BookingsScreen(),
+    newBooking: (_) => const NewBookingScreen(),
+    emergency: (_) => const EmergencyAlertsScreen(),
+    events: (_) => const EventsScreen(),
+    gallery: (_) => const GalleryScreen(),
 
-        // Priest-Only Routes
-        memberDirectory: (_) => const MemberDirectoryScreen(),
-        galleryAdmin: (_) => const GalleryManagementScreen(),
+    // Priest-Only Routes
+    memberDirectory: (_) => const MemberDirectoryScreen(),
+    galleryAdmin: (_) => const GalleryManagementScreen(),
 
-        // Info & Settings
-        settings: (_) => const SettingsScreen(),
-        about: (_) => const AboutScreen(),
-        support: (_) => const SupportScreen(),
-        privacyPolicy: (_) => const PrivacyPolicyScreen(),
-        familyConnections: (_) => const FamilyConnectionsScreen(),
-        familyMembers: (_) => const FamilyMembersScreen(),
-parishCalendar: (_) => const ParishCalendarScreen(),
-      };
+    // Info & Settings
+    settings: (_) => const SettingsScreen(),
+    about: (_) => const AboutScreen(),
+    support: (_) => const SupportScreen(),
+    privacyPolicy: (_) => const PrivacyPolicyScreen(),
+    familyConnections: (_) => const FamilyConnectionsScreen(),
+    familyMembers: (_) => const FamilyMembersScreen(),
+    parishCalendar: (_) => const ParishCalendarScreen(),
+  };
 }

@@ -42,17 +42,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     if (user?.residenceType == "OWNED" || user?.residenceType == "Own") {
-  _selectedResidence = "Own";
-} else if (user?.residenceType == "RENTED" || user?.residenceType == "Rented") {
-  _selectedResidence = "Rented";
-} else {
-  _selectedResidence = user?.residenceType;
-}
+      _selectedResidence = "Own";
+    } else if (user?.residenceType == "RENTED" ||
+        user?.residenceType == "Rented") {
+      _selectedResidence = "Rented";
+    } else {
+      _selectedResidence = user?.residenceType;
+    }
 
     // 2. Initialize Controllers
     _nameController = TextEditingController(text: user?.name ?? "");
     _phoneController = TextEditingController(text: user?.phone ?? "");
-    _addressController = TextEditingController(text: user?.permanentAddress ?? "");
+    _addressController = TextEditingController(
+      text: user?.permanentAddress ?? "",
+    );
     _houseNoController = TextEditingController(text: user?.houseNumber ?? "");
     _houseNameController = TextEditingController(text: user?.houseName ?? "");
 
@@ -98,9 +101,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${e.toString()}")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -133,7 +136,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionLabel("Basic Information", theme),
-              _buildTextField(label: "Name", controller: _nameController, icon: Icons.person_outline, theme: theme),
+              _buildTextField(
+                label: "Name",
+                controller: _nameController,
+                icon: Icons.person_outline,
+                theme: theme,
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -151,28 +159,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildTextField(label: "Phone", controller: _phoneController, icon: Icons.phone_android, theme: theme, keyboardType: TextInputType.phone),
+              _buildTextField(
+                label: "Phone",
+                controller: _phoneController,
+                icon: Icons.phone_android,
+                theme: theme,
+                keyboardType: TextInputType.phone,
+              ),
               const SizedBox(height: 32),
               _buildSectionLabel("Residence Details", theme),
               _buildDropdownField(
-  label: "Residence Type",
-  value: ["OWNED", "RENTED"].contains(_selectedResidence) 
-      ? _selectedResidence 
-      : null,
-  items: ["OWNED", "RENTED"], // Ensure "Own" matches the logic above
-  onChanged: (val) => setState(() => _selectedResidence = val),
-  theme: theme,
-),
+                label: "Residence Type",
+                value:
+                    ["OWNED", "RENTED"].contains(_selectedResidence)
+                        ? _selectedResidence
+                        : null,
+                items: [
+                  "OWNED",
+                  "RENTED",
+                ], // Ensure "Own" matches the logic above
+                onChanged: (val) => setState(() => _selectedResidence = val),
+                theme: theme,
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildTextField(label: "House No", controller: _houseNoController, theme: theme)),
+                  Expanded(
+                    child: _buildTextField(
+                      label: "House No",
+                      controller: _houseNoController,
+                      theme: theme,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildTextField(label: "House Name", controller: _houseNameController, theme: theme)),
+                  Expanded(
+                    child: _buildTextField(
+                      label: "House Name",
+                      controller: _houseNameController,
+                      theme: theme,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              _buildTextField(label: "Permanent Address", controller: _addressController, theme: theme, maxLines: 3),
+              _buildTextField(
+                label: "Permanent Address",
+                controller: _addressController,
+                theme: theme,
+                maxLines: 3,
+              ),
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
@@ -182,12 +217,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5D3A99),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
-                  child: _isSaving
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("SAVE PROFILE", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  child:
+                      _isSaving
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                            "SAVE PROFILE",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
                 ),
               ),
             ],
@@ -202,11 +246,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildSectionLabel(String label, ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF5D3A99))),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF5D3A99),
+        ),
+      ),
     );
   }
 
-  Widget _buildTextField({required String label, required TextEditingController controller, IconData? icon, required ThemeData theme, int maxLines = 1, TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    IconData? icon,
+    required ThemeData theme,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
@@ -215,28 +273,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: theme.hintColor),
-        prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF5D3A99), size: 20) : null,
+        prefixIcon:
+            icon != null
+                ? Icon(icon, color: const Color(0xFF5D3A99), size: 20)
+                : null,
         filled: true,
-        fillColor: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        fillColor:
+            theme.brightness == Brightness.dark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
       ),
       validator: (val) => (val == null || val.isEmpty) ? "Required" : null,
     );
   }
 
-  Widget _buildDropdownField({required String label, required String? value, required List<String> items, required Function(String?) onChanged, required ThemeData theme}) {
+  Widget _buildDropdownField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+    required ThemeData theme,
+  }) {
     return DropdownButtonFormField<String>(
       value: value,
       dropdownColor: theme.cardColor,
       style: TextStyle(color: theme.textTheme.bodyLarge?.color),
-      items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      items:
+          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: theme.hintColor),
         filled: true,
-        fillColor: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        fillColor:
+            theme.brightness == Brightness.dark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
       ),
       validator: (val) => (val == null || val.isEmpty) ? "Required" : null,
     );
@@ -256,7 +336,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
         decoration: BoxDecoration(
-          color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.grey[100],
+          color:
+              theme.brightness == Brightness.dark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -265,7 +348,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Text("DOB", style: TextStyle(fontSize: 12, color: theme.hintColor)),
             const SizedBox(height: 4),
             Text(
-              _selectedDob == null ? "Select Date" : DateFormat.yMd().format(_selectedDob!),
+              _selectedDob == null
+                  ? "Select Date"
+                  : DateFormat.yMd().format(_selectedDob!),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: theme.textTheme.bodyLarge?.color,

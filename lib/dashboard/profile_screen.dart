@@ -9,6 +9,7 @@ import '../widgets/app_drawer.dart';
 import '../screens/aboutUsScreen.dart';
 import '../screens/personal_info_screen.dart';
 import '../screens/PrivacyPolicyScreen.dart';
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -46,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.edit_note),
             onPressed: () {
-             Navigator.pushNamed(context, Routes.editProfile);
+              Navigator.pushNamed(context, Routes.editProfile);
             },
           ),
         ],
@@ -150,12 +151,15 @@ class ProfileScreen extends StatelessWidget {
                   GestureDetector(
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: user.id));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(loc.idCopied)),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(loc.idCopied)));
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -165,7 +169,11 @@ class ProfileScreen extends StatelessWidget {
                         children: [
                           Text(
                             "${loc.userId}: ${user.id.substring(0, 8)}...",
-                            style: TextStyle(fontSize: 12, color: subTextColor, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: subTextColor,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Icon(Icons.copy, size: 14, color: subTextColor),
@@ -222,8 +230,9 @@ class ProfileScreen extends StatelessWidget {
               _ProfileMenuTile(
                 icon: Icons.lock_outline,
                 title: loc.changePassword,
-                onTap: () {    Navigator.pushNamed(context, Routes.changePassword);
-},
+                onTap: () {
+                  Navigator.pushNamed(context, Routes.changePassword);
+                },
               ),
             ]),
 
@@ -284,12 +293,12 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
- void _handleLogout(BuildContext context) async {
+  void _handleLogout(BuildContext context) async {
     // Get the token first so the backend can unregister it
     // String? token = await FirebaseMessaging.instance.getToken();
     final prefs = await SharedPreferences.getInstance();
-                String? token = prefs.getString('deviceToken');
-print(token);
+    String? token = prefs.getString('deviceToken');
+    print(token);
     AuthService().logout(token);
   }
 

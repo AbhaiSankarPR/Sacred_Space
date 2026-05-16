@@ -31,27 +31,33 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
         _selectedDate != null &&
         _selectedStartTime != null &&
         _selectedEndTime != null) {
-      
       setState(() => _isLoading = true);
 
-      final String finalTitle = (_selectedType == "Other") 
-          ? _customTypeController.text.trim() 
-          : (_selectedType ?? "");
+      final String finalTitle =
+          (_selectedType == "Other")
+              ? _customTypeController.text.trim()
+              : (_selectedType ?? "");
 
       final start = DateTime(
-        _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
-        _selectedStartTime!.hour, _selectedStartTime!.minute,
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
+        _selectedStartTime!.hour,
+        _selectedStartTime!.minute,
       );
 
       final end = DateTime(
-        _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
-        _selectedEndTime!.hour, _selectedEndTime!.minute,
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
+        _selectedEndTime!.hour,
+        _selectedEndTime!.minute,
       );
 
       if (end.isBefore(start) || end.isAtSameMomentAs(start)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.errorOccurred)), 
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(loc.errorOccurred)));
         setState(() => _isLoading = false);
         return;
       }
@@ -68,9 +74,9 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
         if (mounted) _showSuccessDialog(loc);
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.errorOccurred)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(loc.errorOccurred)));
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -83,34 +89,48 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: theme.dialogBackgroundColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 60),
-            const SizedBox(height: 20),
-            Text(loc.requestSent,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: theme.textTheme.titleLarge?.color)),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5D3A99),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor: theme.dialogBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green, size: 60),
+                const SizedBox(height: 20),
+                Text(
+                  loc.requestSent,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: theme.textTheme.titleLarge?.color,
+                  ),
                 ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pop(context);
-                },
-                child: Text(loc.ok, style: const TextStyle(color: Colors.white)),
-              ),
-            )
-          ],
-        ),
-      ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5D3A99),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      loc.ok,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
     );
   }
 
@@ -141,17 +161,32 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                 dropdownColor: theme.cardColor,
                 value: _selectedType,
                 style: TextStyle(color: theme.textTheme.bodyLarge?.color),
-                hint: Text(loc.selectEventType ?? "Select Event Type", style: TextStyle(color: theme.hintColor)),
+                hint: Text(
+                  loc.selectEventType ?? "Select Event Type",
+                  style: TextStyle(color: theme.hintColor),
+                ),
                 items: [
-                  DropdownMenuItem(value: "Marriage", child: Text(loc.marriageCeremony)),
+                  DropdownMenuItem(
+                    value: "Marriage",
+                    child: Text(loc.marriageCeremony),
+                  ),
                   DropdownMenuItem(value: "Baptism", child: Text(loc.baptism)),
-                  DropdownMenuItem(value: "Prayer", child: Text(loc.prayerMeeting)),
-                  DropdownMenuItem(value: "Other", child: Text(loc.other ?? "Other")),
+                  DropdownMenuItem(
+                    value: "Prayer",
+                    child: Text(loc.prayerMeeting),
+                  ),
+                  DropdownMenuItem(
+                    value: "Other",
+                    child: Text(loc.other ?? "Other"),
+                  ),
                 ],
                 onChanged: (val) => setState(() => _selectedType = val),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                  fillColor:
+                      theme.brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.grey[100],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -160,7 +195,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                 ),
                 validator: (val) => val == null ? loc.fieldRequired : null,
               ),
-              
+
               if (_selectedType == "Other") ...[
                 const SizedBox(height: 16),
                 _buildSectionLabel(loc.customEventName ?? "Event Name", theme),
@@ -168,29 +203,39 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                   controller: _customTypeController,
                   style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
-                    hintText: loc.enterEventName ?? "e.g. Anniversary, House Blessing",
+                    hintText:
+                        loc.enterEventName ??
+                        "e.g. Anniversary, House Blessing",
                     hintStyle: TextStyle(color: theme.hintColor),
                     filled: true,
-                    fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                    fillColor:
+                        theme.brightness == Brightness.dark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.grey[100],
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  validator: (val) => (_selectedType == "Other" && (val == null || val.isEmpty)) 
-                      ? loc.fieldRequired : null,
+                  validator:
+                      (val) =>
+                          (_selectedType == "Other" &&
+                                  (val == null || val.isEmpty))
+                              ? loc.fieldRequired
+                              : null,
                 ),
               ],
-              
+
               const SizedBox(height: 24),
 
               _buildSectionLabel(loc.selectDate, theme),
               _buildPickerTile(
                 theme: theme,
                 label: loc.selectDate,
-                value: _selectedDate == null 
-                    ? null 
-                    : DateFormat.yMMMd(locale).format(_selectedDate!),
+                value:
+                    _selectedDate == null
+                        ? null
+                        : DateFormat.yMMMd(locale).format(_selectedDate!),
                 icon: Icons.calendar_today_rounded,
                 isFullWidth: true,
                 onTap: () async {
@@ -225,7 +270,10 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                             if (t != null) {
                               setState(() {
                                 _selectedStartTime = t;
-                                _selectedEndTime = TimeOfDay(hour: t.hour + 1, minute: t.minute);
+                                _selectedEndTime = TimeOfDay(
+                                  hour: t.hour + 1,
+                                  minute: t.minute,
+                                );
                               });
                             }
                           },
@@ -247,7 +295,8 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                           onTap: () async {
                             final t = await showTimePicker(
                               context: context,
-                              initialTime: _selectedStartTime ?? TimeOfDay.now(),
+                              initialTime:
+                                  _selectedStartTime ?? TimeOfDay.now(),
                             );
                             if (t != null) setState(() => _selectedEndTime = t);
                           },
@@ -267,14 +316,19 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                   hintText: loc.describeEvent,
                   hintStyle: TextStyle(color: theme.hintColor),
                   filled: true,
-                  fillColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                  fillColor:
+                      theme.brightness == Brightness.dark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.grey[100],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                 ),
                 maxLines: 4,
-                validator: (val) => (val == null || val.isEmpty) ? loc.fieldRequired : null,
+                validator:
+                    (val) =>
+                        (val == null || val.isEmpty) ? loc.fieldRequired : null,
               ),
               const SizedBox(height: 40),
 
@@ -286,15 +340,23 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5D3A99),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(loc.submitRequest.toUpperCase(), 
-                          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  child:
+                      _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                            loc.submitRequest.toUpperCase(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -307,7 +369,11 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         label,
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.textTheme.titleMedium?.color),
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: theme.textTheme.titleMedium?.color,
+        ),
       ),
     );
   }
@@ -333,7 +399,10 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
           color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasValue ? const Color(0xFF5D3A99).withOpacity(0.3) : Colors.transparent,
+            color:
+                hasValue
+                    ? const Color(0xFF5D3A99).withOpacity(0.3)
+                    : Colors.transparent,
             width: 1,
           ),
         ),
@@ -345,9 +414,10 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
               child: Text(
                 value ?? label,
                 style: TextStyle(
-                  color: hasValue 
-                      ? theme.textTheme.bodyLarge?.color 
-                      : theme.hintColor,
+                  color:
+                      hasValue
+                          ? theme.textTheme.bodyLarge?.color
+                          : theme.hintColor,
                   fontWeight: hasValue ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
                 ),

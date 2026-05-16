@@ -20,9 +20,7 @@ class FamilyMembersScreen extends StatelessWidget {
         relatedUser: RelatedUser(
           id: "1884b946-ac8a-44d9-ac2e-d46289de51da",
           role: "MEMBER",
-          profile: FamilyProfile(
-            name: "Akhil",
-          ),
+          profile: FamilyProfile(name: "Akhil"),
         ),
       ),
       FamilyConnection(
@@ -30,19 +28,19 @@ class FamilyMembersScreen extends StatelessWidget {
         relatedUser: RelatedUser(
           id: "7b5bb0bf-5cdc-460b-aa3b-d8dbbfe751c3",
           role: "MEMBER",
-          profile: FamilyProfile(
-            name: "Anjali",
-          ),
+          profile: FamilyProfile(name: "Anjali"),
         ),
       ),
     ];
 
-    final connections = (user?.familyConnections.isNotEmpty ?? false)
-        ? user!.familyConnections
-        : dummyConnections;
+    final connections =
+        (user?.familyConnections.isNotEmpty ?? false)
+            ? user!.familyConnections
+            : dummyConnections;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F7),
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F7),
       appBar: AppBar(
         title: Text(loc.familyMembers),
         centerTitle: true,
@@ -57,7 +55,9 @@ class FamilyMembersScreen extends StatelessWidget {
           final conn = connections[index];
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             elevation: 2,
             child: ListTile(
               leading: CircleAvatar(
@@ -77,7 +77,10 @@ class FamilyMembersScreen extends StatelessWidget {
                 ),
                 child: Text(
                   conn.relatedUser.role?.toUpperCase() ?? "MEMBER",
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

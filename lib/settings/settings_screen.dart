@@ -58,7 +58,8 @@ class SettingsScreen extends StatelessWidget {
             _SettingsTile(
               icon: Icons.family_restroom,
               title: loc.familyConnections,
-              onTap: () => Navigator.pushNamed(context, Routes.familyConnections),
+              onTap:
+                  () => Navigator.pushNamed(context, Routes.familyConnections),
             ),
             _SettingsTile(
               icon: Icons.notifications_none,
@@ -91,8 +92,13 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.language,
               title: loc.language,
               trailing: Text(
-                localeProvider.locale.languageCode == 'en' ? "English" : "മലയാളം",
-                style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                localeProvider.locale.languageCode == 'en'
+                    ? "English"
+                    : "മലയാളം",
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               onTap: () => _showLanguageDialog(context, localeProvider),
             ),
@@ -127,34 +133,43 @@ class SettingsScreen extends StatelessWidget {
   void _showLanguageDialog(BuildContext context, LocaleProvider provider) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("Select Language / ഭാഷ"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.language, color: Colors.blue),
-              title: const Text("English"),
-              trailing: provider.locale.languageCode == 'en' ? const Icon(Icons.check, color: Colors.green) : null,
-              onTap: () {
-                provider.setLocale(const Locale('en'));
-                Navigator.pop(context);
-              },
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.language, color: Colors.red),
-              title: const Text("മലയാളം"),
-              trailing: provider.locale.languageCode == 'ml' ? const Icon(Icons.check, color: Colors.green) : null,
-              onTap: () {
-                provider.setLocale(const Locale('ml'));
-                Navigator.pop(context);
-              },
+            title: const Text("Select Language / ഭാഷ"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.language, color: Colors.blue),
+                  title: const Text("English"),
+                  trailing:
+                      provider.locale.languageCode == 'en'
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+                  onTap: () {
+                    provider.setLocale(const Locale('en'));
+                    Navigator.pop(context);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.language, color: Colors.red),
+                  title: const Text("മലയാളം"),
+                  trailing:
+                      provider.locale.languageCode == 'ml'
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+                  onTap: () {
+                    provider.setLocale(const Locale('ml'));
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -225,7 +240,9 @@ class _SettingsTile extends StatelessWidget {
           color: isDark ? Colors.white : Colors.black87,
         ),
       ),
-      trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+      trailing:
+          trailing ??
+          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
       onTap: onTap,
     );
   }

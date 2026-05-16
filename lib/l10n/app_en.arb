@@ -287,4 +287,6 @@
 "idCopied": "ID copied to clipboard",
 "familyMembers": "Family Members"
 }
-
+
+ "errorOccurred": "An error occurred. Please try again."
+}
