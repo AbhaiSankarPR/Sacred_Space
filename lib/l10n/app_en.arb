@@ -307,5 +307,10 @@
   "idCopied": "ID copied to clipboard",
   "familyMembers": "Family Members",
   "quickAccess": "Quick Access",
+  "signupRequests": "Signup Requests",
+  "noSignupRequests": "No pending signup requests",
+  "accept": "Accept",
+  "decline": "Decline",
+  "signupRequestHandled": "Signup request handled successfully",
   "errorOccurred": "An error occurred. Please try again."
 }
