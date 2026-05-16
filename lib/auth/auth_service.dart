@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,7 @@ import './api_service.dart';
 import '../core/navigator_key.dart';
 import '../core/routes.dart';
 import '../events/event_model.dart';
+import '../settings/family_request_model.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -21,53 +23,55 @@ class AuthService extends ChangeNotifier {
     initializeTokenListeners();
   }
   Future<void> checkPermissionsAndSync() async {
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  // 1. Get CURRENT settings (this does NOT show a popup)
-  NotificationSettings settings = await messaging.getNotificationSettings();
-  String currentStatus = settings.authorizationStatus.toString();
-  
-  // 2. Get LAST SAVED settings and token
-  String? lastStatus = prefs.getString('last_notification_status');
-  String? lastSyncedToken = prefs.getString('lastSyncedToken');
+    // 1. Get CURRENT settings (this does NOT show a popup)
+    NotificationSettings settings = await messaging.getNotificationSettings();
+    String currentStatus = settings.authorizationStatus.toString();
 
-  // 3. Get the current token
-  String? currentToken = await messaging.getToken();
+    // 2. Get LAST SAVED settings and token
+    String? lastStatus = prefs.getString('last_notification_status');
+    String? lastSyncedToken = prefs.getString('lastSyncedToken');
 
-  // 4. CHECK FOR CHANGES
-  // We sync if: Status changed OR the token itself changed
-  bool hasStatusChanged = currentStatus != lastStatus;
-  bool hasTokenChanged = currentToken != lastSyncedToken;
+    // 3. Get the current token
+    String? currentToken = await messaging.getToken();
 
-  if (hasStatusChanged || hasTokenChanged) {
-    debugPrint("Notification Change Detected. Syncing...");
+    // 4. CHECK FOR CHANGES
+    // We sync if: Status changed OR the token itself changed
+    bool hasStatusChanged = currentStatus != lastStatus;
+    bool hasTokenChanged = currentToken != lastSyncedToken;
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-        settings.authorizationStatus == AuthorizationStatus.provisional) {
-      
-      if (currentToken != null && _currentUser != null) {
-        // Sync with backend
-        await syncDeviceToken(currentToken);
-        
-        // Update local storage to remember this state
-        await prefs.setString('last_notification_status', currentStatus);
-        await prefs.setString('lastSyncedToken', currentToken);
-        await prefs.setString('deviceToken', currentToken); // Keep your original key too
+    if (hasStatusChanged || hasTokenChanged) {
+      debugPrint("Notification Change Detected. Syncing...");
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        if (currentToken != null && _currentUser != null) {
+          // Sync with backend
+          await syncDeviceToken(currentToken);
+
+          // Update local storage to remember this state
+          await prefs.setString('last_notification_status', currentStatus);
+          await prefs.setString('lastSyncedToken', currentToken);
+          await prefs.setString(
+            'deviceToken',
+            currentToken,
+          ); // Keep your original key too
+        }
       }
-    } 
-    // Handle the case where they REVOKED permission (Optional but recommended)
-    else if (settings.authorizationStatus == AuthorizationStatus.denied) {
-       if (lastSyncedToken != null) {
-         await unregisterDevice(lastSyncedToken);
-         await prefs.remove('last_notification_status');
-         await prefs.remove('lastSyncedToken');
-       }
+      // Handle the case where they REVOKED permission (Optional but recommended)
+      else if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        if (lastSyncedToken != null) {
+          await unregisterDevice(lastSyncedToken);
+          await prefs.remove('last_notification_status');
+          await prefs.remove('lastSyncedToken');
+        }
+      }
+    } else {
+      debugPrint("Notifications in sync. No network call needed.");
     }
-  } else {
-    debugPrint("Notifications in sync. No network call needed.");
   }
-}
 
   // Restores session from local storage and triggers sync
   Future<bool> tryAutoLogin() async {
@@ -127,22 +131,24 @@ class AuthService extends ChangeNotifier {
     required String churchCode,
     String? deviceToken,
   }) async {
-    final response = await apiService.post('/auth/login', {
-      'email': email,
-      'password': password,
-      'churchId': churchCode,
-      if (deviceToken != null) 'deviceToken': deviceToken,
-    });
+    try {
+      final response = await apiService.post('/auth/login', {
+        'email': email,
+        'password': password,
+        'churchId': churchCode,
+        if (deviceToken != null) 'deviceToken': deviceToken,
+      });
 
-    final user = User.fromJson(response.data['user']);
-    await _saveAuthData(response.data['accessToken'], user);
+      final user = User.fromJson(response.data['user']);
+      await _saveAuthData(response.data['accessToken'], user);
 
-    // Sync notification settings after login
-    // if (deviceToken != null) {
-    //   syncDeviceToken(deviceToken);
-    // }
-
-    return user;
+      return user;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? "Login failed. Please try again.";
+      throw Exception(message);
+    } catch (e) {
+      throw Exception("An unexpected error occurred during login.");
+    }
   }
 
   Future<User> register({
@@ -152,16 +158,23 @@ class AuthService extends ChangeNotifier {
     required String churchId,
     String? deviceToken,
   }) async {
-    final response = await apiService.post('/auth/register', {
-      'name': name,
-      'email': email,
-      'password': password,
-      'churchId': churchId,
-      if (deviceToken != null) 'deviceToken': deviceToken,
-    });
-    final user = User.fromJson(response.data['user']);
-    await _saveAuthData(response.data['accessToken'], user);
-    return user;
+    try {
+      final response = await apiService.post('/auth/register', {
+        'name': name,
+        'email': email,
+        'password': password,
+        'churchId': churchId,
+        if (deviceToken != null) 'deviceToken': deviceToken,
+      });
+      final user = User.fromJson(response.data['user']);
+      await _saveAuthData(response.data['accessToken'], user);
+      return user;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? "Registration failed. Please try again.";
+      throw Exception(message);
+    } catch (e) {
+      throw Exception("An unexpected error occurred during registration.");
+    }
   }
 
   Future<User> updateProfile({
@@ -174,37 +187,44 @@ class AuthService extends ChangeNotifier {
     required String houseName,
     required String phone,
   }) async {
-    final response = await apiService.put('/user/me/profile', {
-      'name': name,
-      'gender': gender,
-      'dob': dob,
-      'permanentAddress': permanentAddress,
-      'houseNumber': houseNumber,
-      'residenceType': residenceType,
-      'houseName': houseName,
-      'phone': phone,
-    });
-    _currentUser = _currentUser!.copyWith(
-      name: name,
-      gender: gender,
-      dob: dob,
-      phone: phone,
-      permanentAddress: permanentAddress,
-      houseNumber: houseNumber,
-      residenceType: residenceType,
-      houseName: houseName,
-    );
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_data', jsonEncode(_currentUser!.toJson()));
-    notifyListeners();
-    return _currentUser!;
+    try {
+      final response = await apiService.put('/user/me/profile', {
+        'name': name,
+        'gender': gender,
+        'dob': dob,
+        'permanentAddress': permanentAddress,
+        'houseNumber': houseNumber,
+        'residenceType': residenceType,
+        'houseName': houseName,
+        'phone': phone,
+      });
+      _currentUser = _currentUser!.copyWith(
+        name: name,
+        gender: gender,
+        dob: dob,
+        phone: phone,
+        permanentAddress: permanentAddress,
+        houseNumber: houseNumber,
+        residenceType: residenceType,
+        houseName: houseName,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', jsonEncode(_currentUser!.toJson()));
+      notifyListeners();
+      return _currentUser!;
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? "Update failed. Please try again.";
+      throw Exception(message);
+    } catch (e) {
+      throw Exception("An unexpected error occurred while updating profile.");
+    }
   }
 
   Future<void> _saveAuthData(String token, User user) async {
     final prefs = await SharedPreferences.getInstance();
     await _storage.write(key: 'token', value: token);
     await prefs.setString('user_data', jsonEncode(user.toJson()));
-    await prefs.setString('userId', user.id); 
+    await prefs.setString('userId', user.id);
     _currentUser = user;
     notifyListeners();
   }
@@ -244,7 +264,7 @@ class AuthService extends ChangeNotifier {
     // Call the logout API with the deviceToken in the body
     print(deviceToken);
     try {
-      await apiService.post("/user/logout", {
+      await apiService.post("/auth/logout", {
         "deviceToken": deviceToken, // Sending device token along with logout
       });
     } catch (_) {}
@@ -296,6 +316,7 @@ class AuthService extends ChangeNotifier {
       }
     });
   }
+
   // 1. Fetch all members for the Priest
   Future<List<dynamic>> getAllMembers() async {
     try {
@@ -304,7 +325,7 @@ class AuthService extends ChangeNotifier {
       return response.data as List<dynamic>;
     } catch (e) {
       debugPrint("Error fetching members: $e");
-      rethrow; 
+      rethrow;
     }
   }
 
@@ -318,6 +339,7 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
+
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -334,33 +356,33 @@ class AuthService extends ChangeNotifier {
       throw e.toString();
     }
   }
-// --- EVENT SERVICE METHODS ---
+  // --- EVENT SERVICE METHODS ---
 
   /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
   /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
-Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
-  try {
-    // Manually append the query parameter to the URL string
-    final response = await apiService.get('/event?type=$type');
-    
-    final List<dynamic> data = response.data;
-    return data.map((json) => EventData.fromJson(json)).toList();
-  } catch (e) {
-    debugPrint("Error fetching events: $e");
-    rethrow;
+  Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
+    try {
+      // Manually append the query parameter to the URL string
+      final response = await apiService.get('/event?type=$type');
+
+      final List<dynamic> data = response.data;
+      return data.map((json) => EventData.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint("Error fetching events: $e");
+      rethrow;
+    }
   }
-}
 
   /// 2. Fetch User Registrations (GET /event/my-registrations)
   Future<List<EventData>> getMyRegistrations() async {
     try {
       final response = await apiService.get('/event/my-registrations');
       final List<dynamic> data = response.data;
-      
+
       // Based on your JSON, we map the inner 'event' object and set isRegistered to true
       return data.map((reg) {
         final event = EventData.fromJson(reg['event']);
-        event.isRegistered = true; 
+        event.isRegistered = true;
         return event;
       }).toList();
     } catch (e) {
@@ -391,7 +413,7 @@ Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
       rethrow;
     }
   }
-  
+
   /// 5. Delete Event (DELETE /event/:id) - Priest Only
   Future<void> deleteEvent(String eventId) async {
     try {
@@ -402,7 +424,7 @@ Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
     }
   }
 
-/// 6. Unregister from Event (DELETE /event/:eventId/unregister)
+  /// 6. Unregister from Event (DELETE /event/:eventId/unregister)
   Future<bool> unregisterFromEvent(String eventId) async {
     try {
       final response = await apiService.delete('/event/$eventId/unregister');
@@ -418,7 +440,7 @@ Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
     try {
       // Hits GET /event/:eventId/attendees
       final response = await apiService.get('/event/$eventId/attendees');
-      
+
       // The backend returns a List of registration objects
       if (response.data is List) {
         return response.data as List<dynamic>;
@@ -430,11 +452,63 @@ Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
       return [];
     }
   }
+
+  // --- FAMILY CONNECTION METHODS ---
+
+  Future<List<FamilyRequest>> getReceivedFamilyRequests() async {
+    try {
+      final response = await apiService.get('/user/me/family-requests');
+      final List<dynamic> data = response.data;
+      return data.map((json) => FamilyRequest.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint("Error fetching received family requests: $e");
+      rethrow;
+    }
+  }
+
+  Future<List<FamilyRequest>> getSentFamilyRequests() async {
+    try {
+      final response = await apiService.get('/user/me/family-requests/sent');
+      final List<dynamic> data = response.data;
+      return data.map((json) => FamilyRequest.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint("Error fetching sent family requests: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> sendFamilyRequest({
+    required String inviteCode,
+    required String relation,
+  }) async {
+    try {
+      await apiService.post('/user/me/family-connections', {
+        'inviteCode': inviteCode,
+        'relation': relation,
+      });
+    } catch (e) {
+      debugPrint("Error sending family request: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> handleFamilyRequest(String relatedUserId, String action) async {
+    try {
+      // Endpoint: user/me/family-connections/:relatedUserId/accept
+      // Method: PUT
+      await apiService.put(
+        '/user/me/family-connections/$relatedUserId/$action',
+        {},
+      );
+    } catch (e) {
+      debugPrint("Error handling family request ($action): $e");
+      rethrow;
+    }
+  }
 }
 // --- ADD THIS METHOD ---
-  
-  /// Fetches the list of participants for a specific event
-  
+
+/// Fetches the list of participants for a specific event
 
 class User {
   final String id, email, role, churchId, name, churchName, location;
@@ -446,6 +520,7 @@ class User {
       residenceType,
       houseName,
       phone;
+  final List<FamilyConnection> familyConnections;
 
   User({
     required this.id,
@@ -463,6 +538,7 @@ class User {
     this.residenceType,
     this.houseName,
     this.phone,
+    this.familyConnections = const [],
   });
 
   User copyWith({
@@ -474,6 +550,7 @@ class User {
     String? residenceType,
     String? houseName,
     String? phone,
+    List<FamilyConnection>? familyConnections,
   }) {
     return User(
       id: id,
@@ -491,6 +568,7 @@ class User {
       residenceType: residenceType ?? this.residenceType,
       houseName: houseName ?? this.houseName,
       phone: phone ?? this.phone,
+      familyConnections: familyConnections ?? this.familyConnections,
     );
   }
 
@@ -510,10 +588,32 @@ class User {
     'residenceType': residenceType,
     'houseName': houseName,
     'phone': phone,
+    'familyConnections':
+        familyConnections
+            .map(
+              (e) => {
+                'relation': e.relation,
+                'relatedUser': {
+                  'id': e.relatedUser.id,
+                  'role': e.relatedUser.role,
+                  'profile': {
+                    'name': e.relatedUser.profile.name,
+                    'gender': e.relatedUser.profile.gender,
+                    'dob': e.relatedUser.profile.dob,
+                    'permanentAddress': e.relatedUser.profile.permanentAddress,
+                    'houseNumber': e.relatedUser.profile.houseNumber,
+                    'residenceType': e.relatedUser.profile.residenceType,
+                    'houseName': e.relatedUser.profile.houseName,
+                  },
+                },
+              },
+            )
+            .toList(),
   };
 
   factory User.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'] as Map<String, dynamic>? ?? json;
+    final List<dynamic> connectionsJson = json['familyConnections'] ?? [];
     return User(
       id: json['id'] ?? '',
       email: json['email'] ?? '',
@@ -530,6 +630,8 @@ class User {
       residenceType: profile['residenceType'],
       houseName: profile['houseName'],
       phone: json['phone'] ?? profile['phone'],
+      familyConnections:
+          connectionsJson.map((e) => FamilyConnection.fromJson(e)).toList(),
     );
   }
 
