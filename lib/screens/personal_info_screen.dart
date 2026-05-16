@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:sacred_space/core/routes.dart';
 import '../auth/auth_service.dart';
 
 class PersonalInfoScreen extends StatelessWidget {
@@ -16,7 +17,8 @@ class PersonalInfoScreen extends StatelessWidget {
     if (user == null) return const Scaffold();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F7),
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F7),
       appBar: AppBar(
         title: Text(loc.personalInformation),
         centerTitle: true,
@@ -29,31 +31,103 @@ class PersonalInfoScreen extends StatelessWidget {
         child: Column(
           children: [
             _buildInfoGroup(theme, "Basic Details", [
-              _InfoRow(label: "Full Name", value: user.name, icon: Icons.badge_outlined),
-              _InfoRow(label: "Email Address", value: user.email, icon: Icons.email_outlined),
-              _InfoRow(label: "Phone Number", value: user.phone ?? "Not provided", icon: Icons.phone_android),
+              _InfoRow(
+                label: "Full Name",
+                value: user.name,
+                icon: Icons.badge_outlined,
+              ),
+              _InfoRow(
+                label: "Email Address",
+                value: user.email,
+                icon: Icons.email_outlined,
+              ),
+              _InfoRow(
+                label: "Phone Number",
+                value: user.phone ?? "Not provided",
+                icon: Icons.phone_android,
+              ),
             ]),
             const SizedBox(height: 24),
             _buildInfoGroup(theme, "Profile Information", [
-              _InfoRow(label: "Gender", value: user.gender ?? "Not provided", icon: Icons.person_outline),
               _InfoRow(
-                label: "Date of Birth", 
-                value: user.dob != null ? DateFormat('dd MMMM yyyy').format(DateTime.parse(user.dob!)) : "Not provided", 
-                icon: Icons.cake_outlined
+                label: "Gender",
+                value: user.gender ?? "Not provided",
+                icon: Icons.person_outline,
+              ),
+              _InfoRow(
+                label: "Date of Birth",
+                value:
+                    user.dob != null
+                        ? DateFormat(
+                          'dd MMMM yyyy',
+                        ).format(DateTime.parse(user.dob!))
+                        : "Not provided",
+                icon: Icons.cake_outlined,
               ),
             ]),
             const SizedBox(height: 24),
             _buildInfoGroup(theme, "Residence", [
-              _InfoRow(label: "Residence Type", value: user.residenceType ?? "Not provided", icon: Icons.night_shelter_outlined),
-              _InfoRow(label: "House Name", value: user.houseName ?? "Not provided", icon: Icons.home_outlined),
-              _InfoRow(label: "House Number", value: user.houseNumber ?? "Not provided", icon: Icons.numbers_outlined),
-              _InfoRow(label: "Permanent Address", value: user.permanentAddress ?? "Not provided", icon: Icons.location_on_outlined),
+              _InfoRow(
+                label: "Residence Type",
+                value: user.residenceType ?? "Not provided",
+                icon: Icons.night_shelter_outlined,
+              ),
+              _InfoRow(
+                label: "House Name",
+                value: user.houseName ?? "Not provided",
+                icon: Icons.home_outlined,
+              ),
+              _InfoRow(
+                label: "House Number",
+                value: user.houseNumber ?? "Not provided",
+                icon: Icons.numbers_outlined,
+              ),
+              _InfoRow(
+                label: "Permanent Address",
+                value: user.permanentAddress ?? "Not provided",
+                icon: Icons.location_on_outlined,
+              ),
             ]),
             const SizedBox(height: 24),
             _buildInfoGroup(theme, "Church Membership", [
-              _InfoRow(label: "Assigned Church", value: user.churchName, icon: Icons.church_outlined),
-              _InfoRow(label: "Church Location", value: user.location, icon: Icons.map_outlined),
-              _InfoRow(label: "Access Level", value: user.role.toUpperCase(), icon: Icons.verified_user_outlined),
+              _InfoRow(
+                label: "Assigned Church",
+                value: user.churchName,
+                icon: Icons.church_outlined,
+              ),
+              _InfoRow(
+                label: "Church Location",
+                value: user.location,
+                icon: Icons.map_outlined,
+              ),
+              _InfoRow(
+                label: "Access Level",
+                value: user.role.toUpperCase(),
+                icon: Icons.verified_user_outlined,
+              ),
+            ]),
+            const SizedBox(height: 24),
+            _buildInfoGroup(theme, loc.familyConnections, [
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                leading: const Icon(
+                  Icons.family_restroom,
+                  color: Color(0xFF5D3A99),
+                  size: 22,
+                ),
+                title: Text(
+                  loc.familyMembers,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                onTap: () => Navigator.pushNamed(context, Routes.familyMembers),
+              ),
             ]),
           ],
         ),
@@ -69,7 +143,12 @@ class PersonalInfoScreen extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             title.toUpperCase(),
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.hintColor, letterSpacing: 1),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: theme.hintColor,
+              letterSpacing: 1,
+            ),
           ),
         ),
         Container(
@@ -90,7 +169,11 @@ class _InfoRow extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _InfoRow({required this.label, required this.value, required this.icon});
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -104,9 +187,18 @@ class _InfoRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
                 const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),

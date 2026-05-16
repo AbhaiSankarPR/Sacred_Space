@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
@@ -144,6 +145,33 @@ class ProfileScreen extends StatelessWidget {
                   Text(
                     user.email,
                     style: TextStyle(fontSize: 14, color: subTextColor),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: user.id));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(loc.idCopied)),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "${loc.userId}: ${user.id.substring(0, 8)}...",
+                            style: TextStyle(fontSize: 12, color: subTextColor, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.copy, size: 14, color: subTextColor),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Container(

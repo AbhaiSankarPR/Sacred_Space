@@ -48,13 +48,18 @@ class SettingsScreen extends StatelessWidget {
               title: loc.editProfile,
               onTap: () => Navigator.pushNamed(context, Routes.profile),
             ),
-           _SettingsTile(
-  icon: Icons.lock_outline,
-  title: loc.changePassword,
-  onTap: () {
-    Navigator.pushNamed(context, Routes.changePassword);
-  }, 
-),
+            _SettingsTile(
+              icon: Icons.lock_outline,
+              title: loc.changePassword,
+              onTap: () {
+                Navigator.pushNamed(context, Routes.changePassword);
+              },
+            ),
+            _SettingsTile(
+              icon: Icons.family_restroom,
+              title: loc.familyConnections,
+              onTap: () => Navigator.pushNamed(context, Routes.familyConnections),
+            ),
             _SettingsTile(
               icon: Icons.notifications_none,
               title: loc.notifications,

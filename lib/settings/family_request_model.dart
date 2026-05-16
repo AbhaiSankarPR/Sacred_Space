@@ -1,0 +1,88 @@
+class FamilyRequest {
+  final String id;
+  final String relation;
+  final RelatedUser relatedUser;
+
+  FamilyRequest({
+    required this.id,
+    required this.relation,
+    required this.relatedUser,
+  });
+
+  factory FamilyRequest.fromJson(Map<String, dynamic> json) {
+    return FamilyRequest(
+      id: json['id'],
+      relation: json['relation'],
+      relatedUser: RelatedUser.fromJson(json['relatedUser']),
+    );
+  }
+}
+
+class FamilyConnection {
+  final String relation;
+  final RelatedUser relatedUser;
+
+  FamilyConnection({
+    required this.relation,
+    required this.relatedUser,
+  });
+
+  factory FamilyConnection.fromJson(Map<String, dynamic> json) {
+    return FamilyConnection(
+      relation: json['relation'],
+      relatedUser: RelatedUser.fromJson(json['relatedUser']),
+    );
+  }
+}
+
+class RelatedUser {
+  final String id;
+  final String? role;
+  final FamilyProfile profile;
+
+  RelatedUser({
+    required this.id,
+    this.role,
+    required this.profile,
+  });
+
+  factory RelatedUser.fromJson(Map<String, dynamic> json) {
+    return RelatedUser(
+      id: json['id'],
+      role: json['role'],
+      profile: FamilyProfile.fromJson(json['profile'] ?? {}),
+    );
+  }
+}
+
+class FamilyProfile {
+  final String name;
+  final String? gender;
+  final String? dob;
+  final String? permanentAddress;
+  final String? houseNumber;
+  final String? residenceType;
+  final String? houseName;
+
+  FamilyProfile({
+    required this.name,
+    this.gender,
+    this.dob,
+    this.permanentAddress,
+    this.houseNumber,
+    this.residenceType,
+    this.houseName,
+  });
+
+  factory FamilyProfile.fromJson(Map<String, dynamic> json) {
+    return FamilyProfile(
+      name: json['name'] ?? '',
+      gender: json['gender'],
+      dob: json['dob'],
+      permanentAddress: json['permanentAddress'],
+      houseNumber: json['houseNumber'],
+      residenceType: json['residenceType'],
+      houseName: json['houseName'],
+    );
+  }
+}
