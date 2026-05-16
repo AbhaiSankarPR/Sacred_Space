@@ -150,10 +150,10 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: () {
-                      Clipboard.setData(ClipboardData(text: user.id));
+                      Clipboard.setData(ClipboardData(text: user.inviteCode ?? ""));
                       ScaffoldMessenger.of(
                         context,
-                      ).showSnackBar(SnackBar(content: Text(loc.idCopied)));
+                      ).showSnackBar(SnackBar(content: Text(loc.inviteCodeCopied)));
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -168,7 +168,7 @@ class ProfileScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            "${loc.userId}: ${user.id.substring(0, 8)}...",
+                            "${loc.inviteCode}: ${user.inviteCode ?? 'N/A'}",
                             style: TextStyle(
                               fontSize: 12,
                               color: subTextColor,
