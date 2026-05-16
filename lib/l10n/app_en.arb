@@ -299,6 +299,7 @@
   "noRequests": "No requests found",
   "addFamily": "Add Family Member",
   "relation": "Relation",
+  "gender": "Gender",
   "userId": "User ID",
   "send": "Send",
   "requestSent": "Request sent successfully",

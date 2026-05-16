@@ -39,6 +39,163 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
     }
   }
 
+  void _showMemberDetails(FamilyConnection connection) {
+    final profile = connection.relatedUser.profile;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final loc = AppLocalizations.of(context)!;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 24),
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
+                child: const Icon(
+                  Icons.person,
+                  size: 40,
+                  color: Color(0xFF5D3A99),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                profile.name,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                connection.relation,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: const Color(0xFF5D3A99).withOpacity(0.8),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                Icons.wc,
+                loc.gender ?? "Gender",
+                profile.gender ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.cake,
+                loc.date ?? "Birth Year",
+                profile.dob != null && profile.dob!.isNotEmpty
+                    ? profile.dob!.split('T')[0]
+                    : "N/A",
+              ),
+              _buildDetailRow(
+                Icons.home_outlined,
+                "House Name",
+                profile.houseName ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.numbers,
+                "House Number",
+                profile.houseNumber ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.location_on_outlined,
+                "Address",
+                profile.permanentAddress ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.apartment,
+                "Residence Type",
+                profile.residenceType ?? "N/A",
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5D3A99),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    "Close",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF5D3A99).withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: const Color(0xFF5D3A99)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -110,6 +267,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
         ],
       ),
       child: ListTile(
+        onTap: () => _showMemberDetails(connection),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
