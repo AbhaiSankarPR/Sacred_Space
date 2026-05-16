@@ -340,6 +340,32 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  // 3. Fetch pending signup requests
+  Future<List<dynamic>> getPendingSignups() async {
+    try {
+      final response = await apiService.get('/priest/users/pending');
+      return response.data as List<dynamic>;
+    } catch (e) {
+      debugPrint("Error fetching pending signups: $e");
+      rethrow;
+    }
+  }
+
+  // 4. Handle signup request (approve/reject)
+  Future<void> handleSignupRequest(String userId, String action) async {
+    try {
+      if (action == 'approve') {
+        await apiService.put('/priest/users/$userId/approve', {});
+      } else {
+        await apiService.delete('/priest/users/$userId/reject');
+      }
+      debugPrint("Signup request $action for $userId successful.");
+    } catch (e) {
+      debugPrint("Error handling signup request: $e");
+      rethrow;
+    }
+  }
+
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -505,10 +531,26 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
-}
-// --- ADD THIS METHOD ---
 
-/// Fetches the list of participants for a specific event
+  Future<List<FamilyConnection>> getFamilyConnections() async {
+    try {
+      final response = await apiService.get('/user/me/family-connections');
+      final List<dynamic> data = response.data;
+      final connections =
+          data.map((json) => FamilyConnection.fromJson(json)).toList();
+
+      if (_currentUser != null) {
+        _currentUser = _currentUser!.copyWith(familyConnections: connections);
+        notifyListeners();
+      }
+
+      return connections;
+    } catch (e) {
+      debugPrint("Error fetching family connections: $e");
+      rethrow;
+    }
+  }
+}
 
 class User {
   final String id, email, role, churchId, name, churchName, location;
@@ -519,7 +561,8 @@ class User {
       houseNumber,
       residenceType,
       houseName,
-      phone;
+      phone,
+      inviteCode;
   final List<FamilyConnection> familyConnections;
 
   User({
@@ -538,6 +581,7 @@ class User {
     this.residenceType,
     this.houseName,
     this.phone,
+    this.inviteCode,
     this.familyConnections = const [],
   });
 
@@ -550,6 +594,7 @@ class User {
     String? residenceType,
     String? houseName,
     String? phone,
+    String? inviteCode,
     List<FamilyConnection>? familyConnections,
   }) {
     return User(
@@ -568,6 +613,7 @@ class User {
       residenceType: residenceType ?? this.residenceType,
       houseName: houseName ?? this.houseName,
       phone: phone ?? this.phone,
+      inviteCode: inviteCode ?? this.inviteCode,
       familyConnections: familyConnections ?? this.familyConnections,
     );
   }
@@ -588,6 +634,7 @@ class User {
     'residenceType': residenceType,
     'houseName': houseName,
     'phone': phone,
+    'inviteCode': inviteCode,
     'familyConnections':
         familyConnections
             .map(
@@ -630,6 +677,7 @@ class User {
       residenceType: profile['residenceType'],
       houseName: profile['houseName'],
       phone: json['phone'] ?? profile['phone'],
+      inviteCode: json['inviteCode'],
       familyConnections:
           connectionsJson.map((e) => FamilyConnection.fromJson(e)).toList(),
     );
