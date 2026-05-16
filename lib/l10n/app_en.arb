@@ -312,5 +312,7 @@
   "accept": "Accept",
   "decline": "Decline",
   "signupRequestHandled": "Signup request handled successfully",
-  "errorOccurred": "An error occurred. Please try again."
+  "errorOccurred": "An error occurred. Please try again.",
+  "inviteCode": "Invite Code",
+  "inviteCodeCopied": "Invite code copied to clipboard"
 }
