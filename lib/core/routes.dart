@@ -27,6 +27,9 @@ import '../settings/about_screen.dart';
 import '../settings/support_screen.dart';
 import '../screens/PrivacyPolicyScreen.dart';
 import '../screens/editProfile.dart';
+import '../settings/family_connections_screen.dart';
+import '../screens/family_members_screen.dart';
+
 
 
 
@@ -62,6 +65,9 @@ static const String forgotPassword = '/forgot-password';
   static const about = '/about';
   static const support = '/support';
   static const privacyPolicy = '/privacy-policy';
+  static const familyConnections = '/family-connections';
+  static const familyMembers = '/family-members';
+
 
   static const announcementDetail = '/announcementdetail';
 
@@ -101,6 +107,8 @@ static const String forgotPassword = '/forgot-password';
         about: (_) => const AboutScreen(),
         support: (_) => const SupportScreen(),
         privacyPolicy: (_) => const PrivacyPolicyScreen(),
+        familyConnections: (_) => const FamilyConnectionsScreen(),
+        familyMembers: (_) => const FamilyMembersScreen(),
 parishCalendar: (_) => const ParishCalendarScreen(),
       };
 }
