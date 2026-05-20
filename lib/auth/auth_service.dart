@@ -144,14 +144,15 @@ class AuthService extends ChangeNotifier {
 
       return user;
     } on DioException catch (e) {
-      final message = e.response?.data?['message'] ?? "Login failed. Please try again.";
+      final message =
+          e.response?.data?['message'] ?? "Login failed. Please try again.";
       throw Exception(message);
     } catch (e) {
       throw Exception("An unexpected error occurred during login.");
     }
   }
 
-  Future<User> register({
+  Future<void> register({
     required String name,
     required String email,
     required String password,
@@ -159,19 +160,26 @@ class AuthService extends ChangeNotifier {
     String? deviceToken,
   }) async {
     try {
-      final response = await apiService.post('/auth/register', {
+      await apiService.post('/auth/register', {
         'name': name,
         'email': email,
         'password': password,
         'churchId': churchId,
         if (deviceToken != null) 'deviceToken': deviceToken,
       });
-      final user = User.fromJson(response.data['user']);
-      await _saveAuthData(response.data['accessToken'], user);
-      return user;
     } on DioException catch (e) {
-      final message = e.response?.data?['message'] ?? "Registration failed. Please try again.";
-      throw Exception(message);
+      final message = e.response?.data?['message'] ?? "";
+      if (message.toString().contains("Registration successful") ||
+          message.toString().contains("Please wait for the priest") ||
+          message.toString().contains("approve your account")) {
+        // Treat as a successful registration flow since the backend created the user
+        return;
+      }
+      final errorMessage =
+          message.isNotEmpty
+              ? message
+              : "Registration failed. Please try again.";
+      throw Exception(errorMessage);
     } catch (e) {
       throw Exception("An unexpected error occurred during registration.");
     }
@@ -213,7 +221,8 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
       return _currentUser!;
     } on DioException catch (e) {
-      final message = e.response?.data?['message'] ?? "Update failed. Please try again.";
+      final message =
+          e.response?.data?['message'] ?? "Update failed. Please try again.";
       throw Exception(message);
     } catch (e) {
       throw Exception("An unexpected error occurred while updating profile.");
@@ -343,7 +352,7 @@ class AuthService extends ChangeNotifier {
   // 3. Fetch pending signup requests
   Future<List<dynamic>> getPendingSignups() async {
     try {
-      final response = await apiService.get('/priest/users/pending');
+      final response = await apiService.get('/priest/pending-users');
       return response.data as List<dynamic>;
     } catch (e) {
       debugPrint("Error fetching pending signups: $e");
@@ -357,7 +366,7 @@ class AuthService extends ChangeNotifier {
       if (action == 'approve') {
         await apiService.put('/priest/users/$userId/approve', {});
       } else {
-        await apiService.delete('/priest/users/$userId/reject');
+        await apiService.put('/priest/users/$userId/reject', {});
       }
       debugPrint("Signup request $action for $userId successful.");
     } catch (e) {
@@ -382,9 +391,9 @@ class AuthService extends ChangeNotifier {
       throw e.toString();
     }
   }
+
   // --- EVENT SERVICE METHODS ---
 
-  /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
   /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
   Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
     try {

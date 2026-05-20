@@ -23,12 +23,19 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 // 1. UPDATED NAVIGATION HANDLER
 void handleNotificationNavigation(Map<String, dynamic> data) {
   final String? type = data['type'];
-  final String? id = data['id'] ?? data['announcementId'] ?? data['eventId'] ?? data['bookingId'];
+  final String? id =
+      data['id'] ??
+      data['announcementId'] ??
+      data['eventId'] ??
+      data['bookingId'];
 
   switch (type) {
     case "ANNOUNCEMENT":
       if (id != null) {
-        navigatorKey.currentState?.pushNamed(Routes.announcementDetail, arguments: id);
+        navigatorKey.currentState?.pushNamed(
+          Routes.announcementDetail,
+          arguments: id,
+        );
       } else {
         navigatorKey.currentState?.pushNamed(Routes.announcements);
       }
@@ -66,7 +73,8 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // 2. Terminated State: Handle notification clicks
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  RemoteMessage? initialMessage =
+      await FirebaseMessaging.instance.getInitialMessage();
   if (initialMessage != null) {
     Future.delayed(const Duration(milliseconds: 1000), () {
       handleNotificationNavigation(initialMessage.data);
@@ -92,12 +100,16 @@ void main() async {
 
       Color background = const Color(0xFF5D3A99); // Default Purple
       if (data['type'] == "BOOKING_STATUS_UPDATE") background = Colors.green;
-      if (data['type'] == "NEW_BOOKING_REQUEST") background = Colors.orange[800]!;
+      if (data['type'] == "NEW_BOOKING_REQUEST")
+        background = Colors.orange[800]!;
 
       notificationEntry = showSimpleNotification(
         Text(
           notification.title ?? "Sacred Space Update",
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         subtitle: Text(
           notification.body ?? "",
@@ -112,7 +124,10 @@ void main() async {
             backgroundColor: Colors.white.withOpacity(0.2),
             foregroundColor: Colors.white,
           ),
-          child: const Text("VIEW", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          child: const Text(
+            "VIEW",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
         ),
         background: background,
         duration: const Duration(seconds: 6),

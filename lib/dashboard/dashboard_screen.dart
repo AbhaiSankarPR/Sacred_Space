@@ -123,7 +123,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       flexibleSpace: FlexibleSpaceBar(
-        stretchModes: const [StretchMode.zoomBackground, StretchMode.blurBackground],
+        stretchModes: const [
+          StretchMode.zoomBackground,
+          StretchMode.blurBackground,
+        ],
         background: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -218,6 +221,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.teal,
               onTap: () => Navigator.pushNamed(context, Routes.galleryAdmin),
             ),
+            _DashboardMenuItem(
+              title: loc.signupRequests,
+              icon: Icons.person_add_alt_1,
+              color: const Color.fromARGB(255, 132, 42, 42),
+              isAlert: true,
+              onTap: () => Navigator.pushNamed(context, Routes.signupRequests),
+            ),
           ],
           _DashboardMenuItem(
             title: loc.events,
@@ -227,12 +237,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           // MEMBER-ONLY (EVENTS & PROFILE)
           if (!isPriest) ...[
-            _DashboardMenuItem(
-              title: loc.myProfile,
-              icon: Icons.person_outline,
-              color: Colors.blue,
-              onTap: () => Navigator.pushNamed(context, Routes.profile),
-            ),
+            // _DashboardMenuItem(
+            //   title: loc.myProfile,
+            //   icon: Icons.person_outline,
+            //   color: Colors.blue,
+            //   onTap: () => Navigator.pushNamed(context, Routes.profile),
+            // ),
             _DashboardMenuItem(
               title: loc.gallery,
               icon: Icons.photo_library_outlined,
@@ -445,7 +455,8 @@ class _DashboardMenuItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white.withOpacity(0.9) : Colors.grey[800],
+                  color:
+                      isDark ? Colors.white.withOpacity(0.9) : Colors.grey[800],
                   letterSpacing: 0.2,
                 ),
               ),

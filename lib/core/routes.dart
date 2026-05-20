@@ -14,6 +14,7 @@ import '../dashboard/profile_screen.dart';
 // import '../dashboard/personal_info_screen.dart';
 // Priest-Specific Features
 import '../screens/priest/member_directory_screen.dart'; // Create these files
+import '../screens/priest/signup_requests_screen.dart';
 import '../gallery/priest/gallery_management_screen.dart';
 // Shared Feature Screens
 import '../announcements/announcements_screen.dart';
@@ -55,6 +56,7 @@ class Routes {
 
   // Priest-Exclusive Features
   static const memberDirectory = '/priest/member-directory';
+  static const signupRequests = '/priest/signup-requests';
   static const galleryAdmin = '/priest/gallery-admin';
 
   // Static & Support Pages
@@ -96,6 +98,7 @@ class Routes {
 
     // Priest-Only Routes
     memberDirectory: (_) => const MemberDirectoryScreen(),
+    signupRequests: (_) => const SignupRequestsScreen(),
     galleryAdmin: (_) => const GalleryManagementScreen(),
 
     // Info & Settings
