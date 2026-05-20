@@ -315,5 +315,7 @@
   "signupRequestHandled": "Signup request handled successfully",
   "errorOccurred": "An error occurred. Please try again.",
   "inviteCode": "Invite Code",
-  "inviteCodeCopied": "Invite code copied to clipboard"
+  "inviteCodeCopied": "Invite code copied to clipboard",
+  "registrationSuccessful": "Registration Successful",
+  "registrationPendingApproval": "Your registration request has been submitted. Please wait for the priest to approve your account before logging in."
 }
