@@ -228,6 +228,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               isAlert: true,
               onTap: () => Navigator.pushNamed(context, Routes.signupRequests),
             ),
+            _DashboardMenuItem(
+              title: loc.manageCertificates,
+              icon: Icons.assignment_turned_in_rounded,
+              color: const Color(0xFF009688), // Gorgeous Teal
+              onTap: () => Navigator.pushNamed(context, Routes.certificate),
+            ),
           ],
           _DashboardMenuItem(
             title: loc.events,
@@ -248,6 +254,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icons.photo_library_outlined,
               color: Colors.indigo,
               onTap: () => Navigator.pushNamed(context, Routes.gallery),
+            ),
+            _DashboardMenuItem(
+              title: loc.certificates,
+              icon: Icons.card_membership_rounded,
+              color: const Color(0xFF009688), // Gorgeous Teal
+              onTap: () => Navigator.pushNamed(context, Routes.certificate),
             ),
           ],
 

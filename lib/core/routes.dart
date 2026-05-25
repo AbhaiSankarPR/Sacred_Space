@@ -30,6 +30,8 @@ import '../screens/PrivacyPolicyScreen.dart';
 import '../screens/editProfile.dart';
 import '../settings/family_connections_screen.dart';
 import '../screens/family_members_screen.dart';
+import '../certificate/certificate_screen.dart';
+
 
 class Routes {
   // Authentication & Onboarding
@@ -66,6 +68,8 @@ class Routes {
   static const privacyPolicy = '/privacy-policy';
   static const familyConnections = '/family-connections';
   static const familyMembers = '/family-members';
+  static const certificate = '/certificate';
+
 
   static const announcementDetail = '/announcementdetail';
 
@@ -109,5 +113,6 @@ class Routes {
     familyConnections: (_) => const FamilyConnectionsScreen(),
     familyMembers: (_) => const FamilyMembersScreen(),
     parishCalendar: (_) => const ParishCalendarScreen(),
+    certificate: (_) => const CertificateScreen(),
   };
 }

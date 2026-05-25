@@ -559,6 +559,17 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<List<FamilyConnection>> getMemberFamilyConnections(String userId) async {
+    try {
+      final response = await apiService.get('/priest/users/$userId/family-connections');
+      final List<dynamic> data = response.data;
+      return data.map((json) => FamilyConnection.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint("Error fetching family connections for member $userId: $e");
+      rethrow;
+    }
+  }
 }
 
 class User {

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../auth/auth_service.dart';
 import '../../auth/api_service.dart';
 import '../../widgets/app_drawer.dart';
+import '../../settings/family_request_model.dart';
 
 class Member {
   final String id, name, email, phone, houseName;
@@ -117,6 +118,335 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
     }
   }
 
+  void _showFamilyConnectionsSheet(Member member) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final loc = AppLocalizations.of(context)!;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
+                        child: const Icon(Icons.family_restroom, color: Color(0xFF5D3A99), size: 28),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              member.name,
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              "Family Connections",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: FutureBuilder<List<FamilyConnection>>(
+                      future: AuthService().getMemberFamilyConnections(member.id),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Failed to load details: ${snapshot.error}",
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          final connections = snapshot.data ?? [];
+                          if (connections.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.family_restroom,
+                                    size: 64,
+                                    color: Colors.grey.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    "No family connections linked.",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          return ListView.builder(
+                            controller: scrollController,
+                            itemCount: connections.length,
+                            itemBuilder: (context, index) {
+                              final connection = connections[index];
+                              return _buildConnectionCard(connection, theme, isDark);
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildConnectionCard(
+    FamilyConnection connection,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        onTap: () => _showConnectionDetails(connection),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
+          child: const Icon(Icons.person, color: Color(0xFF5D3A99)),
+        ),
+        title: Text(
+          connection.relatedUser.profile.name,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: Text(
+          connection.relation,
+          style: TextStyle(
+            color: const Color(0xFF5D3A99).withOpacity(0.8),
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      ),
+    );
+  }
+
+  void _showConnectionDetails(FamilyConnection connection) {
+    final profile = connection.relatedUser.profile;
+    final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context)!;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 24),
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
+                child: const Icon(
+                  Icons.person,
+                  size: 40,
+                  color: Color(0xFF5D3A99),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                profile.name,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                connection.relation,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: const Color(0xFF5D3A99).withOpacity(0.8),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                Icons.wc,
+                loc.gender,
+                profile.gender ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.cake,
+                loc.date,
+                profile.dob != null && profile.dob!.isNotEmpty
+                    ? profile.dob!.split('T')[0]
+                    : "N/A",
+              ),
+              _buildDetailRow(
+                Icons.home_outlined,
+                "House Name",
+                profile.houseName ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.numbers,
+                "House Number",
+                profile.houseNumber ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.location_on_outlined,
+                "Address",
+                profile.permanentAddress ?? "N/A",
+              ),
+              _buildDetailRow(
+                Icons.apartment,
+                "Residence Type",
+                profile.residenceType ?? "N/A",
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5D3A99),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    "Close",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF5D3A99).withOpacity(0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: const Color(0xFF5D3A99)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -190,6 +520,7 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
                               isDark: isDark,
                               onDelete: () => _removeMember(member),
                               onCall: () => _makePhoneCall(member.phone),
+                              onTap: () => _showFamilyConnectionsSheet(member),
                             );
                           },
                         ),
@@ -207,6 +538,7 @@ class _MemberTile extends StatelessWidget {
   final bool isDark;
   final VoidCallback onDelete;
   final VoidCallback onCall;
+  final VoidCallback onTap;
 
   const _MemberTile({
     required this.member, 
@@ -214,6 +546,7 @@ class _MemberTile extends StatelessWidget {
     required this.isDark, 
     required this.onDelete,
     required this.onCall,
+    required this.onTap,
   });
 
   @override
@@ -223,6 +556,7 @@ class _MemberTile extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
       child: ListTile(
+        onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           radius: 25,
