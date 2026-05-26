@@ -89,6 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final theme = Theme.of(context);
     final bool isPriest = user.role.toLowerCase() == 'priest';
+    final bool isOfficial = user.role.toLowerCase() == 'official' || user.role.toLowerCase() == 'church_official';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -96,9 +97,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          _buildSliverAppBar(context, user, loc, isPriest),
+          _buildSliverAppBar(context, user, loc, isPriest, isOfficial),
           _buildLiveAnnouncementBar(context, loc),
-          _buildDynamicMenuGrid(context, loc, isPriest),
+          _buildDynamicMenuGrid(context, loc, isPriest, isOfficial),
           const SliverToBoxAdapter(child: SizedBox(height: 30)),
         ],
       ),
@@ -111,6 +112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     User user,
     AppLocalizations loc,
     bool isPriest,
+    bool isOfficial,
   ) {
     return SliverAppBar(
       expandedHeight: 260.0,
@@ -141,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 10),
-                _buildProfileAvatar(user, isPriest),
+                _buildProfileAvatar(user, isPriest || isOfficial),
                 const SizedBox(height: 16),
                 Text(
                   user.churchName,
@@ -176,6 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     BuildContext context,
     AppLocalizations loc,
     bool isPriest,
+    bool isOfficial,
   ) {
     return SliverPadding(
       padding: const EdgeInsets.all(20),
@@ -201,8 +204,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           // BOOKINGS
           _DashboardMenuItem(
-            title: isPriest ? loc.manageRequests : loc.bookings,
-            icon: isPriest ? Icons.fact_check_outlined : Icons.bookmark_border,
+            title: isPriest || isOfficial ? loc.manageRequests : loc.bookings,
+            icon: isPriest || isOfficial ? Icons.fact_check_outlined : Icons.bookmark_border,
             color: Colors.purple,
             onTap: () => Navigator.pushNamed(context, Routes.bookings),
           ),
@@ -235,6 +238,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () => Navigator.pushNamed(context, Routes.certificate),
             ),
           ],
+          
+          if (isPriest || isOfficial) ...[
+            _DashboardMenuItem(
+              title: loc.transactions,
+              icon: Icons.account_balance_wallet_rounded,
+              color: const Color(0xFFE65100), // Deep Orange
+              onTap: () => Navigator.pushNamed(context, Routes.transactions),
+            ),
+          ],
           _DashboardMenuItem(
             title: loc.events,
             icon: Icons.calendar_month_outlined,
@@ -242,7 +254,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: () => Navigator.pushNamed(context, Routes.events),
           ),
           // MEMBER-ONLY (EVENTS & PROFILE)
-          if (!isPriest) ...[
+          if (!isPriest && !isOfficial) ...[
             // _DashboardMenuItem(
             //   title: loc.myProfile,
             //   icon: Icons.person_outline,
@@ -273,7 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
 
           // SUPPORT (MEMBER ONLY)
-          if (!isPriest)
+          if (!isPriest && !isOfficial)
             _DashboardMenuItem(
               title: loc.support,
               icon: Icons.headset_mic_outlined,
