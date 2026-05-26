@@ -412,5 +412,19 @@
   "witness2": "Witness 2 Details",
   "witnessName": "Witness Full Name",
   "witnessParish": "Witness Home Parish",
-  "witnessAddress": "Witness Address"
+  "witnessAddress": "Witness Address",
+  "transactions": "Transactions",
+  "newTransaction": "New Transaction",
+  "amount": "Amount",
+  "income": "INCOME",
+  "expense": "EXPENSE",
+  "category": "Category",
+  "paymentMethod": "Payment Method",
+  "remarksOptional": "Remarks (Optional)",
+  "addDetailsHere": "Add any additional details here...",
+  "saveTransaction": "Save Transaction",
+  "totalBalance": "Total Balance",
+  "noTransactionsFound": "No transactions found.",
+  "addedBy": "Added by",
+  "downloadReport": "Download Report"
 }

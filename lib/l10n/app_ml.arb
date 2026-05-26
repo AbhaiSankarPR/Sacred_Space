@@ -411,5 +411,19 @@
   "witness2": "സാക്ഷി 2 വിവരങ്ങൾ",
   "witnessName": "മുഴുവൻ പേര്",
   "witnessParish": "ഇടവക",
-  "witnessAddress": "മേൽവിലാസം"
+  "witnessAddress": "മേൽവിലാസം",
+  "transactions": "ഇടപാടുകൾ",
+  "newTransaction": "പുതിയ ഇടപാട്",
+  "amount": "തുക",
+  "income": "വരുമാനം",
+  "expense": "ചെലവ്",
+  "category": "വിഭാഗം",
+  "paymentMethod": "പേയ്‌മെൻ്റ് രീതി",
+  "remarksOptional": "കുറിപ്പുകൾ (ഓപ്ഷണൽ)",
+  "addDetailsHere": "കൂടുതൽ വിവരങ്ങൾ ഇവിടെ ചേർക്കുക...",
+  "saveTransaction": "ഇടപാട് സംരക്ഷിക്കുക",
+  "totalBalance": "ആകെ ബാക്കി",
+  "noTransactionsFound": "ഇടപാടുകൾ ഒന്നും കണ്ടെത്തിയില്ല.",
+  "addedBy": "ചേർത്തത്",
+  "downloadReport": "റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക"
 }

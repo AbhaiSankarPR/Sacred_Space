@@ -63,7 +63,7 @@ class ApiService {
     return null;
   }
 
-  Future<Response> get(String url, {Map<String, dynamic>? params}) => _dio.get(url, queryParameters: params);
+  Future<Response> get(String url, {Map<String, dynamic>? params, Options? options}) => _dio.get(url, queryParameters: params, options: options);
   Future<Response> post(String url, dynamic data) => _dio.post(url, data: data);
   Future<Response> put(String url, dynamic data) => _dio.put(url, data: data);
   Future<Response> delete(String url) => _dio.delete(url);

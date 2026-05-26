@@ -16,6 +16,8 @@ import '../dashboard/profile_screen.dart';
 import '../screens/priest/member_directory_screen.dart'; // Create these files
 import '../screens/priest/signup_requests_screen.dart';
 import '../gallery/priest/gallery_management_screen.dart';
+import '../transactions/transactions_screen.dart';
+import '../transactions/add_transaction_screen.dart';
 // Shared Feature Screens
 import '../announcements/announcements_screen.dart';
 import '../bookings/bookings_screen.dart';
@@ -31,7 +33,6 @@ import '../screens/editProfile.dart';
 import '../settings/family_connections_screen.dart';
 import '../screens/family_members_screen.dart';
 import '../certificate/certificate_screen.dart';
-
 
 class Routes {
   // Authentication & Onboarding
@@ -56,10 +57,12 @@ class Routes {
   static const gallery = '/gallery';
   static const String editProfile = '/edit-profile';
 
-  // Priest-Exclusive Features
+  // Priest/Official-Exclusive Features
   static const memberDirectory = '/priest/member-directory';
   static const signupRequests = '/priest/signup-requests';
   static const galleryAdmin = '/priest/gallery-admin';
+  static const transactions = '/transactions';
+  static const addTransaction = '/transactions/add';
 
   // Static & Support Pages
   static const settings = '/settings';
@@ -69,7 +72,6 @@ class Routes {
   static const familyConnections = '/family-connections';
   static const familyMembers = '/family-members';
   static const certificate = '/certificate';
-
 
   static const announcementDetail = '/announcementdetail';
 
@@ -104,6 +106,8 @@ class Routes {
     memberDirectory: (_) => const MemberDirectoryScreen(),
     signupRequests: (_) => const SignupRequestsScreen(),
     galleryAdmin: (_) => const GalleryManagementScreen(),
+    transactions: (_) => const TransactionsScreen(),
+    addTransaction: (_) => const AddTransactionScreen(),
 
     // Info & Settings
     settings: (_) => const SettingsScreen(),
