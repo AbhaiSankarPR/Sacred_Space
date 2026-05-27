@@ -2,7 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:file_saver/file_saver.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import '../auth/api_service.dart';
 import 'transaction_model.dart';
@@ -59,24 +60,49 @@ class TransactionService extends ChangeNotifier {
 
       final Uint8List bytes = Uint8List.fromList(response.data);
       
-      final String savePath = await FileSaver.instance.saveFile(
-        name: 'transactions_report_$month.xlsx',
+      String? initialDirectory;
+      try {
+        if (Platform.isAndroid) {
+          final dir = await getExternalStorageDirectory();
+          initialDirectory = dir?.path;
+        } else {
+          final dir = await getDownloadsDirectory();
+          initialDirectory = dir?.path;
+        }
+      } catch (e) {
+        debugPrint("Error getting directory: $e");
+      }
+      
+      String? savePath = await FilePicker.saveFile(
+        dialogTitle: 'Save Transactions Report',
+        fileName: 'transactions_report_$month.xlsx',
+        type: FileType.custom,
+        allowedExtensions: ['xlsx'],
+        initialDirectory: initialDirectory,
         bytes: bytes,
-        mimeType: MimeType.microsoftExcel,
       );
+
+      if (savePath == null) {
+        return "Download cancelled.";
+      }
+
+      if (!Platform.isAndroid && !Platform.isIOS) {
+        final File file = File(savePath);
+        await file.writeAsBytes(bytes);
+      }
 
       debugPrint("File saved to: $savePath");
       
       try {
         final result = await OpenFilex.open(savePath);
         if (result.type == ResultType.noAppToOpen) {
-          return "Report saved to Downloads! (No app installed to open Excel)";
+          return "Report saved successfully! (No app installed to open Excel)";
         }
       } catch (e) {
         debugPrint("Auto-open failed: $e");
       }
 
-      return "Report saved successfully to Downloads folder!";
+      return "Report saved successfully!";
     } catch (e) {
       debugPrint("Error downloading report: $e");
       return "Failed to download report. Please check your connection.";

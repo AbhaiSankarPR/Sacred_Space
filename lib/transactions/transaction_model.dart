@@ -98,11 +98,11 @@ class TransactionCategories {
     'WEEKLY_KAYCHAVAYPP',
     'MONTHLY_KURISHADI_KANIKKA',
     'MONTHLY_KANIKKA_INSIDE_CHURCH',
+    'BOOKING_PAYMENT',
     'OTHER_INCOME'
   ];
 
   static const List<String> expenseCategories = [
-    'BOOKING_PAYMENT',
     'PRIEST_SALARY',
     'OFFICIALS_SALARY',
     'CURRENT_BILL',
