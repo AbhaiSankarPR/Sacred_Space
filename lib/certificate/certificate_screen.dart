@@ -105,17 +105,17 @@ class _CertificateScreenState extends State<CertificateScreen>
 
 
 
-      // Identification Letter
-      case 'let_name':
+      // Marriage Preparation
+      case 'prep_name':
         controller.text = user.name;
         break;
-      case 'let_home_parish':
+      case 'prep_home_parish':
         controller.text = user.churchName;
         break;
-      case 'let_diocese_name':
+      case 'prep_diocese_name':
         controller.text = user.location;
         break;
-      case 'let_target_center':
+      case 'prep_target_center':
         controller.text = 'Family Apostolate Centre, Vlangamuri';
         break;
 
@@ -161,13 +161,13 @@ class _CertificateScreenState extends State<CertificateScreen>
         _formData['mar_bride_dob'] ??= userDob;
       }
       _formData['bap_dob'] ??= userDob;
-      _formData['let_dob'] ??= userDob;
+      _formData['prep_dob'] ??= userDob;
     }
 
     if (user.gender != null) {
       final genderVal = user.gender!.toUpperCase();
       _formData['bap_gender'] ??= genderVal;
-      _formData['let_gender'] ??= genderVal;
+      _formData['prep_gender'] ??= genderVal;
     }
   }
 
@@ -280,16 +280,16 @@ class _CertificateScreenState extends State<CertificateScreen>
 
 
 
-        case CertificateType.IDENTIFICATION_LETTER:
-          details['targetCenter'] = _getController('let_target_center').text.trim();
-          details['name'] = _getController('let_candidate_name').text.trim();
-          details['gender'] = _formData['let_gender'] ?? 'MALE';
-          details['parentName'] = _getController('let_parent_name').text.trim();
-          details['homeParish'] = _getController('let_home_parish').text.trim();
-          details['substationName'] = _getController('let_substation').text.trim();
-          details['foranateArea'] = _getController('let_foranate').text.trim();
-          details['dioceseName'] = _getController('let_diocese').text.trim();
-          details['courseCategory'] = _getController('let_course_category').text.trim();
+        case CertificateType.MARRIAGE_PREPARATION:
+          details['targetCenter'] = _getController('prep_target_center').text.trim();
+          details['name'] = _getController('prep_candidate_name').text.trim();
+          details['gender'] = _formData['prep_gender'] ?? 'MALE';
+          details['parentName'] = _getController('prep_parent_name').text.trim();
+          details['homeParish'] = _getController('prep_home_parish').text.trim();
+          details['substationName'] = _getController('prep_substation').text.trim();
+          details['foranateArea'] = _getController('prep_foranate').text.trim();
+          details['dioceseName'] = _getController('prep_diocese').text.trim();
+          details['courseCategory'] = _getController('prep_course_category').text.trim();
           break;
 
         case CertificateType.MARRIAGE:
@@ -1317,22 +1317,22 @@ class _CertificateScreenState extends State<CertificateScreen>
 
 
 
-      case CertificateType.IDENTIFICATION_LETTER:
-        if (_getController('let_target_center').text.isEmpty) {
-          _getController('let_target_center').text = 'Family Apostolate Centre, Vlangamuri';
+      case CertificateType.MARRIAGE_PREPARATION:
+        if (_getController('prep_target_center').text.isEmpty) {
+          _getController('prep_target_center').text = 'Family Apostolate Centre, Vlangamuri';
         }
         return [
-          _buildFormSectionTitle(loc.identificationLetter),
+          _buildFormSectionTitle(loc.marriagePreparation),
           _buildSectionCard(children: [
             _buildTextField(
-              controller: _getController('let_target_center'),
+              controller: _getController('prep_target_center'),
               label: loc.targetCenter,
               icon: Icons.business_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
             ),
             const SizedBox(height: 16),
             _buildTextField(
-              controller: _getController('let_course_category'),
+              controller: _getController('prep_course_category'),
               label: loc.courseCategory,
               icon: Icons.calendar_today_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
@@ -1342,16 +1342,16 @@ class _CertificateScreenState extends State<CertificateScreen>
           _buildFormSectionTitle(loc.details),
           _buildSectionCard(children: [
             _buildTextField(
-              controller: _getController('let_candidate_name'),
+              controller: _getController('prep_candidate_name'),
               label: loc.name,
               icon: Icons.person_outline,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
             ),
             const SizedBox(height: 16),
-            _buildGenderDropdown(loc, isDark, stateKey: 'let_gender'),
+            _buildGenderDropdown(loc, isDark, stateKey: 'prep_gender'),
             const SizedBox(height: 16),
             _buildTextField(
-              controller: _getController('let_parent_name'),
+              controller: _getController('prep_parent_name'),
               label: '${loc.fatherName} / ${loc.motherName} (Son/Daughter of...)',
               icon: Icons.people_outline,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
@@ -1361,27 +1361,27 @@ class _CertificateScreenState extends State<CertificateScreen>
           _buildFormSectionTitle('Home Parish Registry'),
           _buildSectionCard(children: [
             _buildTextField(
-              controller: _getController('let_home_parish'),
+              controller: _getController('prep_home_parish'),
               label: loc.issuingParish,
               icon: Icons.church_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
             ),
             const SizedBox(height: 16),
             _buildTextField(
-              controller: _getController('let_substation'),
+              controller: _getController('prep_substation'),
               label: loc.substationName,
               icon: Icons.church_outlined,
             ),
             const SizedBox(height: 16),
             _buildTextField(
-              controller: _getController('let_foranate'),
+              controller: _getController('prep_foranate'),
               label: loc.foranateArea,
               icon: Icons.map_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
             ),
             const SizedBox(height: 16),
             _buildTextField(
-              controller: _getController('let_diocese'),
+              controller: _getController('prep_diocese'),
               label: loc.issuingDiocese,
               icon: Icons.location_city_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
@@ -1876,8 +1876,8 @@ class _CertificateScreenState extends State<CertificateScreen>
       case CertificateType.MARRIAGE:
         return loc.marriage;
 
-      case CertificateType.IDENTIFICATION_LETTER:
-        return loc.identificationLetter;
+      case CertificateType.MARRIAGE_PREPARATION:
+        return loc.marriagePreparation;
       case CertificateType.NIHIL_OBSTAT:
         return loc.nihilObstat;
     }
@@ -2075,8 +2075,8 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
 
 
 
-              case CertificateType.IDENTIFICATION_LETTER:
-                title = '${widget.loc.approve} - ${widget.loc.identificationLetter}';
+              case CertificateType.MARRIAGE_PREPARATION:
+                title = '${widget.loc.approve} - ${widget.loc.marriagePreparation}';
                 dialogFields.add(
                   _buildDialogDatePicker(
                     label: widget.loc.issueDate,
@@ -2171,7 +2171,7 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                         officialDetails['placeOfConfirmation'] = confPlaceController.text.trim();
                         break;
 
-                      case CertificateType.IDENTIFICATION_LETTER:
+                      case CertificateType.MARRIAGE_PREPARATION:
                         officialDetails['issueDate'] = formattedDate;
                         break;
                       case CertificateType.MARRIAGE:
@@ -2469,7 +2469,7 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
         }
         break;
 
-      case CertificateType.IDENTIFICATION_LETTER:
+      case CertificateType.MARRIAGE_PREPARATION:
         if (details.containsKey('issueDate')) {
           items.add(_buildDetailRow(loc.issueDate, _formatDetailDate(details['issueDate'])));
         }
@@ -2565,7 +2565,7 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
       case CertificateType.MARRIAGE:
         return Icons.favorite_border_rounded;
 
-      case CertificateType.IDENTIFICATION_LETTER:
+      case CertificateType.MARRIAGE_PREPARATION:
         return Icons.assignment_ind_outlined;
       case CertificateType.NIHIL_OBSTAT:
         return Icons.verified_user_outlined;
@@ -2579,8 +2579,8 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
       case CertificateType.MARRIAGE:
         return loc.marriage;
 
-      case CertificateType.IDENTIFICATION_LETTER:
-        return loc.identificationLetter;
+      case CertificateType.MARRIAGE_PREPARATION:
+        return loc.marriagePreparation;
       case CertificateType.NIHIL_OBSTAT:
         return loc.nihilObstat;
     }

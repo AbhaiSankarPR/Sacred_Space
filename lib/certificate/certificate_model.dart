@@ -3,7 +3,7 @@ import 'dart:convert';
 enum CertificateType {
   BAPTISM,
   MARRIAGE,
-  IDENTIFICATION_LETTER,
+  MARRIAGE_PREPARATION,
   NIHIL_OBSTAT;
 
   String toJson() => name;
@@ -12,8 +12,8 @@ enum CertificateType {
     switch (val.toUpperCase()) {
       case 'MARRIAGE':
         return CertificateType.MARRIAGE;
-      case 'IDENTIFICATION_LETTER':
-        return CertificateType.IDENTIFICATION_LETTER;
+      case 'MARRIAGE_PREPARATION':
+        return CertificateType.MARRIAGE_PREPARATION;
       case 'NIHIL_OBSTAT':
         return CertificateType.NIHIL_OBSTAT;
       case 'BAPTISM':
@@ -28,7 +28,7 @@ enum CertificateType {
         return 'Baptism';
       case CertificateType.MARRIAGE:
         return 'Marriage';
-      case CertificateType.IDENTIFICATION_LETTER:
+      case CertificateType.MARRIAGE_PREPARATION:
         return 'Identification Letter';
       case CertificateType.NIHIL_OBSTAT:
         return 'Nihil Obstat';
@@ -93,35 +93,38 @@ class CertificateRequest {
     return CertificateRequest(
       id: json['id'] ?? '',
       type: CertificateType.fromString(json['type'] ?? 'BAPTISM'),
-      details: json['details'] is String
-          ? jsonDecode(json['details'])
-          : (json['details'] as Map<String, dynamic>? ?? {}),
+      details:
+          json['details'] is String
+              ? jsonDecode(json['details'])
+              : (json['details'] as Map<String, dynamic>? ?? {}),
       status: CertificateStatus.fromString(json['status'] ?? 'PENDING'),
       rejectionReason: json['rejectionReason'],
       churchId: json['churchId'] ?? '',
       userId: json['userId'] ?? '',
       approvedById: json['approvedById'],
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
-          : DateTime.now(),
+      createdAt:
+          json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now(),
+      updatedAt:
+          json['updatedAt'] != null
+              ? DateTime.parse(json['updatedAt'])
+              : DateTime.now(),
       requesterName: reqName,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type.toJson(),
-        'details': details,
-        'status': status.name,
-        'rejectionReason': rejectionReason,
-        'churchId': churchId,
-        'userId': userId,
-        'approvedById': approvedById,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'requesterName': requesterName,
-      };
+    'id': id,
+    'type': type.toJson(),
+    'details': details,
+    'status': status.name,
+    'rejectionReason': rejectionReason,
+    'churchId': churchId,
+    'userId': userId,
+    'approvedById': approvedById,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'requesterName': requesterName,
+  };
 }
