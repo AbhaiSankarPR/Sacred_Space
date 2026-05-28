@@ -91,13 +91,16 @@ class _CertificateScreenState extends State<CertificateScreen>
       case 'bap_name':
         controller.text = user.name;
         break;
-      case 'bap_place_of_birth':
+      case 'bap_issuing_diocese':
         controller.text = user.location;
         break;
-      case 'bap_place_of_baptism':
+      case 'bap_pob':
+        controller.text = user.location;
+        break;
+      case 'bap_place':
         controller.text = user.churchName;
         break;
-      case 'bap_permanent_residence':
+      case 'bap_residence':
         if (user.permanentAddress != null) {
           controller.text = user.permanentAddress!;
         }
@@ -120,6 +123,9 @@ class _CertificateScreenState extends State<CertificateScreen>
         break;
 
       // Marriage
+      case 'mar_issuing_diocese':
+        controller.text = user.location;
+        break;
       case 'mar_groom_name':
         if (isMale) controller.text = user.name;
         break;
@@ -273,6 +279,7 @@ class _CertificateScreenState extends State<CertificateScreen>
           details['permanentResidence'] = _getController('bap_residence').text.trim();
           details['godfatherName'] = _getController('bap_godfather').text.trim();
           details['godmotherName'] = _getController('bap_godmother').text.trim();
+          details['issuingDiocese'] = _getController('bap_issuing_diocese').text.trim();
           details['ministerOfBaptism'] = _getController('bap_minister').text.trim();
 
           details['registryBook'] = _getController('bap_registry_book').text.trim();
@@ -293,7 +300,9 @@ class _CertificateScreenState extends State<CertificateScreen>
           break;
 
         case CertificateType.MARRIAGE:
+          details['issuingDiocese'] = _getController('mar_issuing_diocese').text.trim();
           details['locationOfMarriage'] = _getController('mar_location').text.trim();
+          details['substationName'] = _getController('mar_substation').text.trim();
           if (_formData['mar_date'] != null) {
             details['marriageDate'] = DateFormat('yyyy-MM-dd').format(_formData['mar_date']);
           }
@@ -302,6 +311,7 @@ class _CertificateScreenState extends State<CertificateScreen>
           // Groom Block
           details['groomName'] = _getController('mar_groom_name').text.trim();
           details['groomFather'] = _getController('mar_groom_father').text.trim();
+          details['groomMother'] = _getController('mar_groom_mother').text.trim();
           details['groomParish'] = _getController('mar_groom_parish').text.trim();
           details['groomPob'] = _getController('mar_groom_pob').text.trim();
           if (_formData['mar_groom_dob'] != null) {
@@ -316,6 +326,7 @@ class _CertificateScreenState extends State<CertificateScreen>
           // Bride Block
           details['brideName'] = _getController('mar_bride_name').text.trim();
           details['brideFather'] = _getController('mar_bride_father').text.trim();
+          details['brideMother'] = _getController('mar_bride_mother').text.trim();
           details['brideParish'] = _getController('mar_bride_parish').text.trim();
           details['bridePob'] = _getController('mar_bride_pob').text.trim();
           if (_formData['mar_bride_dob'] != null) {
@@ -1299,12 +1310,18 @@ class _CertificateScreenState extends State<CertificateScreen>
           _buildFormSectionTitle('Ecclesiastical details'),
           _buildSectionCard(children: [
             _buildTextField(
+              controller: _getController('bap_issuing_diocese'),
+              label: loc.issuingDiocese,
+              icon: Icons.location_city_outlined,
+              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
               controller: _getController('bap_minister'),
               label: loc.ministerOfBaptism,
               icon: Icons.assignment_ind_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
             ),
-
             const SizedBox(height: 16),
             _buildTextField(
               controller: _getController('bap_registry_book'),
@@ -1394,10 +1411,23 @@ class _CertificateScreenState extends State<CertificateScreen>
           _buildFormSectionTitle(loc.marriageLocation),
           _buildSectionCard(children: [
             _buildTextField(
+              controller: _getController('mar_issuing_diocese'),
+              label: loc.issuingDiocese,
+              icon: Icons.location_city_outlined,
+              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
               controller: _getController('mar_location'),
               label: loc.marriageLocation,
               icon: Icons.church_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _getController('mar_substation'),
+              label: loc.substationName,
+              icon: Icons.church_outlined,
             ),
             const SizedBox(height: 16),
             _buildDatePickerField(
@@ -1432,6 +1462,13 @@ class _CertificateScreenState extends State<CertificateScreen>
               controller: _getController('mar_groom_father'),
               label: loc.fatherName,
               icon: Icons.person,
+              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _getController('mar_groom_mother'),
+              label: loc.motherName,
+              icon: Icons.person_3_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
             ),
             const SizedBox(height: 16),
@@ -1500,6 +1537,13 @@ class _CertificateScreenState extends State<CertificateScreen>
               controller: _getController('mar_bride_father'),
               label: loc.fatherName,
               icon: Icons.person,
+              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _getController('mar_bride_mother'),
+              label: loc.motherName,
+              icon: Icons.person_3_outlined,
               validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
             ),
             const SizedBox(height: 16),
