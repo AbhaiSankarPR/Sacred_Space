@@ -1954,11 +1954,75 @@ class _CertificateRequestCard extends StatefulWidget {
 
 class _CertificateRequestCardState extends State<_CertificateRequestCard> {
   bool _isExpanded = false;
+  bool _isDownloading = false;
+
+  Future<void> _downloadCertificate() async {
+    setState(() {
+      _isDownloading = true;
+    });
+
+    try {
+      final service = CertificateService();
+      final typeName = _getTypeDisplayName(widget.request.type, widget.loc);
+      final message = await service.downloadCertificate(widget.request.id, typeName);
+      
+      if (mounted) {
+        final isSuccess = message.contains('successfully');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  isSuccess ? Icons.check_circle : Icons.info_outline, 
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: isSuccess ? Colors.green[600] : Colors.amber[800],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+        });
+      }
+    }
+  }
+
 
   Widget _buildDialogTextField({
     required TextEditingController controller,
     required String label,
     required String hint,
+    String? errorText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1972,6 +2036,7 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
           controller: controller,
           decoration: InputDecoration(
             hintText: hint,
+            errorText: errorText,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
@@ -2029,17 +2094,68 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
 
   void _showApproveConfirm(BuildContext context) {
     final TextEditingController field1Controller = TextEditingController();
-    final TextEditingController confPlaceController = TextEditingController();
+    final TextEditingController confPlaceController = TextEditingController(
+      text: widget.request.details['placeOfConfirmation']?.toString() ?? '',
+    );
     DateTime? selectedDate = DateTime.now();
-    DateTime? confDate = DateTime.now();
+    DateTime? confDate = widget.request.details['dateOfConfirmation'] != null
+        ? DateTime.tryParse(widget.request.details['dateOfConfirmation'].toString()) ?? DateTime.now()
+        : DateTime.now();
+
+    // Controllers for editing certificate-specific details (flattened in approval payload)
+    final Map<String, TextEditingController> detailControllers = {};
+    String permissionTypeVal = widget.request.details['permissionType']?.toString() ?? 'PUBLISH_BANNS_MARRIAGE';
+
+    // Prefill controllers based on request type
+    switch (widget.request.type) {
+      case CertificateType.NIHIL_OBSTAT:
+        detailControllers['issuingParish'] = TextEditingController(text: widget.request.details['issuingParish']?.toString() ?? '');
+        detailControllers['issuingDiocese'] = TextEditingController(text: widget.request.details['issuingDiocese']?.toString() ?? '');
+        detailControllers['impediments'] = TextEditingController(text: widget.request.details['impediments']?.toString() ?? '');
+        break;
+      case CertificateType.BAPTISM:
+        detailControllers['placeOfBirth'] = TextEditingController(text: widget.request.details['placeOfBirth']?.toString() ?? '');
+        detailControllers['placeOfBaptism'] = TextEditingController(text: widget.request.details['placeOfBaptism']?.toString() ?? '');
+        detailControllers['ministerOfBaptism'] = TextEditingController(text: widget.request.details['ministerOfBaptism']?.toString() ?? '');
+        detailControllers['registryBook'] = TextEditingController(text: widget.request.details['registryBook']?.toString() ?? '');
+        detailControllers['issuingDiocese'] = TextEditingController(text: widget.request.details['issuingDiocese']?.toString() ?? '');
+        break;
+      case CertificateType.MARRIAGE_PREPARATION:
+        detailControllers['targetCenter'] = TextEditingController(text: widget.request.details['targetCenter']?.toString() ?? '');
+        detailControllers['courseCategory'] = TextEditingController(text: widget.request.details['courseCategory']?.toString() ?? '');
+        break;
+      case CertificateType.MARRIAGE:
+        detailControllers['issuingDiocese'] = TextEditingController(text: widget.request.details['issuingDiocese']?.toString() ?? '');
+        detailControllers['locationOfMarriage'] = TextEditingController(text: widget.request.details['locationOfMarriage']?.toString() ?? '');
+        detailControllers['substationName'] = TextEditingController(text: widget.request.details['substationName']?.toString() ?? '');
+        detailControllers['officiatingPriest'] = TextEditingController(text: widget.request.details['officiatingPriest']?.toString() ?? '');
+        break;
+    }
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext ctx) {
+        String? certNoErrorText;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final List<Widget> dialogFields = [];
             String title = widget.loc.approveConfirm;
+
+            Widget buildSectionHeader(String title) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  title.toUpperCase(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    color: Color(0xFF5D3A99),
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              );
+            }
 
             switch (widget.request.type) {
               case CertificateType.NIHIL_OBSTAT:
@@ -2049,6 +2165,7 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                     controller: field1Controller,
                     label: widget.loc.certificateNo,
                     hint: 'e.g. NO-2026-004',
+                    errorText: certNoErrorText,
                   ),
                 );
                 dialogFields.add(const SizedBox(height: 16));
@@ -2066,6 +2183,66 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                     },
                   ),
                 );
+
+                dialogFields.add(const SizedBox(height: 12));
+                dialogFields.add(const Divider());
+                dialogFields.add(buildSectionHeader("Edit Certificate Details"));
+
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['issuingParish']!,
+                    label: "Issuing Parish",
+                    hint: "Parish name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['issuingDiocese']!,
+                    label: "Issuing Diocese",
+                    hint: "Diocese name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Permission Type",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        value: permissionTypeVal,
+                        items: const [
+                          DropdownMenuItem(value: 'ASSIST_AT_ENGAGEMENT', child: Text('Assist at Engagement Contract')),
+                          DropdownMenuItem(value: 'PUBLISH_BANNS_MARRIAGE', child: Text('Publish Banns for Marriage')),
+                          DropdownMenuItem(value: 'ASSIST_AT_THE_MARRIAGE', child: Text('Assist at the Marriage')),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) {
+                            setDialogState(() {
+                              permissionTypeVal = v;
+                            });
+                          }
+                        },
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['impediments']!,
+                    label: "Impediments (if any)",
+                    hint: "e.g. None",
+                  ),
+                );
                 break;
 
               case CertificateType.BAPTISM:
@@ -2075,6 +2252,7 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                     controller: field1Controller,
                     label: widget.loc.certificateNo,
                     hint: 'e.g. BAP-2026-089',
+                    errorText: certNoErrorText,
                   ),
                 );
                 dialogFields.add(const SizedBox(height: 16));
@@ -2115,9 +2293,51 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                     hint: 'e.g. St. Mary\'s Cathedral',
                   ),
                 );
+
+                dialogFields.add(const SizedBox(height: 12));
+                dialogFields.add(const Divider());
+                dialogFields.add(buildSectionHeader("Edit Certificate Details"));
+
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['placeOfBirth']!,
+                    label: "Place of Birth",
+                    hint: "Location",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['placeOfBaptism']!,
+                    label: "Place of Baptism",
+                    hint: "Parish name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['ministerOfBaptism']!,
+                    label: "Minister of Baptism",
+                    hint: "Priest name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['registryBook']!,
+                    label: "Registry Book Location",
+                    hint: "Volume / page",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['issuingDiocese']!,
+                    label: "Issuing Diocese",
+                    hint: "Diocese name",
+                  ),
+                );
                 break;
-
-
 
               case CertificateType.MARRIAGE_PREPARATION:
                 title = '${widget.loc.approve} - ${widget.loc.marriagePreparation}';
@@ -2135,6 +2355,26 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                     },
                   ),
                 );
+
+                dialogFields.add(const SizedBox(height: 12));
+                dialogFields.add(const Divider());
+                dialogFields.add(buildSectionHeader("Edit Certificate Details"));
+
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['targetCenter']!,
+                    label: "Target Center Name",
+                    hint: "Center name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['courseCategory']!,
+                    label: "Course Category / Dates",
+                    hint: "e.g. Regular (May 10-12)",
+                  ),
+                );
                 break;
 
               case CertificateType.MARRIAGE:
@@ -2144,6 +2384,7 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                     controller: field1Controller,
                     label: widget.loc.registerNo,
                     hint: 'e.g. REG-2026-015',
+                    errorText: certNoErrorText,
                   ),
                 );
                 dialogFields.add(const SizedBox(height: 16));
@@ -2159,6 +2400,42 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                         });
                       }
                     },
+                  ),
+                );
+
+                dialogFields.add(const SizedBox(height: 12));
+                dialogFields.add(const Divider());
+                dialogFields.add(buildSectionHeader("Edit Certificate Details"));
+
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['issuingDiocese']!,
+                    label: "Issuing Diocese",
+                    hint: "Diocese name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['locationOfMarriage']!,
+                    label: "Location of Marriage",
+                    hint: "Parish name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['substationName']!,
+                    label: "Substation Name",
+                    hint: "Substation name",
+                  ),
+                );
+                dialogFields.add(const SizedBox(height: 16));
+                dialogFields.add(
+                  _buildDialogTextField(
+                    controller: detailControllers['officiatingPriest']!,
+                    label: "Officiating Priest",
+                    hint: "Priest name",
                   ),
                 );
                 break;
@@ -2185,7 +2462,9 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
                   child: Text(
                     'Cancel',
                     style: TextStyle(
@@ -2196,6 +2475,14 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                 ),
                 ElevatedButton(
                   onPressed: () {
+                    final certNo = field1Controller.text.trim();
+                    if (widget.request.type != CertificateType.MARRIAGE_PREPARATION && certNo.isEmpty) {
+                      setDialogState(() {
+                        certNoErrorText = "This field is required";
+                      });
+                      return;
+                    }
+
                     final Map<String, dynamic> officialDetails = {};
                     final formattedDate = selectedDate != null
                         ? DateFormat('yyyy-MM-dd').format(selectedDate!)
@@ -2205,6 +2492,12 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                       case CertificateType.NIHIL_OBSTAT:
                         officialDetails['certificateNo'] = field1Controller.text.trim();
                         officialDetails['issueDate'] = formattedDate;
+
+                        // Flatten details directly
+                        officialDetails['issuingParish'] = detailControllers['issuingParish']!.text.trim();
+                        officialDetails['issuingDiocese'] = detailControllers['issuingDiocese']!.text.trim();
+                        officialDetails['permissionType'] = permissionTypeVal;
+                        officialDetails['impediments'] = detailControllers['impediments']!.text.trim();
                         break;
                       case CertificateType.BAPTISM:
                         officialDetails['certificateNo'] = field1Controller.text.trim();
@@ -2213,14 +2506,31 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                           officialDetails['dateOfConfirmation'] = DateFormat('yyyy-MM-dd').format(confDate!);
                         }
                         officialDetails['placeOfConfirmation'] = confPlaceController.text.trim();
+
+                        // Flatten details directly
+                        officialDetails['placeOfBirth'] = detailControllers['placeOfBirth']!.text.trim();
+                        officialDetails['placeOfBaptism'] = detailControllers['placeOfBaptism']!.text.trim();
+                        officialDetails['ministerOfBaptism'] = detailControllers['ministerOfBaptism']!.text.trim();
+                        officialDetails['registryBook'] = detailControllers['registryBook']!.text.trim();
+                        officialDetails['issuingDiocese'] = detailControllers['issuingDiocese']!.text.trim();
                         break;
 
                       case CertificateType.MARRIAGE_PREPARATION:
                         officialDetails['issueDate'] = formattedDate;
+
+                        // Flatten details directly
+                        officialDetails['targetCenter'] = detailControllers['targetCenter']!.text.trim();
+                        officialDetails['courseCategory'] = detailControllers['courseCategory']!.text.trim();
                         break;
                       case CertificateType.MARRIAGE:
                         officialDetails['registerNo'] = field1Controller.text.trim();
                         officialDetails['issueDate'] = formattedDate;
+
+                        // Flatten details directly
+                        officialDetails['issuingDiocese'] = detailControllers['issuingDiocese']!.text.trim();
+                        officialDetails['locationOfMarriage'] = detailControllers['locationOfMarriage']!.text.trim();
+                        officialDetails['substationName'] = detailControllers['substationName']!.text.trim();
+                        officialDetails['officiatingPriest'] = detailControllers['officiatingPriest']!.text.trim();
                         break;
                     }
 
@@ -2404,7 +2714,46 @@ class _CertificateRequestCardState extends State<_CertificateRequestCard> {
                 ],
                 if (widget.request.status == CertificateStatus.APPROVED) ...[
                   _buildOfficialDetailsSection(widget.request.type, widget.request.details, widget.loc),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isDownloading ? null : _downloadCertificate,
+                        icon: _isDownloading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.download_rounded, size: 20, color: Colors.white),
+                        label: Text(
+                          _isDownloading 
+                              ? widget.loc.downloadingCertificate 
+                              : widget.loc.downloadCertificate,
+                          style: const TextStyle(
+                            color: Colors.white, 
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5D3A99),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 2,
+                          shadowColor: const Color(0xFF5D3A99).withValues(alpha: 0.3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
                 Text(
                   widget.loc.details.toUpperCase(),
