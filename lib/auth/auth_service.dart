@@ -244,10 +244,8 @@ class AuthService extends ChangeNotifier {
       await apiService.post('/notification/sync', {'deviceToken': deviceToken});
 
       // Topic: church_ST_JOSEPHS_KOCHI
-      String topic = "church_${_currentUser!.churchId}";
-      await FirebaseMessaging.instance.subscribeToTopic(topic);
-
-      debugPrint("Subscribed to topic: $topic");
+      // String topic = "church_${_currentUser!.churchId}";
+      // await FirebaseMessaging.instance.subscribeToTopic(topic);
     } catch (e) {
       debugPrint("Token sync failed: $e");
     }
@@ -285,6 +283,9 @@ class AuthService extends ChangeNotifier {
     // Make sure 'userId' is also removed if you're using it for self-notification filters
     await prefs.remove('user_data');
     await prefs.remove('userId');
+    await prefs.remove('last_notification_status');
+    await prefs.remove('lastSyncedToken');
+    await prefs.remove('deviceToken');
 
     await _storage.delete(key: 'token');
 
@@ -560,9 +561,13 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<List<FamilyConnection>> getMemberFamilyConnections(String userId) async {
+  Future<List<FamilyConnection>> getMemberFamilyConnections(
+    String userId,
+  ) async {
     try {
-      final response = await apiService.get('/priest/users/$userId/family-connections');
+      final response = await apiService.get(
+        '/priest/users/$userId/family-connections',
+      );
       final List<dynamic> data = response.data;
       return data.map((json) => FamilyConnection.fromJson(json)).toList();
     } catch (e) {
