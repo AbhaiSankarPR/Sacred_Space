@@ -660,6 +660,9 @@ class User {
             .map(
               (e) => {
                 'relation': e.relation,
+                'displayRelation': e.displayRelation,
+                'inferred': e.inferred,
+                'source': e.source,
                 'relatedUser': {
                   'id': e.relatedUser.id,
                   'role': e.relatedUser.role,

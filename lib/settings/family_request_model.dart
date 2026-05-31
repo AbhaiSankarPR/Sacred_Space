@@ -21,16 +21,27 @@ class FamilyRequest {
 class FamilyConnection {
   final String relation;
   final RelatedUser relatedUser;
+  final String? displayRelation;
+  final bool? inferred;
+  final String? source;
 
   FamilyConnection({
     required this.relation,
     required this.relatedUser,
+    this.displayRelation,
+    this.inferred,
+    this.source,
   });
 
   factory FamilyConnection.fromJson(Map<String, dynamic> json) {
     return FamilyConnection(
-      relation: json['relation'],
-      relatedUser: RelatedUser.fromJson(json['relatedUser']),
+      relation: json['relation'] ?? '',
+      relatedUser: RelatedUser.fromJson(json['relatedUser'] ?? {}),
+      displayRelation: json['displayRelation'],
+      inferred: json['inferred'] is bool
+          ? json['inferred']
+          : (json['inferred']?.toString().toLowerCase() == 'true'),
+      source: json['source'],
     );
   }
 }

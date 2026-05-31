@@ -86,14 +86,31 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                 ),
               ),
               Text(
-                connection.relation,
+                connection.displayRelation ?? connection.relation,
                 style: TextStyle(
                   fontSize: 14,
                   color: const Color(0xFF5D3A99).withOpacity(0.8),
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  _buildBadge(
+                    connection.inferred == true ? "System Suggested" : "Direct Connection",
+                    connection.inferred == true ? Colors.amber[700]! : const Color(0xFF5D3A99),
+                  ),
+                  if (connection.source != null && connection.source!.isNotEmpty)
+                    _buildBadge(
+                      "Source: ${connection.source}",
+                      const Color(0xFF00796B),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 16),
               _buildDetailRow(
@@ -196,6 +213,26 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
     );
   }
 
+  Widget _buildBadge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -278,7 +315,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Text(
-          connection.relation,
+          "${connection.displayRelation ?? connection.relation}${connection.inferred == true ? ' (Inferred)' : ''}",
           style: TextStyle(
             color: const Color(0xFF5D3A99).withOpacity(0.8),
             fontWeight: FontWeight.w500,
