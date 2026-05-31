@@ -424,5 +424,7 @@
   "totalBalance": "ആകെ ബാക്കി",
   "noTransactionsFound": "ഇടപാടുകൾ ഒന്നും കണ്ടെത്തിയില്ല.",
   "addedBy": "ചേർത്തത്",
-  "downloadReport": "റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക"
+  "downloadReport": "റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക",
+  "downloadCertificate": "സർട്ടിഫിക്കറ്റ് ഡൗൺലോഡ് ചെയ്യുക",
+  "downloadingCertificate": "സർട്ടിഫിക്കറ്റ് ഡൗൺലോഡ് ചെയ്യുന്നു..."
 }

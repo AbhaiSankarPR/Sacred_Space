@@ -425,5 +425,7 @@
   "totalBalance": "Total Balance",
   "noTransactionsFound": "No transactions found.",
   "addedBy": "Added by",
-  "downloadReport": "Download Report"
+  "downloadReport": "Download Report",
+  "downloadCertificate": "Download Certificate",
+  "downloadingCertificate": "Downloading certificate..."
 }
