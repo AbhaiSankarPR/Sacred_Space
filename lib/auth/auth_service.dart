@@ -157,7 +157,6 @@ class AuthService extends ChangeNotifier {
     required String email,
     required String password,
     required String churchId,
-    String? deviceToken,
   }) async {
     try {
       await apiService.post('/auth/register', {
@@ -165,7 +164,6 @@ class AuthService extends ChangeNotifier {
         'email': email,
         'password': password,
         'churchId': churchId,
-        if (deviceToken != null) 'deviceToken': deviceToken,
       });
     } on DioException catch (e) {
       final message = e.response?.data?['message'] ?? "";
