@@ -13,53 +13,12 @@ import 'firebase_options.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/navigator_key.dart';
+import 'core/notification_helper.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("Handling a background message: ${message.messageId}");
-}
-
-// 1. UPDATED NAVIGATION HANDLER
-void handleNotificationNavigation(Map<String, dynamic> data) {
-  final String? type = data['type'];
-  final String? id =
-      data['id'] ??
-      data['announcementId'] ??
-      data['eventId'] ??
-      data['bookingId'];
-
-  switch (type) {
-    case "ANNOUNCEMENT":
-      if (id != null) {
-        navigatorKey.currentState?.pushNamed(
-          Routes.announcementDetail,
-          arguments: id,
-        );
-      } else {
-        navigatorKey.currentState?.pushNamed(Routes.announcements);
-      }
-      break;
-
-    case "NEW_EVENT":
-      navigatorKey.currentState?.pushNamed(Routes.events);
-      break;
-
-    case "NEW_BOOKING_REQUEST":
-      // Priest navigates here to approve/reject
-      navigatorKey.currentState?.pushNamed(Routes.bookings);
-      break;
-
-    case "BOOKING_STATUS_UPDATE":
-      // Member navigates here to see confirmation
-      navigatorKey.currentState?.pushNamed(Routes.bookings);
-      break;
-
-    default:
-      debugPrint("Unknown notification type: $type");
-      // Fallback: send them to home or announcements
-      navigatorKey.currentState?.pushNamed(Routes.announcements);
-  }
 }
 
 void main() async {
@@ -72,13 +31,11 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // 2. Terminated State: Handle notification clicks
+  // 2. Terminated State: Handle notification clicks by queuing them
   RemoteMessage? initialMessage =
       await FirebaseMessaging.instance.getInitialMessage();
   if (initialMessage != null) {
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      handleNotificationNavigation(initialMessage.data);
-    });
+    pendingNotificationData = initialMessage.data;
   }
 
   // 3. Foreground State: Custom UI Popups

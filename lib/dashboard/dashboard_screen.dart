@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../core/routes.dart';
+import '../core/notification_helper.dart';
 import 'package:provider/provider.dart'; // Added Provider
 import '../auth/auth_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -25,6 +26,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // This catches if the user enabled notifications in Phone Settings
     // or if the app needs to prompt for permission on the first arrival.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (pendingNotificationData != null) {
+        final data = pendingNotificationData!;
+        pendingNotificationData = null;
+        handleNotificationNavigation(data);
+      }
+
       final loc = AppLocalizations.of(context)!; // Define loc here
       if (mounted) {
         // Calls the method we added to AuthService
