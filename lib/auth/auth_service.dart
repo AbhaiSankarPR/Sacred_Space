@@ -520,11 +520,16 @@ class AuthService extends ChangeNotifier {
         'inviteCode': inviteCode,
         'relation': relation,
       });
+    } on DioException catch (e) {
+      final message = e.response?.data?['message'] ?? e.message ?? "Unknown error";
+      debugPrint("Error sending family request: $message");
+      throw Exception(message);
     } catch (e) {
       debugPrint("Error sending family request: $e");
-      rethrow;
+      throw Exception("An unexpected error occurred.");
     }
   }
+
 
   Future<void> handleFamilyRequest(String relatedUserId, String action) async {
     try {

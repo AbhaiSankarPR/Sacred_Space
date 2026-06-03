@@ -279,8 +279,9 @@ class _FamilyConnectionsScreenState extends State<FamilyConnectionsScreen> {
                             );
                             _refreshRequests();
                           } catch (e) {
+                            final errorMsg = e.toString().replaceAll('Exception: ', '');
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(loc.requestFailed)),
+                              SnackBar(content: Text(errorMsg)),
                             );
                           }
                         }
