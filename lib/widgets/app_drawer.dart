@@ -21,6 +21,27 @@ class AppDrawer extends StatelessWidget {
     // Role-Based Logic
     final bool isPriest = user.role.toLowerCase() == 'priest';
 
+    void navigateTo(String targetRoute) {
+      final bool isTargetDashboard = targetRoute == Routes.member || targetRoute == Routes.priest;
+      final bool isCurrentDashboard = currentRoute == Routes.member || currentRoute == Routes.priest;
+
+      if (isTargetDashboard && isCurrentDashboard) {
+        Navigator.pop(context);
+        return;
+      }
+
+      if (currentRoute == targetRoute) {
+        Navigator.pop(context);
+        return;
+      }
+
+      Navigator.pop(context);
+      Navigator.popUntil(context, (route) => route.isFirst);
+      if (!isTargetDashboard) {
+        Navigator.pushNamed(context, targetRoute);
+      }
+    }
+
     return Drawer(
       backgroundColor: theme.cardColor,
       child: Column(
@@ -34,53 +55,36 @@ class AppDrawer extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.dashboard_outlined,
                   title: loc.dashboard,
-                  onTap:
-                      () => Navigator.pushReplacementNamed(
-                        context,
-                        isPriest ? Routes.priest : Routes.member,
-                      ),
+                  onTap: () => navigateTo(isPriest ? Routes.priest : Routes.member),
                   isSelected:
                       currentRoute == Routes.member ||
                       currentRoute == Routes.priest,
                 ),
-            _DrawerItem(
+                _DrawerItem(
                   icon: Icons.calendar_month,
                   title: loc.parishCalendar,
-                  onTap:
-                      () => Navigator.pushNamed(context, Routes.parishCalendar),
+                  onTap: () => navigateTo(Routes.parishCalendar),
                   isSelected: currentRoute == Routes.parishCalendar,
                 ),
                 // BOOKINGS: Specialized label for Priest
                 _DrawerItem(
                   icon: Icons.bookmark_border_rounded,
                   title: isPriest ? loc.manageRequests : loc.bookings,
-                  onTap:
-                      () => Navigator.pushReplacementNamed(
-                        context,
-                        Routes.bookings,
-                      ),
+                  onTap: () => navigateTo(Routes.bookings),
                   isSelected: currentRoute == Routes.bookings,
                 ),
 
                 _DrawerItem(
                   icon: Icons.campaign_outlined,
                   title: loc.announcements,
-                  onTap:
-                      () => Navigator.pushNamed(
-                        context,
-                        Routes.announcements,
-                      ),
+                  onTap: () => navigateTo(Routes.announcements),
                   isSelected: currentRoute == Routes.announcements,
                 ),
 
                 _DrawerItem(
                   icon: Icons.calendar_month_outlined,
                   title: loc.events,
-                  onTap:
-                      () => Navigator.pushReplacementNamed(
-                        context,
-                        Routes.events,
-                      ),
+                  onTap: () => navigateTo(Routes.events),
                   isSelected: currentRoute == Routes.events,
                 ),
 
@@ -93,21 +97,13 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.groups_outlined,
                     title: loc.memberDirectory, // Ensure this exists in .arb
-                    onTap:
-                        () => Navigator.pushReplacementNamed(
-                          context,
-                          Routes.memberDirectory,
-                        ),
+                    onTap: () => navigateTo(Routes.memberDirectory),
                     isSelected: currentRoute == Routes.memberDirectory,
                   ),
                   _DrawerItem(
                     icon: Icons.settings_applications_outlined,
                     title: loc.galleryAdmin, // Ensure this exists in .arb
-                    onTap:
-                        () => Navigator.pushReplacementNamed(
-                          context,
-                          Routes.galleryAdmin,
-                        ),
+                    onTap: () => navigateTo(Routes.galleryAdmin),
                     isSelected: currentRoute == Routes.galleryAdmin,
                   ),
                 ] else ...[
@@ -115,11 +111,7 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.photo_library_outlined,
                     title: loc.gallery,
-                    onTap:
-                        () => Navigator.pushReplacementNamed(
-                          context,
-                          Routes.gallery,
-                        ),
+                    onTap: () => navigateTo(Routes.gallery),
                     isSelected: currentRoute == Routes.gallery,
                   ),
                 ],
@@ -127,11 +119,7 @@ class AppDrawer extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.warning_amber_rounded,
                   title: loc.emergencyAlerts,
-                  onTap:
-                      () => Navigator.pushReplacementNamed(
-                        context,
-                        Routes.emergency,
-                      ),
+                  onTap: () => navigateTo(Routes.emergency),
                   isSelected: currentRoute == Routes.emergency,
                   isAlert: true,
                 ),
@@ -144,21 +132,13 @@ class AppDrawer extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.person_outline,
                   title: loc.profile,
-                  onTap:
-                      () => Navigator.pushReplacementNamed(
-                        context,
-                        Routes.profile,
-                      ),
+                  onTap: () => navigateTo(Routes.profile),
                   isSelected: currentRoute == Routes.profile,
                 ),
                 _DrawerItem(
                   icon: Icons.settings_outlined,
                   title: loc.settings,
-                  onTap:
-                      () => Navigator.pushReplacementNamed(
-                        context,
-                        Routes.settings,
-                      ),
+                  onTap: () => navigateTo(Routes.settings),
                   isSelected: currentRoute == Routes.settings,
                 ),
               ],
