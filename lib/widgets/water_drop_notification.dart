@@ -79,7 +79,7 @@ class _WaterDropNotificationState extends State<WaterDropNotification>
       animation: _controller,
       builder: (context, child) {
         final progress = _controller.value;
-        
+
         // Morph border radius from asymmetric droplet to symmetric capsule
         final borderRadius = BorderRadius.only(
           topLeft: const Radius.circular(30),
@@ -90,7 +90,9 @@ class _WaterDropNotificationState extends State<WaterDropNotification>
 
         return Positioned(
           top: _dropAnimation.value,
-          left: MediaQuery.of(context).size.width / 2 - (_morphAnimation.value / 2),
+          left:
+              MediaQuery.of(context).size.width / 2 -
+              (_morphAnimation.value / 2),
           child: Material(
             color: Colors.transparent,
             elevation: 8,
@@ -107,54 +109,55 @@ class _WaterDropNotificationState extends State<WaterDropNotification>
                 ),
                 borderRadius: borderRadius,
               ),
-              child: progress < 0.55
-                  ? Center(
-                      // Inline drop core
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+              child:
+                  progress < 0.55
+                      ? Center(
+                        // Inline drop core
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    )
-                  : FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.check_circle_outline_rounded,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                widget.message,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                      )
+                      : FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.check_circle_outline_rounded,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  letterSpacing: 0.2,
+                                  size: 22,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  widget.message,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
             ),
           ),
         );

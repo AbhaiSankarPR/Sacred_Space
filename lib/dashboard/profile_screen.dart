@@ -3,21 +3,76 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
 import '../screens/aboutUsScreen.dart';
 import '../screens/personal_info_screen.dart';
 import '../screens/PrivacyPolicyScreen.dart';
+import '../widgets/water_drop_notification.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isUploading = false;
+
+  Future<void> _pickAndUploadProfilePic() async {
+    final loc = AppLocalizations.of(context)!;
+    try {
+      final FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      setState(() {
+        _isUploading = true;
+      });
+
+      if (!mounted) return;
+      final authService = context.read<AuthService>();
+      await authService.updateProfilePicture(result.files.first);
+
+      if (!mounted) return;
+      final overlayState = Overlay.of(context);
+      late OverlayEntry overlayEntry;
+      overlayEntry = OverlayEntry(
+        builder: (context) => WaterDropNotification(
+          message: loc.profilePicUpdated,
+          onDismiss: () => overlayEntry.remove(),
+        ),
+      );
+      overlayState.insert(overlayEntry);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Upload failed: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    // Using the singleton instance to get the currently logged-in user
-    final user = AuthService().currentUser;
+    // Bind reactively to updates in AuthService
+    final user = Provider.of<AuthService>(context).currentUser;
 
     if (user == null) {
       // Safety redirect if session is lost
@@ -91,16 +146,22 @@ class ProfileScreen extends StatelessWidget {
                               isDark ? Colors.grey[800] : Colors.grey[100],
                           // Use user's specific profile image if available, else fallback to initials or icon
                           backgroundImage:
-                              (user.logoUrl != null && user.logoUrl!.isNotEmpty)
-                                  ? NetworkImage(user.logoUrl!)
-                                  : null,
-                          child:
-                              (user.logoUrl == null || user.logoUrl!.isEmpty)
+                              (user.profilePicUrl != null && user.profilePicUrl!.isNotEmpty)
+                                  ? NetworkImage(user.profilePicUrl!)
+                                  : (user.logoUrl != null && user.logoUrl!.isNotEmpty)
+                                      ? NetworkImage(user.logoUrl!)
+                                      : null,
+                          child: _isUploading
+                              ? const CircularProgressIndicator(
+                                  color: Color(0xFF5D3A99),
+                                )
+                              : (user.profilePicUrl == null || user.profilePicUrl!.isEmpty) &&
+                                (user.logoUrl == null || user.logoUrl!.isEmpty)
                                   ? const Icon(
-                                    Icons.person,
-                                    size: 45,
-                                    color: Color(0xFF5D3A99),
-                                  )
+                                      Icons.person,
+                                      size: 45,
+                                      color: Color(0xFF5D3A99),
+                                    )
                                   : null,
                         ),
                       ),
@@ -108,10 +169,7 @@ class ProfileScreen extends StatelessWidget {
                         bottom: 0,
                         right: 4,
                         child: GestureDetector(
-                          onTap:
-                              () => print(
-                                "Update Photo",
-                              ), // You can add image picker here later
+                          onTap: _isUploading ? null : _pickAndUploadProfilePic,
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(

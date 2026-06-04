@@ -438,5 +438,6 @@
   "churchManagementSection": "Church Management",
   "uploadBackground": "Upload Church Background",
   "backgroundUpdated": "Church background updated successfully!",
-  "uploading": "Uploading..."
+  "uploading": "Uploading...",
+  "profilePicUpdated": "Profile picture updated successfully!"
 }

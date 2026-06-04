@@ -191,10 +191,13 @@ print(token);
               radius: 32,
               backgroundColor: Colors.white,
               backgroundImage:
-                  (user.logoUrl != null && user.logoUrl!.isNotEmpty)
-                      ? NetworkImage(user.logoUrl!)
-                      : null,
+                  (user.profilePicUrl != null && user.profilePicUrl!.isNotEmpty)
+                      ? NetworkImage(user.profilePicUrl!)
+                      : (user.logoUrl != null && user.logoUrl!.isNotEmpty)
+                          ? NetworkImage(user.logoUrl!)
+                          : null,
               child:
+                  (user.profilePicUrl == null || user.profilePicUrl!.isEmpty) &&
                   (user.logoUrl == null || user.logoUrl!.isEmpty)
                       ? Icon(
                         isPriest ? Icons.person : Icons.church,

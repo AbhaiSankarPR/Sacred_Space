@@ -618,11 +618,50 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<String> updateProfilePicture(PlatformFile file) async {
+    try {
+      final formData = FormData();
+      if (file.bytes != null) {
+        formData.files.add(MapEntry(
+          'image',
+          MultipartFile.fromBytes(
+            file.bytes!,
+            filename: file.name,
+          ),
+        ));
+      } else if (file.path != null) {
+        formData.files.add(MapEntry(
+          'image',
+          await MultipartFile.fromFile(
+            file.path!,
+            filename: file.name,
+          ),
+        ));
+      }
+
+      final response = await apiService.put('/user/me/profile-pic', formData);
+      final profilePicUrl = response.data['profilePicUrl'] as String;
+
+      if (_currentUser != null) {
+        _currentUser = _currentUser!.copyWith(profilePicUrl: profilePicUrl);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_data', jsonEncode(_currentUser!.toJson()));
+        notifyListeners();
+      }
+
+      return profilePicUrl;
+    } catch (e) {
+      debugPrint("Error updating profile picture: $e");
+      rethrow;
+    }
+  }
 }
 
 class User {
   final String id, email, role, churchId, name, churchName, location;
   final String? logoUrl,
+      profilePicUrl,
       gender,
       dob,
       permanentAddress,
@@ -640,6 +679,7 @@ class User {
     required this.churchId,
     required this.name,
     this.logoUrl,
+    this.profilePicUrl,
     required this.churchName,
     required this.location,
     this.gender,
@@ -663,6 +703,7 @@ class User {
     String? houseName,
     String? phone,
     String? inviteCode,
+    String? profilePicUrl,
     List<FamilyConnection>? familyConnections,
   }) {
     return User(
@@ -671,6 +712,7 @@ class User {
       role: role,
       churchId: churchId,
       logoUrl: logoUrl,
+      profilePicUrl: profilePicUrl ?? this.profilePicUrl,
       churchName: churchName,
       location: location,
       name: name ?? this.name,
@@ -693,6 +735,7 @@ class User {
     'churchId': churchId,
     'name': name,
     'logoUrl': logoUrl,
+    'profilePicUrl': profilePicUrl,
     'churchName': churchName,
     'location': location,
     'gender': gender,
@@ -739,6 +782,7 @@ class User {
       churchId: json['churchId'] ?? '',
       name: profile['name'] ?? json['name'] ?? '',
       logoUrl: json['logoUrl'],
+      profilePicUrl: profile['profilePicUrl'] ?? json['profilePicUrl'],
       churchName: json['churchName'] ?? "Sacred Space",
       location: json['location'] ?? "Community",
       gender: profile['gender'],
