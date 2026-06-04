@@ -107,7 +107,7 @@ class ApiService {
   }) => _dio.get(url, queryParameters: params, options: options);
   Future<Response> post(String url, dynamic data) => _dio.post(url, data: data);
   Future<Response> put(String url, dynamic data) => _dio.put(url, data: data);
-  Future<Response> delete(String url) => _dio.delete(url);
+  Future<Response> delete(String url, {dynamic data}) => _dio.delete(url, data: data);
   Future<Response> patch(String url, dynamic data) =>
       _dio.patch(url, data: data);
 }
