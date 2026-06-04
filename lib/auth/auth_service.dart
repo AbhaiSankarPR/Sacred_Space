@@ -734,8 +734,6 @@ class User {
     'role': role,
     'churchId': churchId,
     'name': name,
-    'logoUrl': logoUrl,
-    'profilePicUrl': profilePicUrl,
     'churchName': churchName,
     'location': location,
     'gender': gender,
@@ -774,6 +772,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     final profile = json['profile'] as Map<String, dynamic>? ?? json;
+    final church = json['church'] as Map<String, dynamic>?;
     final List<dynamic> connectionsJson = json['familyConnections'] ?? [];
     return User(
       id: json['id'] ?? '',
@@ -781,10 +780,10 @@ class User {
       role: json['role']?.toString().toLowerCase() ?? 'member',
       churchId: json['churchId'] ?? '',
       name: profile['name'] ?? json['name'] ?? '',
-      logoUrl: json['logoUrl'],
+      logoUrl: json['logoUrl'] ?? church?['logoUrl'],
       profilePicUrl: profile['profilePicUrl'] ?? json['profilePicUrl'],
-      churchName: json['churchName'] ?? "Sacred Space",
-      location: json['location'] ?? "Community",
+      churchName: church?['name'] ?? json['churchName'] ?? "Sacred Space",
+      location: church?['location'] ?? json['location'] ?? "Community",
       gender: profile['gender'],
       dob: profile['dob'],
       permanentAddress: profile['permanentAddress'],
