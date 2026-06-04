@@ -18,6 +18,22 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  String? _backgroundPicUrl;
+
+  Future<void> _fetchChurchDetails() async {
+    try {
+      final authService = context.read<AuthService>();
+      final data = await authService.getMyChurchDetails();
+      if (mounted) {
+        setState(() {
+          _backgroundPicUrl = data['backgroundPicUrl'];
+        });
+      }
+    } catch (e) {
+      debugPrint("Could not load church details: $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -40,7 +56,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // 1. Run the silent check (Syncs only if token/status changed since last run)
         await authService.checkPermissionsAndSync();
 
-        // 2. Check current status to see if we should prompt the user
+        // 2. Fetch Church Details
+        _fetchChurchDetails();
+
+        // 3. Check current status to see if we should prompt the user
         NotificationSettings settings =
             await FirebaseMessaging.instance.getNotificationSettings();
 
@@ -101,14 +120,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       drawer: AppDrawer(user: user),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildSliverAppBar(context, user, loc, isPriest, isOfficial),
-          _buildLiveAnnouncementBar(context, loc),
-          _buildDynamicMenuGrid(context, loc, isPriest, isOfficial),
-          const SliverToBoxAdapter(child: SizedBox(height: 30)),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _fetchChurchDetails,
+        color: const Color(0xFF5D3A99),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _buildSliverAppBar(context, user, loc, isPriest, isOfficial),
+            _buildLiveAnnouncementBar(context, loc),
+            _buildDynamicMenuGrid(context, loc, isPriest, isOfficial),
+            const SliverToBoxAdapter(child: SizedBox(height: 30)),
+          ],
+        ),
       ),
     );
   }
@@ -137,15 +160,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
           StretchMode.blurBackground,
         ],
         background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF5D3A99), Color(0xFF7B1FA2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+            image: _backgroundPicUrl != null && _backgroundPicUrl!.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(_backgroundPicUrl!),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
-          child: SafeArea(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF5D3A99).withOpacity(_backgroundPicUrl != null ? 0.75 : 1.0),
+                  const Color(0xFF7B1FA2).withOpacity(_backgroundPicUrl != null ? 0.85 : 1.0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: SafeArea(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -177,8 +213,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // --- 2. DYNAMIC MENU GRID ---
   Widget _buildDynamicMenuGrid(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'; // Added Firebase dependency
+import 'package:file_picker/file_picker.dart';
 import './api_service.dart';
 import '../core/navigator_key.dart';
 import '../core/routes.dart';
@@ -122,6 +123,16 @@ class AuthService extends ChangeNotifier {
           .toList();
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyChurchDetails() async {
+    try {
+      final response = await apiService.get('/churches/me');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint("Error fetching church details: $e");
+      rethrow;
     }
   }
 
@@ -575,6 +586,35 @@ class AuthService extends ChangeNotifier {
       return data.map((json) => FamilyConnection.fromJson(json)).toList();
     } catch (e) {
       debugPrint("Error fetching family connections for member $userId: $e");
+      rethrow;
+    }
+  }
+
+  Future<String> updateChurchBackground(PlatformFile file) async {
+    try {
+      final formData = FormData();
+      if (file.bytes != null) {
+        formData.files.add(MapEntry(
+          'image',
+          MultipartFile.fromBytes(
+            file.bytes!,
+            filename: file.name,
+          ),
+        ));
+      } else if (file.path != null) {
+        formData.files.add(MapEntry(
+          'image',
+          await MultipartFile.fromFile(
+            file.path!,
+            filename: file.name,
+          ),
+        ));
+      }
+
+      final response = await apiService.put('/priest/church/background', formData);
+      return response.data['backgroundPicUrl'] as String;
+    } catch (e) {
+      debugPrint("Error updating church background: $e");
       rethrow;
     }
   }

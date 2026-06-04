@@ -434,5 +434,9 @@
   "sibling": "Sibling",
   "relationYourPerspective": "Recipient's Relationship to You",
   "relationHelperText": "Specify how the recipient is related to you (e.g., choose 'Parent' if they are your parent)",
-  "enterInviteCode": "Enter invite code"
+  "enterInviteCode": "Enter invite code",
+  "churchManagementSection": "Church Management",
+  "uploadBackground": "Upload Church Background",
+  "backgroundUpdated": "Church background updated successfully!",
+  "uploading": "Uploading..."
 }

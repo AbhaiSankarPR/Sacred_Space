@@ -1,14 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:file_picker/file_picker.dart';
 import '../core/theme_provider.dart';
 import '../core/locale_provider.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/water_drop_notification.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _isUploading = false;
+
+  Future<void> _pickAndUploadBackground() async {
+    final loc = AppLocalizations.of(context)!;
+    try {
+      final FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      setState(() {
+        _isUploading = true;
+      });
+
+      if (!mounted) return;
+      final authService = context.read<AuthService>();
+      await authService.updateChurchBackground(result.files.first);
+
+      if (!mounted) return;
+      final overlayState = Overlay.of(context);
+      late OverlayEntry overlayEntry;
+      overlayEntry = OverlayEntry(
+        builder: (context) => WaterDropNotification(
+          message: loc.backgroundUpdated,
+          onDismiss: () => overlayEntry.remove(),
+        ),
+      );
+      overlayState.insert(overlayEntry);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Upload failed: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +159,31 @@ class SettingsScreen extends StatelessWidget {
           ]),
 
           const SizedBox(height: 24),
+
+          // --- SECTION: CHURCH MANAGEMENT (Priest Only) ---
+          if (user.role.toLowerCase() == 'priest') ...[
+            _buildSectionHeader(loc.churchManagementSection),
+            _buildSettingsGroup(context, [
+              _SettingsTile(
+                icon: Icons.image_outlined,
+                title: loc.uploadBackground,
+                trailing: _isUploading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF5D3A99),
+                        ),
+                      )
+                    : null,
+                onTap: _isUploading
+                    ? null
+                    : _pickAndUploadBackground,
+              ),
+            ]),
+            const SizedBox(height: 24),
+          ],
 
           // --- SECTION: SUPPORT ---
           _buildSectionHeader(loc.supportSection),
