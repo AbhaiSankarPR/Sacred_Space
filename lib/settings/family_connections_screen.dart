@@ -169,7 +169,7 @@ class _FamilyConnectionsScreenState extends State<FamilyConnectionsScreen> {
                         ),
                       ),
                       Text(
-                        "${loc.relation}: ${req.relation}",
+                        "${loc.relation}: ${_getDisplayRelation(req.relation, loc)}",
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                     ],
@@ -221,6 +221,21 @@ class _FamilyConnectionsScreenState extends State<FamilyConnectionsScreen> {
     }
   }
 
+  String _getDisplayRelation(String relation, AppLocalizations loc) {
+    switch (relation.toUpperCase()) {
+      case 'PARENT':
+        return loc.parent;
+      case 'CHILD':
+        return loc.child;
+      case 'SPOUSE':
+        return loc.spouse;
+      case 'SIBLING':
+        return loc.sibling;
+      default:
+        return relation;
+    }
+  }
+
   void _showSendRequestDialog(AppLocalizations loc) {
     final userIdController = TextEditingController();
     String selectedRelation = "PARENT";
@@ -239,24 +254,42 @@ class _FamilyConnectionsScreenState extends State<FamilyConnectionsScreen> {
                       TextField(
                         controller: userIdController,
                         decoration: InputDecoration(
-                          labelText: loc.userId,
-                          hintText: "Enter unique ID",
+                          labelText: loc.inviteCode,
+                          hintText: loc.enterInviteCode,
                         ),
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         value: selectedRelation,
-                        items:
-                            relations
-                                .map(
-                                  (r) => DropdownMenuItem(
-                                    value: r,
-                                    child: Text(r),
-                                  ),
-                                )
-                                .toList(),
+                        items: relations.map((r) {
+                          String label;
+                          switch (r) {
+                            case "PARENT":
+                              label = loc.parent;
+                              break;
+                            case "CHILD":
+                              label = loc.child;
+                              break;
+                            case "SPOUSE":
+                              label = loc.spouse;
+                              break;
+                            case "SIBLING":
+                              label = loc.sibling;
+                              break;
+                            default:
+                              label = r;
+                          }
+                          return DropdownMenuItem(
+                            value: r,
+                            child: Text(label),
+                          );
+                        }).toList(),
                         onChanged: (v) => setState(() => selectedRelation = v!),
-                        decoration: InputDecoration(labelText: loc.relation),
+                        decoration: InputDecoration(
+                          labelText: loc.relationYourPerspective,
+                          helperText: loc.relationHelperText,
+                          helperMaxLines: 3,
+                        ),
                       ),
                     ],
                   ),

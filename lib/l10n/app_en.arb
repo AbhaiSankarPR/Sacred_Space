@@ -279,7 +279,7 @@
 "noRequests": "No requests found",
 "addFamily": "Add Family Member",
 "relation": "Relation",
-"userId": "User ID",
+"userId": "Unique ID",
 "send": "Send",
 "requestSent": "Request sent successfully",
 "requestFailed": "Failed to perform action",
@@ -427,5 +427,12 @@
   "addedBy": "Added by",
   "downloadReport": "Download Report",
   "downloadCertificate": "Download Certificate",
-  "downloadingCertificate": "Downloading certificate..."
+  "downloadingCertificate": "Downloading certificate...",
+  "parent": "Parent",
+  "child": "Child",
+  "spouse": "Spouse",
+  "sibling": "Sibling",
+  "relationYourPerspective": "Recipient's Relationship to You",
+  "relationHelperText": "Specify how the recipient is related to you (e.g., choose 'Parent' if they are your parent)",
+  "enterInviteCode": "Enter invite code"
 }
