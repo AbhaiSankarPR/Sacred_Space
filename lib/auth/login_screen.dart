@@ -224,7 +224,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(color: textColor),
                   decoration: inputDecor(l10n.password, l10n.enterPassword),
                 ),
-                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, Routes.forgotPassword);
+                    },
+                    child: const Text(
+                      "Forgot Password?",
+                      style: TextStyle(
+                        color: Color(0xFF5D3A99),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 50,

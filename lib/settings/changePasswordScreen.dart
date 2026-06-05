@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
-import '../core/routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -49,11 +48,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         // Success feedback
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Password updated successfully"),
+            content: Text("Password updated successfully. Please login again."),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.pop(context); // Go back after success
+        
+        // Log out the user to force logging in with the new password
+        final prefs = await SharedPreferences.getInstance();
+        final String? token = prefs.getString('deviceToken');
+        await _authService.logout(token);
       }
     } catch (e) {
       if (mounted) {
@@ -72,7 +76,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     // Get user name from AuthService
     final userName = _authService.currentUser?.name ?? "User";
 
@@ -219,23 +222,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, Routes.forgotPassword);
-                        },
-                        child: const Text(
-                          "Forgot Password?",
-                          style: TextStyle(
-                            color: Color(0xFF5D3A99),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
+                     const SizedBox(height: 30),
                   ],
                 ),
               ),

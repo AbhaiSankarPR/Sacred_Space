@@ -207,6 +207,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Widget _buildOtpBox(int index) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SizedBox(
       width: 45,
       child: TextFormField(
@@ -214,16 +217,40 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         focusNode: _focusNodes[index],
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        inputFormatters: [LengthLimitingTextInputFormatter(1), FilteringTextInputFormatter.digitsOnly],
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : Colors.black87,
+        ),
+        inputFormatters: [
+          LengthLimitingTextInputFormatter(1),
+          FilteringTextInputFormatter.digitsOnly,
+        ],
         onChanged: (v) {
           if (v.isNotEmpty && index < 5) _focusNodes[index + 1].requestFocus();
           if (v.isEmpty && index > 0) _focusNodes[index - 1].requestFocus();
         },
         decoration: InputDecoration(
-          filled: true, 
-          fillColor: Colors.grey[100], 
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)
+          filled: true,
+          fillColor: isDark ? Colors.white.withOpacity(0.08) : Colors.grey[100],
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(
+              color: isDark ? Colors.white24 : Colors.grey[300]!,
+              width: 1,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF5D3A99),
+              width: 2,
+            ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       ),
     );
