@@ -8,6 +8,7 @@ import '../../settings/family_request_model.dart';
 
 class Member {
   final String id, name, email, phone, houseName;
+  final String? profilePicUrl;
 
   Member({
     required this.id,
@@ -15,6 +16,7 @@ class Member {
     required this.email,
     required this.phone,
     required this.houseName,
+    this.profilePicUrl,
   });
 
   factory Member.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class Member {
       // Falls back to root phone if profile phone is missing
       phone: profile?['phone'] ?? (json['phone'] ?? 'No Phone'),
       houseName: profile?['houseName'] ?? 'No House Name',
+      profilePicUrl: profile?['profilePicUrl'] ?? json['profilePicUrl'],
     );
   }
 }
@@ -272,7 +275,15 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
-          child: const Icon(Icons.person, color: Color(0xFF5D3A99)),
+          backgroundImage: connection.relatedUser.profile.profilePicUrl != null && connection.relatedUser.profile.profilePicUrl!.isNotEmpty
+              ? NetworkImage(connection.relatedUser.profile.profilePicUrl!)
+              : (connection.relatedUser.profilePicUrl != null && connection.relatedUser.profilePicUrl!.isNotEmpty
+                  ? NetworkImage(connection.relatedUser.profilePicUrl!)
+                  : null),
+          child: (connection.relatedUser.profile.profilePicUrl == null || connection.relatedUser.profile.profilePicUrl!.isEmpty) &&
+                 (connection.relatedUser.profilePicUrl == null || connection.relatedUser.profilePicUrl!.isEmpty)
+              ? const Icon(Icons.person, color: Color(0xFF5D3A99))
+              : null,
         ),
         title: Text(
           connection.relatedUser.profile.name,
@@ -322,11 +333,19 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
-                child: const Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Color(0xFF5D3A99),
-                ),
+                backgroundImage: connection.relatedUser.profile.profilePicUrl != null && connection.relatedUser.profile.profilePicUrl!.isNotEmpty
+                    ? NetworkImage(connection.relatedUser.profile.profilePicUrl!)
+                    : (connection.relatedUser.profilePicUrl != null && connection.relatedUser.profilePicUrl!.isNotEmpty
+                        ? NetworkImage(connection.relatedUser.profilePicUrl!)
+                        : null),
+                child: (connection.relatedUser.profile.profilePicUrl == null || connection.relatedUser.profile.profilePicUrl!.isEmpty) &&
+                       (connection.relatedUser.profilePicUrl == null || connection.relatedUser.profilePicUrl!.isEmpty)
+                    ? const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Color(0xFF5D3A99),
+                      )
+                    : null,
               ),
               const SizedBox(height: 16),
               Text(
@@ -561,7 +580,12 @@ class _MemberTile extends StatelessWidget {
         leading: CircleAvatar(
           radius: 25,
           backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
-          child: const Icon(Icons.person, color: Color(0xFF5D3A99), size: 28),
+          backgroundImage: member.profilePicUrl != null && member.profilePicUrl!.isNotEmpty
+              ? NetworkImage(member.profilePicUrl!)
+              : null,
+          child: member.profilePicUrl == null || member.profilePicUrl!.isEmpty
+              ? const Icon(Icons.person, color: Color(0xFF5D3A99), size: 28)
+              : null,
         ),
         title: Text(
           member.name, 

@@ -71,11 +71,19 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
-                child: const Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Color(0xFF5D3A99),
-                ),
+                backgroundImage: profile.profilePicUrl != null && profile.profilePicUrl!.isNotEmpty
+                    ? NetworkImage(profile.profilePicUrl!)
+                    : (connection.relatedUser.profilePicUrl != null && connection.relatedUser.profilePicUrl!.isNotEmpty
+                        ? NetworkImage(connection.relatedUser.profilePicUrl!)
+                        : null),
+                child: (profile.profilePicUrl == null || profile.profilePicUrl!.isEmpty) &&
+                       (connection.relatedUser.profilePicUrl == null || connection.relatedUser.profilePicUrl!.isEmpty)
+                    ? const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Color(0xFF5D3A99),
+                      )
+                    : null,
               ),
               const SizedBox(height: 16),
               Text(
@@ -308,7 +316,15 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
-          child: const Icon(Icons.person, color: Color(0xFF5D3A99)),
+          backgroundImage: connection.relatedUser.profile.profilePicUrl != null && connection.relatedUser.profile.profilePicUrl!.isNotEmpty
+              ? NetworkImage(connection.relatedUser.profile.profilePicUrl!)
+              : (connection.relatedUser.profilePicUrl != null && connection.relatedUser.profilePicUrl!.isNotEmpty
+                  ? NetworkImage(connection.relatedUser.profilePicUrl!)
+                  : null),
+          child: (connection.relatedUser.profile.profilePicUrl == null || connection.relatedUser.profile.profilePicUrl!.isEmpty) &&
+                 (connection.relatedUser.profilePicUrl == null || connection.relatedUser.profilePicUrl!.isEmpty)
+              ? const Icon(Icons.person, color: Color(0xFF5D3A99))
+              : null,
         ),
         title: Text(
           connection.relatedUser.profile.name,

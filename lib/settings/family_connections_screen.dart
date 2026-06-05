@@ -154,7 +154,15 @@ class _FamilyConnectionsScreenState extends State<FamilyConnectionsScreen> {
               children: [
                 CircleAvatar(
                   backgroundColor: const Color(0xFF5D3A99).withOpacity(0.1),
-                  child: const Icon(Icons.person, color: Color(0xFF5D3A99)),
+                  backgroundImage: req.relatedUser.profile.profilePicUrl != null && req.relatedUser.profile.profilePicUrl!.isNotEmpty
+                      ? NetworkImage(req.relatedUser.profile.profilePicUrl!)
+                      : (req.relatedUser.profilePicUrl != null && req.relatedUser.profilePicUrl!.isNotEmpty
+                          ? NetworkImage(req.relatedUser.profilePicUrl!)
+                          : null),
+                  child: (req.relatedUser.profile.profilePicUrl == null || req.relatedUser.profile.profilePicUrl!.isEmpty) &&
+                         (req.relatedUser.profilePicUrl == null || req.relatedUser.profilePicUrl!.isEmpty)
+                      ? const Icon(Icons.person, color: Color(0xFF5D3A99))
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

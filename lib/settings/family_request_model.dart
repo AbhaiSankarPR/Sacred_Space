@@ -50,11 +50,13 @@ class RelatedUser {
   final String id;
   final String? role;
   final FamilyProfile profile;
+  final String? profilePicUrl;
 
   RelatedUser({
     required this.id,
     this.role,
     required this.profile,
+    this.profilePicUrl,
   });
 
   factory RelatedUser.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,7 @@ class RelatedUser {
       id: json['id'],
       role: json['role'],
       profile: FamilyProfile.fromJson(json['profile'] ?? {}),
+      profilePicUrl: json['profilePicUrl'] ?? json['profile']?['profilePicUrl'] ?? json['profilePicUrl'],
     );
   }
 }
@@ -74,6 +77,7 @@ class FamilyProfile {
   final String? houseNumber;
   final String? residenceType;
   final String? houseName;
+  final String? profilePicUrl;
 
   FamilyProfile({
     required this.name,
@@ -83,6 +87,7 @@ class FamilyProfile {
     this.houseNumber,
     this.residenceType,
     this.houseName,
+    this.profilePicUrl,
   });
 
   factory FamilyProfile.fromJson(Map<String, dynamic> json) {
@@ -94,6 +99,7 @@ class FamilyProfile {
       houseNumber: json['houseNumber'],
       residenceType: json['residenceType'],
       houseName: json['houseName'],
+      profilePicUrl: json['profilePicUrl'] ?? json['profile']?['profilePicUrl'],
     );
   }
 }
