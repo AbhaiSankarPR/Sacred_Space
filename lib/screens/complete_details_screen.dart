@@ -266,7 +266,16 @@ class _CompleteDetailsScreenState extends State<CompleteDetailsScreen> {
         border: InputBorder.none,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
       ),
-      validator: (v) => v!.isEmpty ? "Required" : null,
+      validator: (v) {
+        if (v == null || v.isEmpty) return "Required";
+        if (label == "Phone Number") {
+          final digits = v.replaceAll(RegExp(r'\D'), '');
+          if (digits.length != 10) {
+            return "Please enter a valid 10-digit phone number";
+          }
+        }
+        return null;
+      },
     );
   }
 

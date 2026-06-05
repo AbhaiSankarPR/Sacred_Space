@@ -38,12 +38,19 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _signup() async {
     final loc = AppLocalizations.of(context)!;
+    final email = _emailController.text.trim();
 
     if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
+        email.isEmpty ||
         _passwordController.text.isEmpty ||
         _selectedChurchCode == null) {
       _showSnackBar(loc.fillAllFields, isError: true);
+      return;
+    }
+
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+    if (!emailRegex.hasMatch(email)) {
+      _showSnackBar("Please enter a valid email address.", isError: true);
       return;
     }
 
@@ -180,7 +187,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         church['name']!.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
                         church['code']!.toLowerCase().contains(textEditingValue.text.toLowerCase()));
                   },
-                  displayStringForOption: (option) => "${option['name']} (${option['code']})",
+                  displayStringForOption: (option) => option['name'] ?? '',
                   fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
                     return _buildTextField(
                       controller: controller,

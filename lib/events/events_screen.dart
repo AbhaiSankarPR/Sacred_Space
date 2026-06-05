@@ -3,6 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../auth/auth_service.dart';
 import '../widgets/app_drawer.dart';
+import '../core/routes.dart';
 import 'event_model.dart';
 import './event_card.dart';
 
@@ -141,158 +142,15 @@ class _EventsScreenState extends State<EventsScreen> {
     );
   }
 
-  void _showCreateEventDialog() {
-    final loc = AppLocalizations.of(context)!;
-    final titleController = TextEditingController();
-    final descController = TextEditingController();
-    final locController = TextEditingController();
-    final slotsController = TextEditingController(text: "100");
-    DateTime? selectedDate;
-    TimeOfDay? startTime;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder:
-          (ctx) => StatefulBuilder(
-            builder:
-                (context, setModalState) => Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-                    left: 24,
-                    right: 24,
-                    top: 24,
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          loc.newEvent,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: titleController,
-                          decoration: InputDecoration(labelText: loc.eventType),
-                        ),
-                        TextField(
-                          controller: locController,
-                          decoration: const InputDecoration(
-                            labelText: "Location",
-                          ),
-                        ),
-                        TextField(
-                          controller: slotsController,
-                          decoration: const InputDecoration(
-                            labelText: "Max Slots",
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                        TextField(
-                          controller: descController,
-                          decoration: InputDecoration(
-                            labelText: loc.describeEvent,
-                          ),
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 16),
-                        ListTile(
-                          leading: const Icon(Icons.calendar_today),
-                          title: Text(
-                            selectedDate == null
-                                ? loc.selectDate
-                                : DateFormat.yMMMd().format(selectedDate!),
-                          ),
-                          onTap: () async {
-                            final d = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime(2030),
-                            );
-                            if (d != null)
-                              setModalState(() => selectedDate = d);
-                          },
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.access_time),
-                          title: Text(
-                            startTime == null
-                                ? "Select Time"
-                                : startTime!.format(context),
-                          ),
-                          onTap: () async {
-                            final t = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.now(),
-                            );
-                            if (t != null) setModalState(() => startTime = t);
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF5D3A99),
-                            minimumSize: const Size(double.infinity, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () async {
-                            if (titleController.text.isNotEmpty &&
-                                selectedDate != null &&
-                                startTime != null) {
-                              final fullDate = DateTime(
-                                selectedDate!.year,
-                                selectedDate!.month,
-                                selectedDate!.day,
-                                startTime!.hour,
-                                startTime!.minute,
-                              );
-
-                              final success = await _authService.createEvent({
-                                "title": titleController.text,
-                                "description": descController.text,
-                                "location": locController.text,
-                                "date": fullDate.toUtc().toIso8601String(),
-                                "maxSlots":
-                                    int.tryParse(slotsController.text) ?? 100,
-                              });
-
-                              if (success && mounted) {
-                                Navigator.pop(ctx);
-                                _fetchEvents();
-                              }
-                            }
-                          },
-                          child: Text(
-                            loc.ok,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-          ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final user = _authService.currentUser;
     final bool isPriest = user?.role.toLowerCase() == 'priest';
+
+    final String currentFilterLabel = _selectedFilter == "Upcoming"
+        ? loc.upcoming
+        : (_selectedFilter == "Past" ? loc.past : loc.myEvents);
 
     return Scaffold(
       appBar: AppBar(
@@ -309,7 +167,12 @@ class _EventsScreenState extends State<EventsScreen> {
           isPriest
               ? FloatingActionButton(
                 backgroundColor: const Color(0xFF5D3A99),
-                onPressed: _showCreateEventDialog,
+                onPressed: () async {
+                  final success = await Navigator.pushNamed(context, Routes.newEvent);
+                  if (success == true) {
+                    _fetchEvents();
+                  }
+                },
                 child: const Icon(Icons.add, color: Colors.white),
               )
               : null,
@@ -329,15 +192,27 @@ class _EventsScreenState extends State<EventsScreen> {
                       child:
                           _events.isEmpty
                               ? ListView(
-                                children: [
-                                  SizedBox(
-                                    height: 200,
-                                    child: Center(
-                                      child: Text(loc.noBookingsFound),
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  children: [
+                                    SizedBox(
+                                      height: MediaQuery.of(context).size.height * 0.6,
+                                      child: Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                                          child: Text(
+                                            loc.noEventsFound(currentFilterLabel.toLowerCase()),
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.grey.shade600,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              )
+                                  ],
+                                )
                               : ListView.builder(
                                 padding: const EdgeInsets.all(20),
                                 itemCount: _events.length,

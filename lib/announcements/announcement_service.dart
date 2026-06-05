@@ -23,20 +23,21 @@ class AnnouncementService {
       final response = await apiService.post('/priest/announcement', {
         'title': title,
         'message': message,
+        'date': DateTime.now().toUtc().toIso8601String(),
       });
       return Announcement.fromJson(response.data);
     } catch (e) {
       rethrow;
     }
   }
+
   Future<Announcement> getAnnouncementById(String id) async {
-  try {
-    final response = await apiService.get('/user/announcements/$id');
-    // Your API returns a single object, so we parse it directly
-    return Announcement.fromJson(response.data);
-  } catch (e) {
-    rethrow;
+    try {
+      final response = await apiService.get('/user/announcements/$id');
+      // Your API returns a single object, so we parse it directly
+      return Announcement.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
   }
 }
-}
-

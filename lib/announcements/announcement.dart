@@ -32,10 +32,13 @@ class Announcement {
       message: json['message'] ?? '',
       churchId: json['churchId'] ?? '',
       createdBy: json['createdBy'] ?? '',
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+        json['createdAt'] ?? DateTime.now().toIso8601String(),
+      ),
       priestName: pName,
     );
   }
 
-  String get formattedDate => DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt);
+  String get formattedDate =>
+      DateFormat('MMM dd, yyyy • hh:mm a').format(createdAt.toLocal());
 }

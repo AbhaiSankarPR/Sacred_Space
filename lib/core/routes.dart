@@ -24,6 +24,7 @@ import '../bookings/bookings_screen.dart';
 import '../bookings/newbooking_screen.dart';
 import '../emergency/emergency_alerts_screen.dart';
 import '../events/events_screen.dart';
+import '../events/new_event_screen.dart';
 import '../gallery/member/gallery_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/about_screen.dart';
@@ -54,6 +55,7 @@ class Routes {
   static const newBooking = '/new-booking';
   static const emergency = '/emergency';
   static const events = '/events';
+  static const newEvent = '/events/new';
   static const gallery = '/gallery';
   static const String editProfile = '/edit-profile';
 
@@ -100,6 +102,7 @@ class Routes {
     newBooking: (_) => const NewBookingScreen(),
     emergency: (_) => const EmergencyAlertsScreen(),
     events: (_) => const EventsScreen(),
+    newEvent: (_) => const NewEventScreen(),
     gallery: (_) => const GalleryScreen(),
 
     // Priest-Only Routes

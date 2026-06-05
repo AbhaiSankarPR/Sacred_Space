@@ -66,8 +66,8 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
         await _service.createBooking({
           "title": finalTitle,
           "description": _noteController.text,
-          "startTime": start.toIso8601String(),
-          "endTime": end.toIso8601String(),
+          "startTime": start.toUtc().toIso8601String(),
+          "endTime": end.toUtc().toIso8601String(),
           "churchId": auth.currentUser?.churchId,
         });
 

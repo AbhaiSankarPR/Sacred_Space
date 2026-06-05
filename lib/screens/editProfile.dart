@@ -287,7 +287,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           borderSide: BorderSide.none,
         ),
       ),
-      validator: (val) => (val == null || val.isEmpty) ? "Required" : null,
+      validator: (val) {
+        if (val == null || val.isEmpty) return "Required";
+        if (label == "Phone") {
+          final digits = val.replaceAll(RegExp(r'\D'), '');
+          if (digits.length != 10) {
+            return "Please enter a valid 10-digit phone number";
+          }
+        }
+        return null;
+      },
     );
   }
 
