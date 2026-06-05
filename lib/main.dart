@@ -14,6 +14,7 @@ import 'package:overlay_support/overlay_support.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/navigator_key.dart';
 import 'core/notification_helper.dart';
+import 'announcements/live_announcement_provider.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -106,6 +107,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider(create: (_) => AuthService()),
+          ChangeNotifierProvider(create: (_) => LiveAnnouncementProvider()),
         ],
         child: const SacredSpaceApp(initialRoute: Routes.splash),
       ),

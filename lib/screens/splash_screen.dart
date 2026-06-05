@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
+import 'package:provider/provider.dart';
+import '../announcements/live_announcement_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,6 +43,13 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (isLoggedIn) {
+      // Pre-fetch live announcements in the background
+      if (mounted) {
+        Provider.of<LiveAnnouncementProvider>(context, listen: false)
+            .refreshLiveAnnouncements()
+            .catchError((e) => debugPrint("Pre-fetch live announcements failed: $e"));
+      }
+
       final user = authService.currentUser!;
 
       // 3. Check if profile is incomplete before going to dashboard

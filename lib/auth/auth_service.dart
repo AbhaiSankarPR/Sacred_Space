@@ -126,15 +126,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>> getMyChurchDetails() async {
-    try {
-      final response = await apiService.get('/churches/me');
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      debugPrint("Error fetching church details: $e");
-      rethrow;
-    }
-  }
+
 
   Future<User> login({
     required String email,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
 import '../core/routes.dart';
+import 'package:provider/provider.dart';
+import '../announcements/live_announcement_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -60,6 +62,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted) {
+        // Pre-fetch live announcements in the background
+        Provider.of<LiveAnnouncementProvider>(context, listen: false)
+            .refreshLiveAnnouncements()
+            .catchError((e) => debugPrint("Pre-fetch live announcements failed: $e"));
+
         // THE GATEKEEPER LOGIC
         if (user.isProfileIncomplete) {
           // Redirect if fields like gender or phone are null

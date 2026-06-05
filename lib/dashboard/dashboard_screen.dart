@@ -8,6 +8,7 @@ import '../auth/auth_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../widgets/app_drawer.dart';
 import 'package:marquee/marquee.dart';
+import '../announcements/live_announcement_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Changed to StatefulWidget
@@ -18,19 +19,10 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String? _backgroundPicUrl;
 
-  Future<void> _fetchChurchDetails() async {
-    try {
-      final authService = context.read<AuthService>();
-      final data = await authService.getMyChurchDetails();
-      if (mounted) {
-        setState(() {
-          _backgroundPicUrl = data['backgroundPicUrl'];
-        });
-      }
-    } catch (e) {
-      debugPrint("Could not load church details: $e");
+  Future<void> _handleDashboardRefresh() async {
+    if (mounted) {
+      await context.read<LiveAnnouncementProvider>().refreshLiveAnnouncements();
     }
   }
 
@@ -56,8 +48,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // 1. Run the silent check (Syncs only if token/status changed since last run)
         await authService.checkPermissionsAndSync();
 
-        // 2. Fetch Church Details
-        _fetchChurchDetails();
+        // 2. Fetch Live Announcements
+        context.read<LiveAnnouncementProvider>().refreshLiveAnnouncements();
 
         // 3. Check current status to see if we should prompt the user
         NotificationSettings settings =
@@ -121,7 +113,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       drawer: AppDrawer(user: user),
       body: RefreshIndicator(
-        onRefresh: _fetchChurchDetails,
+        onRefresh: _handleDashboardRefresh,
         color: const Color(0xFF5D3A99),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -144,6 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool isPriest,
     bool isOfficial,
   ) {
+    final churchImage = context.watch<LiveAnnouncementProvider>().churchImage;
     return SliverAppBar(
       expandedHeight: 260.0,
       pinned: true,
@@ -162,9 +155,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         background: Container(
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
-            image: _backgroundPicUrl != null && _backgroundPicUrl!.isNotEmpty
+            image: churchImage != null && churchImage.isNotEmpty
                 ? DecorationImage(
-                    image: NetworkImage(_backgroundPicUrl!),
+                    image: NetworkImage(churchImage),
                     fit: BoxFit.cover,
                   )
                 : null,
@@ -174,8 +167,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF5D3A99).withOpacity(_backgroundPicUrl != null ? 0.75 : 1.0),
-                  const Color(0xFF7B1FA2).withOpacity(_backgroundPicUrl != null ? 0.85 : 1.0),
+                  const Color(0xFF5D3A99).withOpacity(churchImage != null ? 0.75 : 1.0),
+                  const Color(0xFF7B1FA2).withOpacity(churchImage != null ? 0.85 : 1.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -397,6 +390,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildLiveAnnouncementBar(BuildContext context, AppLocalizations loc) {
+    final announcementProvider = context.watch<LiveAnnouncementProvider>();
+    final String text = announcementProvider.liveMarqueeText;
+    final bool isLoading = announcementProvider.isLoading;
+
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -441,18 +438,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 10),
               // The Marquee
               Expanded(
-                child: Marquee(
-                  text:
-                      "✨ New Parish feast dates announced! • Sunday School starts at 9 AM • Welcome our new members!    ",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                    color: Colors.grey[800],
-                  ),
-                  blankSpace: 50.0,
-                  velocity: 40.0,
-                  pauseAfterRound: const Duration(seconds: 2),
-                ),
+                child: isLoading && text.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(
+                          "Loading updates...",
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                      )
+                    : Marquee(
+                        text: text.isEmpty
+                            ? "✨ Welcome! Pull down to refresh today's updates.      "
+                            : text,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          color: Colors.grey[800],
+                        ),
+                        blankSpace: 50.0,
+                        velocity: 40.0,
+                        pauseAfterRound: const Duration(seconds: 2),
+                      ),
               ),
               const Padding(
                 padding: EdgeInsets.only(right: 12),
