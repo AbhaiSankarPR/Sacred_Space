@@ -389,6 +389,221 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _showLiveUpdatesBottomSheet(BuildContext context) {
+    final provider = Provider.of<LiveAnnouncementProvider>(context, listen: false);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (context, scrollController) {
+            final announcements = provider.announcements;
+            final events = provider.events;
+            final bookings = provider.bookings;
+            final bool hasAnyData = announcements.isNotEmpty || events.isNotEmpty || bookings.isNotEmpty;
+
+            return Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[700] : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Today's Updates",
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF5D3A99),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                Expanded(
+                  child: !hasAnyData
+                      ? Center(
+                          child: Text(
+                            "No announcements or events for today.",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        )
+                      : ListView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          children: [
+                            if (announcements.isNotEmpty) ...[
+                              _buildBottomSheetSectionHeader(
+                                context,
+                                "Announcements",
+                                Icons.campaign_rounded,
+                                const Color(0xFF5D3A99),
+                              ),
+                              const SizedBox(height: 8),
+                              ...announcements.map((ann) {
+                                return _buildBottomSheetItem(
+                                  context: context,
+                                  title: ann['title']?.toString() ?? '',
+                                  icon: Icons.chevron_right_rounded,
+                                  color: const Color(0xFF5D3A99),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    if (ann['id'] != null) {
+                                      Navigator.pushNamed(
+                                        context,
+                                        Routes.announcementDetail,
+                                        arguments: ann['id'].toString(),
+                                      );
+                                    } else {
+                                      Navigator.pushNamed(context, Routes.announcements);
+                                    }
+                                  },
+                                );
+                              }),
+                              const SizedBox(height: 20),
+                            ],
+                            if (events.isNotEmpty) ...[
+                              _buildBottomSheetSectionHeader(
+                                context,
+                                "Today's Events",
+                                Icons.event_available_rounded,
+                                const Color(0xFF2E7D32),
+                              ),
+                              const SizedBox(height: 8),
+                              ...events.map((ev) {
+                                return _buildBottomSheetItem(
+                                  context: context,
+                                  title: ev['title']?.toString() ?? '',
+                                  icon: Icons.calendar_month_rounded,
+                                  color: const Color(0xFF2E7D32),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(context, Routes.events);
+                                  },
+                                );
+                              }),
+                              const SizedBox(height: 20),
+                            ],
+                            if (bookings.isNotEmpty) ...[
+                              _buildBottomSheetSectionHeader(
+                                context,
+                                "Today's Bookings",
+                                Icons.bookmark_border_rounded,
+                                Colors.purple,
+                              ),
+                              const SizedBox(height: 8),
+                              ...bookings.map((b) {
+                                return _buildBottomSheetItem(
+                                  context: context,
+                                  title: b['title']?.toString() ?? '',
+                                  icon: Icons.bookmark_added_rounded,
+                                  color: Colors.purple,
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(context, Routes.bookings);
+                                  },
+                                );
+                              }),
+                            ],
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomSheetSectionHeader(
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomSheetItem({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white : Colors.grey[800],
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey[400]),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildLiveAnnouncementBar(BuildContext context, AppLocalizations loc) {
     final announcementProvider = context.watch<LiveAnnouncementProvider>();
     final String text = announcementProvider.liveMarqueeText;
@@ -410,61 +625,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          child: Row(
-            children: [
-              // Left "Label" Badge
-              Container(
-                margin: const EdgeInsets.only(left: 6),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF5D3A99), Color(0xFF9B59B6)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  loc.announcements.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // The Marquee
-              Expanded(
-                child: isLoading && text.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          "Loading updates...",
-                          style: TextStyle(color: Colors.grey, fontSize: 13),
-                        ),
-                      )
-                    : Marquee(
-                        text: text.isEmpty
-                            ? "✨ Welcome! Pull down to refresh today's updates.      "
-                            : text,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                          color: Colors.grey[800],
-                        ),
-                        blankSpace: 50.0,
-                        velocity: 40.0,
-                        pauseAfterRound: const Duration(seconds: 2),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(25),
+              onTap: () => _showLiveUpdatesBottomSheet(context),
+              child: Row(
+                children: [
+                  // Left "Label" Badge
+                  Container(
+                    margin: const EdgeInsets.only(left: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF5D3A99), Color(0xFF9B59B6)],
                       ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "LIVE",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // The Marquee
+                  Expanded(
+                    child: isLoading && text.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text(
+                              "Loading updates...",
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                            ),
+                          )
+                        : Marquee(
+                            text: text.isEmpty
+                                ? "✨ Welcome! Pull down to refresh today's updates.      "
+                                : text,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              color: Colors.grey[800],
+                            ),
+                            blankSpace: 50.0,
+                            velocity: 40.0,
+                            pauseAfterRound: const Duration(seconds: 2),
+                          ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(right: 12),
+                    child: Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                  ),
+                ],
               ),
-              const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: Icon(Icons.chevron_right, size: 16, color: Colors.grey),
-              ),
-            ],
+            ),
           ),
         ),
       ),

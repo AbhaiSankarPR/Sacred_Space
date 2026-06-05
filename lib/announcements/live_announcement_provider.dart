@@ -8,6 +8,15 @@ class LiveAnnouncementProvider extends ChangeNotifier {
   String? _churchImage;
   String? get churchImage => _churchImage;
 
+  List<Map<String, dynamic>> _announcements = [];
+  List<Map<String, dynamic>> get announcements => _announcements;
+
+  List<Map<String, dynamic>> _events = [];
+  List<Map<String, dynamic>> get events => _events;
+
+  List<Map<String, dynamic>> _bookings = [];
+  List<Map<String, dynamic>> get bookings => _bookings;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -27,14 +36,23 @@ class LiveAnnouncementProvider extends ChangeNotifier {
         // Parse background image
         _churchImage = data['churchImage']?.toString();
 
-        final List<dynamic> announcements = data['announcements'] ?? [];
-        final List<dynamic> events = data['events'] ?? [];
-        final List<dynamic> bookings = data['bookings'] ?? [];
+        // Parse list objects to lists of maps explicitly
+        _announcements = (data['announcements'] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+
+        _events = (data['events'] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+
+        _bookings = (data['bookings'] as List? ?? [])
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
 
         List<String> items = [];
 
         // Add general announcements
-        for (var ann in announcements) {
+        for (var ann in _announcements) {
           final title = ann['title']?.toString().trim() ?? '';
           if (title.isNotEmpty) {
             items.add("✨ $title");
@@ -42,7 +60,7 @@ class LiveAnnouncementProvider extends ChangeNotifier {
         }
 
         // Add events
-        for (var ev in events) {
+        for (var ev in _events) {
           final title = ev['title']?.toString().trim() ?? '';
           if (title.isNotEmpty) {
             items.add("📅 Event: $title");
@@ -50,7 +68,7 @@ class LiveAnnouncementProvider extends ChangeNotifier {
         }
 
         // Add bookings
-        for (var b in bookings) {
+        for (var b in _bookings) {
           final title = b['title']?.toString().trim() ?? '';
           if (title.isNotEmpty) {
             items.add("🔒 Booked: $title");
