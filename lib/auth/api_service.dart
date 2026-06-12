@@ -4,15 +4,31 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ApiService {
   late Dio _dio;
   final Dio _refreshDio = Dio();
   final _storage = const FlutterSecureStorage();
-  final _cookieJar = CookieJar();
+  late final PersistCookieJar _cookieJar;
   Future<String?>? _refreshFuture;
+  Future<void>? _initFuture;
 
   Future<void> Function()? onSessionExpired;
+
+  Future<void> init() async {
+    if (_initFuture != null) return _initFuture;
+    _initFuture = _init();
+    return _initFuture;
+  }
+
+  Future<void> _init() async {
+    final appDocDir = await getApplicationDocumentsDirectory();
+    final String dirPath = '${appDocDir.path}/.cookies/';
+    _cookieJar = PersistCookieJar(storage: FileStorage(dirPath));
+    _dio.interceptors.add(CookieManager(_cookieJar));
+    _refreshDio.interceptors.add(CookieManager(_cookieJar));
+  }
 
   ApiService() {
     _dio = Dio(
@@ -25,10 +41,7 @@ class ApiService {
 
     _refreshDio.options.baseUrl = _dio.options.baseUrl;
     _refreshDio.options.connectTimeout = _dio.options.connectTimeout;
-    _refreshDio.options.receiveTimeout = _dio.options.receiveTimeout;
-
-    _dio.interceptors.add(CookieManager(_cookieJar));
-    _refreshDio.interceptors.add(CookieManager(_cookieJar));
+    _refreshDio.options.receiveTimeout = _refreshDio.options.receiveTimeout;
 
     _dio.interceptors.add(
       LogInterceptor(requestBody: true, responseBody: true, error: true),
@@ -49,7 +62,18 @@ class ApiService {
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401 &&
               e.requestOptions.path != "/auth/refresh") {
-            final newToken = await _refreshToken();
+            final currentToken = await _storage.read(key: "token");
+            final requestToken = e.requestOptions.headers["Authorization"]
+                ?.toString()
+                .replaceFirst("Bearer ", "");
+
+            String? newToken;
+            if (currentToken != null && currentToken != requestToken) {
+              newToken = currentToken;
+            } else {
+              newToken = await _refreshToken();
+            }
+
             if (newToken != null) {
               final options = e.requestOptions;
               options.headers["Authorization"] = "Bearer $newToken";
@@ -61,10 +85,7 @@ class ApiService {
                   return handler.next(retryError);
                 }
                 return handler.reject(
-                  DioException(
-                    requestOptions: options,
-                    error: retryError,
-                  ),
+                  DioException(requestOptions: options, error: retryError),
                 );
               }
             } else {
@@ -99,7 +120,6 @@ class ApiService {
     return null;
   }
 
-
   Future<Response> get(
     String url, {
     Map<String, dynamic>? params,
@@ -107,7 +127,8 @@ class ApiService {
   }) => _dio.get(url, queryParameters: params, options: options);
   Future<Response> post(String url, dynamic data) => _dio.post(url, data: data);
   Future<Response> put(String url, dynamic data) => _dio.put(url, data: data);
-  Future<Response> delete(String url, {dynamic data}) => _dio.delete(url, data: data);
+  Future<Response> delete(String url, {dynamic data}) =>
+      _dio.delete(url, data: data);
   Future<Response> patch(String url, dynamic data) =>
       _dio.patch(url, data: data);
 }

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart'; // Added Firebase dependency
 import 'package:file_picker/file_picker.dart';
 import './api_service.dart';
+import './activity_service.dart';
 import '../core/navigator_key.dart';
 import '../core/routes.dart';
 import '../events/event_model.dart';
@@ -18,6 +19,9 @@ class AuthService extends ChangeNotifier {
   User? _currentUser;
   User? get currentUser => _currentUser;
   final _storage = const FlutterSecureStorage();
+
+  bool _isLoggingOut = false;
+  Future<User>? _activeLoginFuture;
 
   AuthService._internal() {
     apiService.onSessionExpired = () => logout(null);
@@ -86,6 +90,9 @@ class AuthService extends ChangeNotifier {
       _currentUser = User.fromJson(jsonDecode(userData));
       notifyListeners();
 
+      // Log autologin activity
+      ActivityService().logActivity('LOGIN');
+
       // Sync user data and notification token in background
       fetchCurrentUser()
           .then((_) async {
@@ -126,9 +133,32 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-
-
   Future<User> login({
+    required String email,
+    required String password,
+    required String churchCode,
+    String? deviceToken,
+  }) async {
+    if (_activeLoginFuture != null) {
+      return _activeLoginFuture!;
+    }
+
+    final loginFuture = _performLogin(
+      email: email,
+      password: password,
+      churchCode: churchCode,
+      deviceToken: deviceToken,
+    );
+    _activeLoginFuture = loginFuture;
+
+    try {
+      return await loginFuture;
+    } finally {
+      _activeLoginFuture = null;
+    }
+  }
+
+  Future<User> _performLogin({
     required String email,
     required String password,
     required String churchCode,
@@ -269,11 +299,15 @@ class AuthService extends ChangeNotifier {
 
   // 2. Updated Logout Method
   Future<void> logout(String? deviceToken) async {
+    if (_isLoggingOut) return;
+    _isLoggingOut = true;
+
     // Call the logout API with the deviceToken in the body
     print(deviceToken);
     try {
       await apiService.post("/auth/logout", {
         "deviceToken": deviceToken, // Sending device token along with logout
+        "timestamp": DateTime.now().toUtc().toIso8601String(),
       });
     } catch (_) {}
 
@@ -290,6 +324,7 @@ class AuthService extends ChangeNotifier {
 
     await _storage.delete(key: 'token');
 
+    _isLoggingOut = false;
     notifyListeners();
 
     // Navigate to Login and clear stack
@@ -524,7 +559,8 @@ class AuthService extends ChangeNotifier {
         'relation': relation,
       });
     } on DioException catch (e) {
-      final message = e.response?.data?['message'] ?? e.message ?? "Unknown error";
+      final message =
+          e.response?.data?['message'] ?? e.message ?? "Unknown error";
       debugPrint("Error sending family request: $message");
       throw Exception(message);
     } catch (e) {
@@ -532,7 +568,6 @@ class AuthService extends ChangeNotifier {
       throw Exception("An unexpected error occurred.");
     }
   }
-
 
   Future<void> handleFamilyRequest(String relatedUserId, String action) async {
     try {
@@ -586,24 +621,25 @@ class AuthService extends ChangeNotifier {
     try {
       final formData = FormData();
       if (file.bytes != null) {
-        formData.files.add(MapEntry(
-          'image',
-          MultipartFile.fromBytes(
-            file.bytes!,
-            filename: file.name,
+        formData.files.add(
+          MapEntry(
+            'image',
+            MultipartFile.fromBytes(file.bytes!, filename: file.name),
           ),
-        ));
+        );
       } else if (file.path != null) {
-        formData.files.add(MapEntry(
-          'image',
-          await MultipartFile.fromFile(
-            file.path!,
-            filename: file.name,
+        formData.files.add(
+          MapEntry(
+            'image',
+            await MultipartFile.fromFile(file.path!, filename: file.name),
           ),
-        ));
+        );
       }
 
-      final response = await apiService.put('/priest/church/background', formData);
+      final response = await apiService.put(
+        '/priest/church/background',
+        formData,
+      );
       return response.data['backgroundPicUrl'] as String;
     } catch (e) {
       debugPrint("Error updating church background: $e");
@@ -615,21 +651,19 @@ class AuthService extends ChangeNotifier {
     try {
       final formData = FormData();
       if (file.bytes != null) {
-        formData.files.add(MapEntry(
-          'image',
-          MultipartFile.fromBytes(
-            file.bytes!,
-            filename: file.name,
+        formData.files.add(
+          MapEntry(
+            'image',
+            MultipartFile.fromBytes(file.bytes!, filename: file.name),
           ),
-        ));
+        );
       } else if (file.path != null) {
-        formData.files.add(MapEntry(
-          'image',
-          await MultipartFile.fromFile(
-            file.path!,
-            filename: file.name,
+        formData.files.add(
+          MapEntry(
+            'image',
+            await MultipartFile.fromFile(file.path!, filename: file.name),
           ),
-        ));
+        );
       }
 
       final response = await apiService.put('/user/me/profile-pic', formData);

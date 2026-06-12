@@ -9,6 +9,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../widgets/app_drawer.dart';
 import 'package:marquee/marquee.dart';
 import '../announcements/live_announcement_provider.dart';
+import '../auth/activity_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   // Changed to StatefulWidget
@@ -19,6 +20,23 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  bool _isExiting = false;
+
+  Future<void> _handleSystemExit() async {
+    if (_isExiting) return;
+    setState(() {
+      _isExiting = true;
+    });
+
+    try {
+      await ActivityService().logActivity('LOGOUT');
+      await ActivityService().syncQueue();
+    } catch (e) {
+      debugPrint("Error syncing activity on exit: $e");
+    }
+
+    SystemNavigator.pop();
+  }
 
   Future<void> _handleDashboardRefresh() async {
     if (mounted) {
@@ -109,20 +127,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final bool isPriest = user.role.toLowerCase() == 'priest';
     final bool isOfficial = user.role.toLowerCase() == 'official' || user.role.toLowerCase() == 'church_official';
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      drawer: AppDrawer(user: user),
-      body: RefreshIndicator(
-        onRefresh: _handleDashboardRefresh,
-        color: const Color(0xFF5D3A99),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            _buildSliverAppBar(context, user, loc, isPriest, isOfficial),
-            _buildLiveAnnouncementBar(context, loc),
-            _buildDynamicMenuGrid(context, loc, isPriest, isOfficial),
-            const SliverToBoxAdapter(child: SizedBox(height: 30)),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleSystemExit();
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        drawer: AppDrawer(user: user),
+        body: RefreshIndicator(
+          onRefresh: _handleDashboardRefresh,
+          color: const Color(0xFF5D3A99),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildSliverAppBar(context, user, loc, isPriest, isOfficial),
+              _buildLiveAnnouncementBar(context, loc),
+              _buildDynamicMenuGrid(context, loc, isPriest, isOfficial),
+              const SliverToBoxAdapter(child: SizedBox(height: 30)),
+            ],
+          ),
         ),
       ),
     );

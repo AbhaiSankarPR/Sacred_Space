@@ -9,10 +9,39 @@ import 'core/theme.dart';
 import 'core/routes.dart';
 import 'core/theme_provider.dart';
 import 'core/locale_provider.dart';
+import 'auth/activity_service.dart';
 
-class SacredSpaceApp extends StatelessWidget {
+class SacredSpaceApp extends StatefulWidget {
   final String initialRoute;
   const SacredSpaceApp({super.key, required this.initialRoute});
+
+  @override
+  State<SacredSpaceApp> createState() => _SacredSpaceAppState();
+}
+
+class _SacredSpaceAppState extends State<SacredSpaceApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      ActivityService().logActivity('LOGOUT');
+    } else if (state == AppLifecycleState.resumed) {
+      ActivityService().logActivity('LOGIN');
+      ActivityService().syncQueue();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +60,10 @@ class SacredSpaceApp extends StatelessWidget {
           // Malayalam characters are taller; height: 1.4 prevents clipping
           bodyLarge: baseTheme.bodyLarge?.copyWith(height: 1.4),
           bodyMedium: baseTheme.bodyMedium?.copyWith(height: 1.4),
-          titleLarge: baseTheme.titleLarge?.copyWith(height: 1.4, fontWeight: FontWeight.bold),
+          titleLarge: baseTheme.titleLarge?.copyWith(
+            height: 1.4,
+            fontWeight: FontWeight.bold,
+          ),
         );
       } else {
         // English Font: Lora (Google Serif font)
@@ -42,17 +74,17 @@ class SacredSpaceApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: navigatorKey, // <--- Add this line here
       debugShowCheckedModeBanner: false,
-      initialRoute: initialRoute,
+      initialRoute: widget.initialRoute,
       routes: Routes.map,
       onGenerateRoute: (settings) {
         if (settings.name == Routes.announcementDetail) {
           // Cast the arguments passed from main.dart back to a String
           final String announcementId = settings.arguments as String;
-          
+
           return MaterialPageRoute(
-            builder: (context) => AnnouncementDetailScreen(
-              announcementId: announcementId,
-            ),
+            builder:
+                (context) =>
+                    AnnouncementDetailScreen(announcementId: announcementId),
           );
         }
         return null; // Fallback to the 'routes' map for everything else
@@ -71,7 +103,8 @@ class SacredSpaceApp extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate, // Important for localized DatePickers
+        GlobalMaterialLocalizations
+            .delegate, // Important for localized DatePickers
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
