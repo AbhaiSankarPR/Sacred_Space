@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../auth/auth_service.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import '../core/routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +19,7 @@ class AppDrawer extends StatelessWidget {
 
     // Role-Based Logic
     final bool isPriest = user.role.toLowerCase() == 'priest';
+    final bool isOfficialUser = user.isOfficial;
 
     void navigateTo(String targetRoute) {
       final bool isTargetDashboard = targetRoute == Routes.member || targetRoute == Routes.priest;
@@ -46,7 +46,7 @@ class AppDrawer extends StatelessWidget {
       backgroundColor: theme.cardColor,
       child: Column(
         children: [
-          _buildHeader(theme, isPriest),
+          _buildHeader(theme, isOfficialUser),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -55,7 +55,7 @@ class AppDrawer extends StatelessWidget {
                 _DrawerItem(
                   icon: Icons.dashboard_outlined,
                   title: loc.dashboard,
-                  onTap: () => navigateTo(isPriest ? Routes.priest : Routes.member),
+                  onTap: () => navigateTo(isOfficialUser ? Routes.priest : Routes.member),
                   isSelected:
                       currentRoute == Routes.member ||
                       currentRoute == Routes.priest,
@@ -69,7 +69,7 @@ class AppDrawer extends StatelessWidget {
                 // BOOKINGS: Specialized label for Priest
                 _DrawerItem(
                   icon: Icons.bookmark_border_rounded,
-                  title: isPriest ? loc.manageRequests : loc.bookings,
+                  title: isOfficialUser ? loc.manageRequests : loc.bookings,
                   onTap: () => navigateTo(Routes.bookings),
                   isSelected: currentRoute == Routes.bookings,
                 ),
@@ -117,11 +117,10 @@ class AppDrawer extends StatelessWidget {
                 ],
 
                 _DrawerItem(
-                  icon: Icons.warning_amber_rounded,
-                  title: loc.emergencyAlerts,
-                  onTap: () => navigateTo(Routes.emergency),
-                  isSelected: currentRoute == Routes.emergency,
-                  isAlert: true,
+                  icon: Icons.chat_bubble_outline,
+                  title: loc.complaints,
+                  onTap: () => navigateTo(Routes.complaints),
+                  isSelected: currentRoute == Routes.complaints,
                 ),
 
                 Divider(
@@ -247,14 +246,12 @@ class _DrawerItem extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
   final bool isSelected;
-  final bool isAlert;
 
   const _DrawerItem({
     required this.icon,
     required this.title,
     required this.onTap,
     this.isSelected = false,
-    this.isAlert = false,
   });
 
   @override
@@ -263,21 +260,17 @@ class _DrawerItem extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Theme-Aware Coloring
-    final Color activeColor = const Color(0xFF9B59B6);
-    // Use ?? to provide a default color if the map lookup returns null
     final Color textColor =
         isSelected
             ? const Color(0xFF9B59B6)
             : (isDark ? Colors.white70 : Colors.black87);
 
     final Color iconColor =
-        isAlert
-            ? Colors.red
-            : (isSelected
-                ? const Color(0xFF9B59B6)
-                : (isDark
-                    ? Colors.white60
-                    : (Colors.grey[700] ?? Colors.grey)));
+        isSelected
+            ? const Color(0xFF9B59B6)
+            : (isDark
+                ? Colors.white60
+                : (Colors.grey[700] ?? Colors.grey));
     final Color bgColor =
         isSelected
             ? const Color(0xFF5D3A99).withOpacity(isDark ? 0.2 : 0.1)

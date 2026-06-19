@@ -22,7 +22,6 @@ import '../transactions/add_transaction_screen.dart';
 import '../announcements/announcements_screen.dart';
 import '../bookings/bookings_screen.dart';
 import '../bookings/newbooking_screen.dart';
-import '../emergency/emergency_alerts_screen.dart';
 import '../events/events_screen.dart';
 import '../events/new_event_screen.dart';
 import '../gallery/member/gallery_screen.dart';
@@ -34,6 +33,9 @@ import '../screens/editProfile.dart';
 import '../settings/family_connections_screen.dart';
 import '../screens/family_members_screen.dart';
 import '../certificate/certificate_screen.dart';
+import '../complaints/complaints_screen.dart';
+import '../complaints/new_complaint_screen.dart';
+import '../complaints/complaint_detail_screen.dart';
 
 class Routes {
   // Authentication & Onboarding
@@ -53,11 +55,13 @@ class Routes {
   static const personalInfo = '/personal-info';
   static const bookings = '/bookings';
   static const newBooking = '/new-booking';
-  static const emergency = '/emergency';
   static const events = '/events';
   static const newEvent = '/events/new';
   static const gallery = '/gallery';
   static const String editProfile = '/edit-profile';
+  static const complaints = '/complaints';
+  static const newComplaint = '/complaints/new';
+  static const complaintDetail = '/complaints/detail';
 
   // Priest/Official-Exclusive Features
   static const memberDirectory = '/priest/member-directory';
@@ -90,6 +94,14 @@ class Routes {
     // Unified Dashboard (Logic inside handles role differences)
     member: (_) => const DashboardScreen(),
     priest: (_) => const DashboardScreen(),
+    '/president': (_) => const DashboardScreen(),
+    '/secretary': (_) => const DashboardScreen(),
+    '/treasurer': (_) => const DashboardScreen(),
+    '/MEMBER': (_) => const DashboardScreen(),
+    '/PRIEST': (_) => const DashboardScreen(),
+    '/PRESIDENT': (_) => const DashboardScreen(),
+    '/SECRETARY': (_) => const DashboardScreen(),
+    '/TREASURER': (_) => const DashboardScreen(),
 
     // Profile & Personal Data
     profile: (_) => const ProfileScreen(),
@@ -100,10 +112,15 @@ class Routes {
     announcements: (_) => const AnnouncementsScreen(),
     bookings: (_) => const BookingsScreen(),
     newBooking: (_) => const NewBookingScreen(),
-    emergency: (_) => const EmergencyAlertsScreen(),
     events: (_) => const EventsScreen(),
     newEvent: (_) => const NewEventScreen(),
     gallery: (_) => const GalleryScreen(),
+    complaints: (_) => const ComplaintsScreen(),
+    newComplaint: (_) => const NewComplaintScreen(),
+    complaintDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments as String;
+      return ComplaintDetailScreen(complaintId: args);
+    },
 
     // Priest-Only Routes
     memberDirectory: (_) => const MemberDirectoryScreen(),

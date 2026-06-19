@@ -41,7 +41,7 @@ class _CertificateScreenState extends State<CertificateScreen>
   void _refreshRequests() {
     setState(() {
       final user = AuthService().currentUser;
-      final bool isPriest = user?.role.toLowerCase() == 'priest';
+      final bool isPriest = user?.isOfficial ?? false;
       
       if (isPriest) {
         _requestsFuture = _certificateService.fetchChurchRequests(
@@ -136,7 +136,7 @@ class _CertificateScreenState extends State<CertificateScreen>
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bool isPriest = user.role.toLowerCase() == 'priest';
+    final bool isPriest = user.isOfficial;
 
     if (isPriest) {
       return Scaffold(

@@ -43,7 +43,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final bool isPriest = user.role.toLowerCase() == 'priest';
+    final bool isPriest = user.isOfficial;
     final theme = Theme.of(context);
 
     return Scaffold(

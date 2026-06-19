@@ -719,6 +719,17 @@ class User {
     this.familyConnections = const [],
   });
 
+  bool get isOfficial => isRoleOfficial(role);
+
+  static bool isRoleOfficial(String? role) {
+    if (role == null) return false;
+    final r = role.toLowerCase();
+    return r == 'priest' ||
+        r == 'president' ||
+        r == 'secretary' ||
+        r == 'treasurer';
+  }
+
   User copyWith({
     String? name,
     String? gender,

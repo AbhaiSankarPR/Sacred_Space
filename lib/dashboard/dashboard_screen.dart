@@ -125,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final theme = Theme.of(context);
     final bool isPriest = user.role.toLowerCase() == 'priest';
-    final bool isOfficial = user.role.toLowerCase() == 'official' || user.role.toLowerCase() == 'church_official';
+    final bool isOfficial = user.isOfficial && !isPriest;
 
     return PopScope(
       canPop: false,
@@ -337,15 +337,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
 
-          // EMERGENCY (SHARED)
-          _DashboardMenuItem(
-            title: loc.emergency,
-            icon: Icons.warning_amber_rounded,
-            color: Colors.red,
-            isAlert: true,
-            onTap: () => Navigator.pushNamed(context, Routes.emergency),
-          ),
-
           // SUPPORT (MEMBER ONLY)
           if (!isPriest && !isOfficial)
             _DashboardMenuItem(
@@ -354,6 +345,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.teal,
               onTap: () => Navigator.pushNamed(context, Routes.support),
             ),
+
+          // COMPLAINTS
+          _DashboardMenuItem(
+            title: loc.complaints,
+            icon: Icons.chat_bubble_outline,
+            color: Colors.blueAccent,
+            onTap: () => Navigator.pushNamed(context, Routes.complaints),
+          ),
 
           // SETTINGS
           _DashboardMenuItem(
