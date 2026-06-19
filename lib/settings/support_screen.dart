@@ -26,7 +26,6 @@ class SupportScreen extends StatelessWidget {
       {'question': loc.faqQ1, 'answer': loc.faqA1},
       {'question': loc.faqQ2, 'answer': loc.faqA2},
       {'question': loc.faqQ3, 'answer': loc.faqA3},
-      {'question': loc.faqQ4, 'answer': loc.faqA4},
     ];
 
     return Scaffold(

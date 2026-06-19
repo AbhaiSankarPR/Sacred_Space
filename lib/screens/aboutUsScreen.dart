@@ -32,7 +32,7 @@ class AboutUsScreen extends StatelessWidget {
         const SizedBox(height: 24),
         const Text("What We Offer", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const BulletItem(text: "Easy booking for church services and sacraments."),
-        const BulletItem(text: "Real-time announcements and emergency alerts."),
+        const BulletItem(text: "Real-time announcements."),
         const BulletItem(text: "Integrated community events calendar."),
         const BulletItem(text: "Secure digital scrapbook of your spiritual journey."),
       ],
