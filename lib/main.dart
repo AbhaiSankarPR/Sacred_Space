@@ -56,6 +56,8 @@ void main() async {
       return;
     }
 
+    notificationStreamController.add(data);
+
     if (notification != null) {
       late OverlaySupportEntry notificationEntry;
 

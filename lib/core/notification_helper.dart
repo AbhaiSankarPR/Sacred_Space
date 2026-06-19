@@ -1,13 +1,18 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'navigator_key.dart';
 import 'routes.dart';
 
 Map<String, dynamic>? pendingNotificationData;
 
+final StreamController<Map<String, dynamic>> notificationStreamController =
+    StreamController<Map<String, dynamic>>.broadcast();
+
 void handleNotificationNavigation(Map<String, dynamic> data) {
   final String? type = data['type'];
   final String? id =
       data['id'] ??
+      data['complaintId'] ??
       data['announcementId'] ??
       data['eventId'] ??
       data['bookingId'] ??
@@ -18,6 +23,15 @@ void handleNotificationNavigation(Map<String, dynamic> data) {
   Object? arguments;
 
   switch (type) {
+    case "COMPLAINT":
+      if (id != null) {
+        targetRoute = Routes.complaintDetail;
+        arguments = id;
+      } else {
+        targetRoute = Routes.complaints;
+      }
+      break;
+
     case "ANNOUNCEMENT":
       if (id != null) {
         targetRoute = Routes.announcementDetail;
