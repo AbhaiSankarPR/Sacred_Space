@@ -10,13 +10,14 @@ class ActivityService {
 
   Timer? _syncTimer;
   bool _isSyncing = false;
+  Future<void>? _activeSyncFuture;
 
   ActivityService._internal() {
     _startPeriodicSync();
   }
 
   /// Logs a user activity of [type] ('LOGIN' or 'LOGOUT').
-  /// The activity is queued locally and then a sync attempt is triggered.
+  /// The activity is queued locally only if the network response is negative.
   Future<void> logActivity(String type, {DateTime? timestamp}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -44,21 +45,52 @@ class ActivityService {
       await prefs.setString('last_activity_type', type);
       await prefs.setString('last_activity_time', timestampStr);
 
-      // Add activity to user-specific queue
       final queueKey = 'activity_queue_$userId';
       final queueJson = prefs.getStringList(queueKey) ?? [];
 
-      final newLog = jsonEncode({
-        'type': type,
-        'timestamp': timestampStr,
-      });
-      queueJson.add(newLog);
-      await prefs.setStringList(queueKey, queueJson);
+      if (queueJson.isNotEmpty) {
+        // If there is already an unsynced queue, append to it to maintain correct chronological order
+        final newLog = jsonEncode({
+          'type': type,
+          'timestamp': timestampStr,
+        });
+        queueJson.add(newLog);
+        await prefs.setStringList(queueKey, queueJson);
+        debugPrint("ActivityService: Queue is not empty. Appending '$type' and triggering sync.");
+        await syncQueue();
+      } else {
+        // Queue is empty, attempt immediate direct send
+        debugPrint("ActivityService: Queue is empty. Attempting immediate log for '$type'...");
+        bool success = false;
+        try {
+          final response = await apiService.post('/user/me/activity', {
+            'type': type,
+            'timestamp': timestampStr,
+          });
 
-      debugPrint("ActivityService: Queued '$type' at $timestampStr for user: $userId");
+          if (response.statusCode != null &&
+              response.statusCode! >= 200 &&
+              response.statusCode! < 300) {
+            success = true;
+            debugPrint("ActivityService: Successfully logged '$type' directly to backend.");
+          } else {
+            debugPrint("ActivityService: Server returned negative status (${response.statusCode}) for '$type'.");
+          }
+        } catch (e) {
+          debugPrint("ActivityService: Network error logging '$type' directly: $e");
+        }
 
-      // Attempt to sync immediately
-      syncQueue();
+        if (!success) {
+          // Store in queue only if response is negative/failed
+          final newLog = jsonEncode({
+            'type': type,
+            'timestamp': timestampStr,
+          });
+          queueJson.add(newLog);
+          await prefs.setStringList(queueKey, queueJson);
+          debugPrint("ActivityService: Queued failed '$type' activity.");
+        }
+      }
     } catch (e) {
       debugPrint("ActivityService: Error in logActivity: $e");
     }
@@ -68,22 +100,27 @@ class ActivityService {
   /// Sends them chronologically, halting on first failure to keep correct order.
   Future<void> syncQueue() async {
     if (_isSyncing) {
-      debugPrint("ActivityService: Sync already in progress. Skipping.");
+      debugPrint("ActivityService: Sync already in progress. Waiting for it to finish.");
+      await _activeSyncFuture;
       return;
     }
     _isSyncing = true;
+    final completer = Completer<void>();
+    _activeSyncFuture = completer.future;
 
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('userId');
       if (userId == null) {
         debugPrint("ActivityService: Cannot sync queue. No logged-in user.");
+        completer.complete();
         return;
       }
 
       final queueKey = 'activity_queue_$userId';
       List<String> queueJson = prefs.getStringList(queueKey) ?? [];
       if (queueJson.isEmpty) {
+        completer.complete();
         return;
       }
 
@@ -127,10 +164,13 @@ class ActivityService {
         }
         debugPrint("ActivityService: Successfully synced $successCount items.");
       }
+      completer.complete();
     } catch (e) {
       debugPrint("ActivityService: Error in syncQueue: $e");
+      completer.completeError(e);
     } finally {
       _isSyncing = false;
+      _activeSyncFuture = null;
     }
   }
 
