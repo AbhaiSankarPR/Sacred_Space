@@ -387,31 +387,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // 3. Fetch pending signup requests
-  Future<List<dynamic>> getPendingSignups() async {
-    try {
-      final response = await apiService.get('/priest/pending-users');
-      return response.data as List<dynamic>;
-    } catch (e) {
-      debugPrint("Error fetching pending signups: $e");
-      rethrow;
-    }
-  }
-
-  // 4. Handle signup request (approve/reject)
-  Future<void> handleSignupRequest(String userId, String action) async {
-    try {
-      if (action == 'approve') {
-        await apiService.put('/priest/users/$userId/approve', {});
-      } else {
-        await apiService.put('/priest/users/$userId/reject', {});
-      }
-      debugPrint("Signup request $action for $userId successful.");
-    } catch (e) {
-      debugPrint("Error handling signup request: $e");
-      rethrow;
-    }
-  }
 
   Future<void> changePassword({
     required String currentPassword,

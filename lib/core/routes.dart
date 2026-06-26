@@ -14,7 +14,7 @@ import '../dashboard/profile_screen.dart';
 // import '../dashboard/personal_info_screen.dart';
 // Priest-Specific Features
 import '../members/member_directory_screen.dart';
-import '../screens/priest/signup_requests_screen.dart';
+import '../signup_requests/signup_requests_screen.dart';
 import '../gallery/priest/gallery_management_screen.dart';
 import '../transactions/transactions_screen.dart';
 import '../transactions/add_transaction_screen.dart';
