@@ -1,37 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../auth/auth_service.dart';
-import '../../auth/api_service.dart';
-import '../../widgets/app_drawer.dart';
-import '../../settings/family_request_model.dart';
-
-class Member {
-  final String id, name, email, phone, houseName;
-  final String? profilePicUrl;
-
-  Member({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.houseName,
-    this.profilePicUrl,
-  });
-
-  factory Member.fromJson(Map<String, dynamic> json) {
-    final profile = json['profile'] as Map<String, dynamic>?;
-    return Member(
-      id: json['id'] ?? '',
-      email: json['email'] ?? '',
-      name: profile?['name'] ?? 'No Name',
-      // Falls back to root phone if profile phone is missing
-      phone: profile?['phone'] ?? (json['phone'] ?? 'No Phone'),
-      houseName: profile?['houseName'] ?? 'No House Name',
-      profilePicUrl: profile?['profilePicUrl'] ?? json['profilePicUrl'],
-    );
-  }
-}
+import '../auth/auth_service.dart';
+import '../widgets/app_drawer.dart';
+import '../settings/family_request_model.dart';
+import 'member_model.dart';
+import 'member_service.dart';
 
 class MemberDirectoryScreen extends StatefulWidget {
   const MemberDirectoryScreen({super.key});
@@ -41,29 +16,115 @@ class MemberDirectoryScreen extends StatefulWidget {
 }
 
 class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
+  final MemberService _memberService = MemberService();
+  final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
+
   String _searchQuery = "";
   List<Member> _allMembers = [];
   bool _isLoading = true;
+  bool _isLoadingMore = false;
+  int _currentPage = 1;
+  bool _hasMore = false;
+  final int _limit = 10;
 
   @override
   void initState() {
     super.initState();
-    _fetchMembers();
+    _scrollController.addListener(_scrollListener);
+    _fetchMembers(isRefresh: true);
   }
 
-  Future<void> _fetchMembers() async {
-    try {
-      setState(() => _isLoading = true);
-      final response = await apiService.get('/priest/users');
-      final List<dynamic> data = response.data;
-      
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _fetchMembers(isLoadMore: true);
+      }
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() => _searchQuery = query);
+      _fetchMembers(isRefresh: true);
+    });
+  }
+
+  Future<void> _fetchMembers({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
+    if (!mounted) return;
+
+    if (isRefresh) {
       setState(() {
-        _allMembers = data.map((m) => Member.fromJson(m)).toList();
-        _isLoading = false;
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
       });
+    } else if (isLoadMore) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    } else {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    }
+
+    try {
+      final int pageToFetch = isLoadMore ? _currentPage + 1 : 1;
+
+      final response = await _memberService.fetchMembers(
+        page: pageToFetch,
+        limit: _limit,
+        searchQuery: _searchQuery,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (isLoadMore) {
+            _allMembers.addAll(response.data);
+            _currentPage = pageToFetch;
+          } else {
+            _allMembers = response.data;
+            _currentPage = 1;
+          }
+          _hasMore = response.meta.hasMore;
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted &&
+              _scrollController.hasClients &&
+              _scrollController.position.maxScrollExtent <= 0 &&
+              _hasMore &&
+              !_isLoading &&
+              !_isLoadingMore) {
+            _fetchMembers(isLoadMore: true);
+          }
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackBar("Failed to load members: $e", isError: true);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+        _showSnackBar("Failed to load members: $e", isError: true);
+      }
     }
   }
 
@@ -86,7 +147,7 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
 
     if (confirm == true) {
       try {
-        await apiService.delete('/priest/${member.id}');
+        await _memberService.removeMember(member.id);
         setState(() {
           _allMembers.removeWhere((m) => m.id == member.id);
         });
@@ -124,7 +185,6 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
   void _showFamilyConnectionsSheet(Member member) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final loc = AppLocalizations.of(context)!;
 
     showModalBottomSheet(
       context: context,
@@ -479,13 +539,6 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final filteredMembers = _allMembers.where((m) {
-      final query = _searchQuery.toLowerCase();
-      return m.name.toLowerCase().contains(query) || 
-             m.houseName.toLowerCase().contains(query) ||
-             m.email.toLowerCase().contains(query);
-    }).toList();
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       drawer: AppDrawer(user: user!),
@@ -503,7 +556,7 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
             padding: const EdgeInsets.all(16),
             color: const Color(0xFF5D3A99),
             child: TextField(
-              onChanged: (val) => setState(() => _searchQuery = val),
+              onChanged: _onSearchChanged,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Search name, email or house...",
@@ -522,17 +575,37 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
 
           // --- MEMBER LIST ---
           Expanded(
-            child: _isLoading 
+            child: _isLoading && _allMembers.isEmpty
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                  onRefresh: _fetchMembers,
-                  child: filteredMembers.isEmpty
-                      ? const Center(child: Text("No members found."))
+                  onRefresh: () async => _fetchMembers(isRefresh: true),
+                  child: _allMembers.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.6,
+                              child: const Center(
+                                child: Text("No members found."),
+                              ),
+                            ),
+                          ],
+                        )
                       : ListView.builder(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(12),
-                          itemCount: filteredMembers.length,
+                          itemCount: _allMembers.length + (_isLoadingMore ? 1 : 0),
                           itemBuilder: (context, index) {
-                            final member = filteredMembers[index];
+                            if (index == _allMembers.length) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(
+                                  child: CircularProgressIndicator(color: Color(0xFF5D3A99)),
+                                ),
+                              );
+                            }
+                            final member = _allMembers[index];
                             return _MemberTile(
                               member: member, 
                               theme: theme, 

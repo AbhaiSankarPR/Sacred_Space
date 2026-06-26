@@ -13,7 +13,7 @@ import '../dashboard/dashboard_screen.dart';
 import '../dashboard/profile_screen.dart';
 // import '../dashboard/personal_info_screen.dart';
 // Priest-Specific Features
-import '../screens/priest/member_directory_screen.dart'; // Create these files
+import '../members/member_directory_screen.dart';
 import '../screens/priest/signup_requests_screen.dart';
 import '../gallery/priest/gallery_management_screen.dart';
 import '../transactions/transactions_screen.dart';
