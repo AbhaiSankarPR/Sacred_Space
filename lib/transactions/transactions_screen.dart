@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../core/routes.dart';
 import 'transaction_model.dart';
@@ -16,13 +15,129 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   final TransactionService _service = TransactionService();
+  final ScrollController _scrollController = ScrollController();
+
+  List<Transaction> _transactions = [];
+  double _totalAmount = 0.0;
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasError = false;
+  int _currentPage = 1;
+  bool _hasMore = false;
+  final int _limit = 10;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _service.getTransactions();
-    });
+    _scrollController.addListener(_scrollListener);
+    _fetchTransactions(isRefresh: true);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _fetchTransactions(isLoadMore: true);
+      }
+    }
+  }
+
+  Future<void> _fetchTransactions({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
+    if (!mounted) return;
+
+    if (isRefresh) {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+        _hasError = false;
+      });
+    } else if (isLoadMore) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    } else {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+        _hasError = false;
+      });
+    }
+
+    try {
+      final int pageToFetch = isLoadMore ? _currentPage + 1 : 1;
+
+      // Only fetch the total amount on the first page / refresh
+      if (pageToFetch == 1) {
+        final total = await _service.fetchTotalAmount();
+        if (mounted) {
+          setState(() {
+            _totalAmount = total;
+          });
+        }
+      }
+
+      final response = await _service.fetchTransactions(
+        page: pageToFetch,
+        limit: _limit,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (isLoadMore) {
+            _transactions.addAll(response.data);
+            _currentPage = pageToFetch;
+          } else {
+            _transactions = response.data;
+            _currentPage = 1;
+          }
+          _hasMore = response.meta.hasMore;
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted &&
+              _scrollController.hasClients &&
+              _scrollController.position.maxScrollExtent <= 0 &&
+              _hasMore &&
+              !_isLoading &&
+              !_isLoadingMore) {
+            _fetchTransactions(isLoadMore: true);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+          if (_transactions.isEmpty) {
+            _hasError = true;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load transactions'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _refreshTransactions() {
+    _fetchTransactions(isRefresh: true);
   }
 
   Future<void> _downloadReport() async {
@@ -94,7 +209,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.pushNamed(context, Routes.addTransaction).then((_) {
-            _service.getTransactions();
+            _refreshTransactions();
           });
         },
         backgroundColor: const Color(0xFF5D3A99),
@@ -107,87 +222,86 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ),
         ),
       ),
-      body: ListenableBuilder(
-        listenable: _service,
-        builder: (context, _) {
-          if (_service.isLoading && _service.lastResponse == null) {
-            return const Center(
+      body: _isLoading && _transactions.isEmpty
+          ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF5D3A99)),
-            );
-          }
-
-          if (_service.lastResponse == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Failed to load transactions",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  TextButton(
-                    onPressed: () => _service.getTransactions(),
-                    child: const Text(
-                      "Retry",
-                      style: TextStyle(color: Color(0xFF5D3A99)),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final response = _service.lastResponse!;
-          final transactions = response.transactions;
-
-          return RefreshIndicator(
-            color: const Color(0xFF5D3A99),
-            onRefresh: () => _service.getTransactions(),
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: _buildTotalCard(response.totalAmount, loc),
-                ),
-                if (transactions.isEmpty)
-                  SliverFillRemaining(
-                    child: Center(
-                      child: Text(
-                        loc.noTransactionsFound,
-                        style: TextStyle(color: mutedTextColor, fontSize: 16),
+            )
+          : _hasError && _transactions.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Failed to load transactions",
+                        style: TextStyle(color: Colors.grey),
                       ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final tx = transactions[index];
-                        return _buildTransactionCard(
-                          tx,
-                          isDark,
-                          cardBg,
-                          textColor,
-                          mutedTextColor,
-                          loc,
-                        );
-                      }, childCount: transactions.length),
-                    ),
+                      TextButton(
+                        onPressed: () => _refreshTransactions(),
+                        child: const Text(
+                          "Retry",
+                          style: TextStyle(color: Color(0xFF5D3A99)),
+                        ),
+                      ),
+                    ],
                   ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 80),
-                ), // FAB padding
-              ],
-            ),
-          );
-        },
-      ),
+                )
+              : RefreshIndicator(
+                  color: const Color(0xFF5D3A99),
+                  onRefresh: () async => _refreshTransactions(),
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: _buildTotalCard(_totalAmount, loc),
+                      ),
+                      if (_transactions.isEmpty)
+                        SliverFillRemaining(
+                          child: Center(
+                            child: Text(
+                              loc.noTransactionsFound,
+                              style: TextStyle(color: mutedTextColor, fontSize: 16),
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((context, index) {
+                              if (index == _transactions.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF5D3A99),
+                                    ),
+                                  ),
+                                );
+                              }
+                              final tx = _transactions[index];
+                              return _buildTransactionCard(
+                                tx,
+                                isDark,
+                                cardBg,
+                                textColor,
+                                mutedTextColor,
+                                loc,
+                              );
+                            }, childCount: _transactions.length + (_isLoadingMore ? 1 : 0)),
+                          ),
+                        ),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 80),
+                      ), // FAB padding
+                    ],
+                  ),
+                ),
     );
   }
 

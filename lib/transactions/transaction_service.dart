@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
@@ -7,46 +8,79 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import '../auth/api_service.dart';
 import 'transaction_model.dart';
+import '../core/models/paginated_response.dart';
 
-class TransactionService extends ChangeNotifier {
+class TransactionService {
   static final TransactionService _instance = TransactionService._internal();
   factory TransactionService() => _instance;
 
   TransactionService._internal();
 
-  bool isLoading = false;
-  TransactionResponse? lastResponse;
-
-  Future<TransactionResponse> getTransactions() async {
-    isLoading = true;
-    notifyListeners();
-
+  // GET: Fetch transactions using the project-wide paginated wrapper
+  Future<PaginatedResponse<Transaction>> fetchTransactions({
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final response = await apiService.get('/transaction');
-      final transactionResponse = TransactionResponse.fromJson(response.data);
-      lastResponse = transactionResponse;
-      
-      isLoading = false;
-      notifyListeners();
-      return transactionResponse;
+      final response = await apiService.get(
+        '/transaction?page=$page&limit=$limit',
+      );
+
+      if (response.data == null) {
+        return PaginatedResponse(
+          data: [],
+          meta: PaginationMeta(page: page, limit: limit, hasMore: false),
+        );
+      }
+
+      final Map<String, dynamic> decodedData = response.data is String
+          ? Map<String, dynamic>.from(json.decode(response.data) as Map)
+          : Map<String, dynamic>.from(response.data as Map);
+
+      final List<dynamic> list = decodedData['data'] ?? [];
+      final metaJson = decodedData['meta'] != null
+          ? Map<String, dynamic>.from(decodedData['meta'] as Map)
+          : <String, dynamic>{};
+      final meta = PaginationMeta.fromJson(metaJson);
+
+      final data = list.map((json) => Transaction.fromJson(json)).toList();
+
+      return PaginatedResponse(data: data, meta: meta);
     } catch (e) {
-      isLoading = false;
-      notifyListeners();
       debugPrint("Error fetching transactions: $e");
       rethrow;
     }
   }
 
+  // GET: Fetch total amount from the separate endpoint
+  Future<double> fetchTotalAmount() async {
+    try {
+      final response = await apiService.get('/transaction/total');
+      if (response.data == null) return 0.0;
+
+      final Map<String, dynamic> decodedData = response.data is String
+          ? Map<String, dynamic>.from(json.decode(response.data) as Map)
+          : Map<String, dynamic>.from(response.data as Map);
+
+      return double.tryParse((decodedData['totalAmount'] ?? 0.0).toString()) ??
+          0.0;
+    } catch (e) {
+      debugPrint("Error fetching total balance: $e");
+      return 0.0;
+    }
+  }
+
+  // POST: Add a transaction
   Future<void> addTransaction(Map<String, dynamic> data) async {
     try {
       await apiService.post('/transaction', data);
-      await getTransactions(); // Refresh the list
     } catch (e) {
       debugPrint("Error adding transaction: $e");
       rethrow;
     }
   }
 
+  // GET: Download report file
   Future<String> downloadReport(String month) async {
     try {
       // month should be in format 'YYYY-MM'
