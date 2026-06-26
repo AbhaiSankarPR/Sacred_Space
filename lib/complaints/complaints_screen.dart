@@ -16,24 +16,116 @@ class ComplaintsScreen extends StatefulWidget {
 class _ComplaintsScreenState extends State<ComplaintsScreen> {
   String _selectedFilter = "All";
   final ComplaintService _service = ComplaintService();
-  late Future<List<Complaint>> _complaintsFuture;
+  final ScrollController _scrollController = ScrollController();
+
+  List<Complaint> _complaints = [];
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  int _currentPage = 1;
+  bool _hasMore = false;
+  final int _limit = 6;
   bool _isPriest = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_scrollListener);
     final user = AuthService().currentUser;
     _isPriest = user?.isOfficial ?? false;
-    _refreshComplaints();
+    _fetchComplaints(isRefresh: true);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _fetchComplaints(isLoadMore: true);
+      }
+    }
+  }
+
+  Future<void> _fetchComplaints({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
+    if (!mounted) return;
+
+    if (isRefresh) {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    } else if (isLoadMore) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    } else {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    }
+
+    try {
+      final int pageToFetch = isLoadMore ? _currentPage + 1 : 1;
+      final response = await _service.fetchComplaints(
+        isPriest: _isPriest,
+        status: _selectedFilter == "All" ? null : _selectedFilter,
+        page: pageToFetch,
+        limit: _limit,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (isLoadMore) {
+            _complaints.addAll(response.data);
+            _currentPage = pageToFetch;
+          } else {
+            _complaints = response.data;
+            _currentPage = 1;
+          }
+          _hasMore = response.meta.hasMore;
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted &&
+              _scrollController.hasClients &&
+              _scrollController.position.maxScrollExtent <= 0 &&
+              _hasMore &&
+              !_isLoading &&
+              !_isLoadingMore) {
+            _fetchComplaints(isLoadMore: true);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.errorOccurred),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _refreshComplaints() {
-    setState(() {
-      _complaintsFuture = _service.fetchComplaints(
-        isPriest: _isPriest,
-        status: _selectedFilter == "All" ? null : _selectedFilter,
-      );
-    });
+    _fetchComplaints(isRefresh: true);
   }
 
   @override
@@ -61,71 +153,80 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
         elevation: 0,
       ),
       drawer: AppDrawer(user: user),
-      floatingActionButton: !_isPriest
-          ? FloatingActionButton.extended(
-              onPressed: () async {
-                await Navigator.pushNamed(context, Routes.newComplaint);
-                _refreshComplaints();
-              },
-              backgroundColor: const Color(0xFF5D3A99),
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: Text(loc.newComplaint),
-            )
-          : null,
+      floatingActionButton:
+          !_isPriest
+              ? FloatingActionButton.extended(
+                onPressed: () async {
+                  await Navigator.pushNamed(context, Routes.newComplaint);
+                  _refreshComplaints();
+                },
+                backgroundColor: const Color(0xFF5D3A99),
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: Text(loc.newComplaint),
+              )
+              : null,
       body: Column(
         children: [
           _buildFilterBar(loc, theme),
           Expanded(
-            child: FutureBuilder<List<Complaint>>(
-              future: _complaintsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Text(
-                        loc.errorOccurred,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  );
-                }
-
-                final complaints = snapshot.data ?? [];
-
-                return RefreshIndicator(
-                  onRefresh: () async => _refreshComplaints(),
-                  child: complaints.isEmpty
-                      ? ListView(
-                          children: [
-                            SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                            Center(
-                              child: Text(
-                                loc.noComplaintsFound,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: theme.hintColor,
+            child:
+                _isLoading && _complaints.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                      onRefresh: () async => _refreshComplaints(),
+                      child:
+                          _complaints.isEmpty
+                              ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                    height:
+                                        MediaQuery.of(context).size.height *
+                                        0.3,
+                                  ),
+                                  Center(
+                                    child: Text(
+                                      loc.noComplaintsFound,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: theme.hintColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                              : ListView.builder(
+                                controller: _scrollController,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
                                 ),
+                                itemCount:
+                                    _complaints.length +
+                                    (_isLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index == _complaints.length) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: Color(0xFF5D3A99),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  final complaint = _complaints[index];
+                                  return _buildComplaintCard(
+                                    complaint,
+                                    theme,
+                                    isDark,
+                                  );
+                                },
                               ),
-                            ),
-                          ],
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          itemCount: complaints.length,
-                          itemBuilder: (context, index) {
-                            final complaint = complaints[index];
-                            return _buildComplaintCard(complaint, theme, isDark);
-                          },
-                        ),
-                );
-              },
-            ),
+                    ),
           ),
         ],
       ),
@@ -141,9 +242,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor,
         border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withOpacity(0.1),
-          ),
+          bottom: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
         ),
       ),
       child: SingleChildScrollView(
@@ -157,66 +256,87 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: filters.map((f) {
-              final isSelected = _selectedFilter == f;
-              String labelText = '';
-              if (f == 'All') labelText = loc.all;
-              if (f == 'Open') labelText = loc.complaintStatusOpen;
-              if (f == 'In_Progress') labelText = loc.complaintStatusInProgress;
-              if (f == 'Resolved') labelText = loc.complaintStatusResolved;
-              if (f == 'Closed') labelText = loc.complaintStatusClosed;
+            children:
+                filters.map((f) {
+                  final isSelected = _selectedFilter == f;
+                  String labelText = '';
+                  if (f == 'All') labelText = loc.all;
+                  if (f == 'Open') labelText = loc.complaintStatusOpen;
+                  if (f == 'In_Progress')
+                    labelText = loc.complaintStatusInProgress;
+                  if (f == 'Resolved') labelText = loc.complaintStatusResolved;
+                  if (f == 'Closed') labelText = loc.complaintStatusClosed;
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                child: ChoiceChip(
-                  label: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      labelText,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: ChoiceChip(
+                      label: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          labelText,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                isSelected ? FontWeight.bold : FontWeight.w500,
+                            color:
+                                isSelected
+                                    ? Colors.white
+                                    : theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
                       ),
+                      selected: isSelected,
+                      onSelected: (val) {
+                        setState(() {
+                          _selectedFilter = f;
+                        });
+                        _refreshComplaints();
+                      },
+                      selectedColor: const Color(0xFF5D3A99),
+                      backgroundColor:
+                          isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.grey[100],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      side: BorderSide(
+                        color:
+                            isSelected
+                                ? const Color(0xFF5D3A99)
+                                : Colors.transparent,
+                      ),
+                      showCheckmark: false,
                     ),
-                  ),
-                  selected: isSelected,
-                  onSelected: (val) {
-                    setState(() {
-                      _selectedFilter = f;
-                    });
-                    _refreshComplaints();
-                  },
-                  selectedColor: const Color(0xFF5D3A99),
-                  backgroundColor: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.grey[100],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  side: BorderSide(
-                    color: isSelected ? const Color(0xFF5D3A99) : Colors.transparent,
-                  ),
-                  showCheckmark: false,
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildComplaintCard(Complaint complaint, ThemeData theme, bool isDark) {
+  Widget _buildComplaintCard(
+    Complaint complaint,
+    ThemeData theme,
+    bool isDark,
+  ) {
     final statusColor = _getStatusColor(complaint.status);
-    final formattedDate = complaint.createdAt.toLocal().toString().substring(0, 16);
+    final formattedDate = complaint.createdAt.toLocal().toString().substring(
+      0,
+      16,
+    );
     final loc = AppLocalizations.of(context)!;
 
     String statusText = complaint.status;
-    if (complaint.status.toUpperCase() == 'OPEN') statusText = loc.complaintStatusOpen;
-    if (complaint.status.toUpperCase() == 'IN_PROGRESS') statusText = loc.complaintStatusInProgress;
-    if (complaint.status.toUpperCase() == 'RESOLVED') statusText = loc.complaintStatusResolved;
-    if (complaint.status.toUpperCase() == 'CLOSED') statusText = loc.complaintStatusClosed;
+    if (complaint.status.toUpperCase() == 'OPEN')
+      statusText = loc.complaintStatusOpen;
+    if (complaint.status.toUpperCase() == 'IN_PROGRESS')
+      statusText = loc.complaintStatusInProgress;
+    if (complaint.status.toUpperCase() == 'RESOLVED')
+      statusText = loc.complaintStatusResolved;
+    if (complaint.status.toUpperCase() == 'CLOSED')
+      statusText = loc.complaintStatusClosed;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),

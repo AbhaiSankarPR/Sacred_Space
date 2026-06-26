@@ -1,12 +1,20 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../auth/api_service.dart';
 import 'complaint_model.dart';
 import 'package:flutter/foundation.dart';
+import '../core/models/paginated_response.dart';
 
 class ComplaintService {
-  Future<List<Complaint>> fetchComplaints({required bool isPriest, String? status}) async {
+  Future<PaginatedResponse<Complaint>> fetchComplaints({
+    required bool isPriest,
+    String? status,
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final String path = isPriest ? '/priest/complaints' : '/user/complaints';
+      final String basePath = isPriest ? '/priest/complaints' : '/user/complaints';
+      final String path = '$basePath?page=$page&limit=$limit';
       final Map<String, dynamic> params = {};
       if (status != null && status != 'All' && status.isNotEmpty) {
         params['status'] = status.toUpperCase();
@@ -14,13 +22,26 @@ class ComplaintService {
       
       final response = await apiService.get(path, params: params);
       
-      if (response.data == null) return [];
+      if (response.data == null) {
+        return PaginatedResponse(
+          data: [],
+          meta: PaginationMeta(page: page, limit: limit, hasMore: false),
+        );
+      }
       
-      final List<dynamic> list = response.data is List ? response.data : (response.data['data'] ?? []);
-      return list.map((json) => Complaint.fromJson(json)).toList();
+      final Map<String, dynamic> decodedData = response.data is String
+          ? json.decode(response.data)
+          : response.data;
+          
+      final List<dynamic> list = decodedData['data'] ?? [];
+      final metaJson = decodedData['meta'] ?? {};
+      final meta = PaginationMeta.fromJson(metaJson);
+      
+      final data = list.map((json) => Complaint.fromJson(json)).toList();
+      return PaginatedResponse(data: data, meta: meta);
     } catch (e) {
       debugPrint('Fetch Complaints Error: $e');
-      throw Exception('Failed to load complaints');
+      throw Exception('Failed to load complaints: $e');
     }
   }
 
