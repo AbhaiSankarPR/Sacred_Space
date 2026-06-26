@@ -11,6 +11,7 @@ import '../core/navigator_key.dart';
 import '../core/routes.dart';
 import '../events/event_model.dart';
 import '../settings/family_request_model.dart';
+import '../core/models/paginated_response.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -431,14 +432,27 @@ class AuthService extends ChangeNotifier {
 
   // --- EVENT SERVICE METHODS ---
 
-  /// 1. Fetch Events (GET /event?type=upcoming or GET /event?type=past)
-  Future<List<EventData>> getEvents({String type = 'upcoming'}) async {
+  /// 1. Fetch Events (GET /event?type=upcoming)
+  Future<PaginatedResponse<EventData>> getEvents({
+    String type = 'upcoming',
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       // Manually append the query parameter to the URL string
-      final response = await apiService.get('/event?type=$type');
+      final response = await apiService.get(
+        '/event?type=$type&page=$page&limit=$limit',
+      );
 
-      final List<dynamic> data = response.data;
-      return data.map((json) => EventData.fromJson(json)).toList();
+      final Map<String, dynamic> responseData = response.data;
+      final List<dynamic> list = responseData['data'] ?? [];
+      final metaJson = responseData['meta'] ?? {};
+
+      final data = list.map((json) => EventData.fromJson(json)).toList();
+      return PaginatedResponse(
+        data: data,
+        meta: PaginationMeta.fromJson(metaJson),
+      );
     } catch (e) {
       debugPrint("Error fetching events: $e");
       rethrow;
@@ -446,17 +460,30 @@ class AuthService extends ChangeNotifier {
   }
 
   /// 2. Fetch User Registrations (GET /event/my-registrations)
-  Future<List<EventData>> getMyRegistrations() async {
+  Future<PaginatedResponse<EventData>> getMyRegistrations({
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final response = await apiService.get('/event/my-registrations');
-      final List<dynamic> data = response.data;
+      final response = await apiService.get(
+        '/event/my-registrations?page=$page&limit=$limit',
+      );
+      final Map<String, dynamic> responseData = response.data;
+      final List<dynamic> list = responseData['data'] ?? [];
+      final metaJson = responseData['meta'] ?? {};
 
       // Based on your JSON, we map the inner 'event' object and set isRegistered to true
-      return data.map((reg) {
-        final event = EventData.fromJson(reg['event']);
-        event.isRegistered = true;
-        return event;
-      }).toList();
+      final data =
+          list.map((reg) {
+            final event = EventData.fromJson(reg['event']);
+            event.isRegistered = true;
+            return event;
+          }).toList();
+
+      return PaginatedResponse(
+        data: data,
+        meta: PaginationMeta.fromJson(metaJson),
+      );
     } catch (e) {
       debugPrint("Error fetching registrations: $e");
       rethrow;
@@ -508,20 +535,32 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<List<dynamic>> getEventAttendees(String eventId) async {
+  Future<PaginatedResponse<dynamic>> getEventAttendees(
+    String eventId, {
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       // Hits GET /event/:eventId/attendees
-      final response = await apiService.get('/event/$eventId/attendees');
+      final response = await apiService.get(
+        '/event/$eventId/attendees?page=$page&limit=$limit',
+      );
 
-      // The backend returns a List of registration objects
-      if (response.data is List) {
-        return response.data as List<dynamic>;
-      }
-      return [];
+      final Map<String, dynamic> responseData = response.data;
+      final List<dynamic> list = responseData['data'] ?? [];
+      final metaJson = responseData['meta'] ?? {};
+
+      return PaginatedResponse(
+        data: list,
+        meta: PaginationMeta.fromJson(metaJson),
+      );
     } catch (e) {
       debugPrint("Error fetching event attendees: $e");
       // Return empty list so the UI doesn't crash
-      return [];
+      return PaginatedResponse(
+        data: [],
+        meta: PaginationMeta(page: 1, limit: limit, hasMore: false),
+      );
     }
   }
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:intl/intl.dart';
 import '../auth/auth_service.dart';
 import '../widgets/app_drawer.dart';
 import '../core/routes.dart';
 import 'event_model.dart';
 import './event_card.dart';
+import '../core/models/paginated_response.dart';
 
 class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
@@ -20,34 +20,107 @@ class _EventsScreenState extends State<EventsScreen> {
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
+  int _currentPage = 1;
+  bool _hasMore = false;
+  bool _isLoadingMore = false;
+  final int _limit = 8;
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    _fetchEvents();
+    _scrollController.addListener(_scrollListener);
+    _fetchEvents(isRefresh: true);
   }
 
-  Future<void> _fetchEvents() async {
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _fetchEvents(isLoadMore: true);
+      }
+    }
+  }
+
+  Future<void> _fetchEvents({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+
+    if (isRefresh) {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    } else if (isLoadMore) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    } else {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    }
 
     try {
-      List<EventData> fetchedEvents;
+      final int pageToFetch = isLoadMore ? _currentPage + 1 : 1;
+      PaginatedResponse<EventData> response;
+
       if (_selectedFilter == "My Events") {
-        fetchedEvents = await _authService.getMyRegistrations();
+        response = await _authService.getMyRegistrations(
+          page: pageToFetch,
+          limit: _limit,
+        );
       } else {
-        fetchedEvents = await _authService.getEvents(
+        response = await _authService.getEvents(
           type: _selectedFilter.toLowerCase(),
+          page: pageToFetch,
+          limit: _limit,
         );
       }
 
       if (mounted) {
         setState(() {
-          _events = fetchedEvents;
+          if (isLoadMore) {
+            _events.addAll(response.data);
+            _currentPage = pageToFetch;
+          } else {
+            _events = response.data;
+            _currentPage = 1;
+          }
+          _hasMore = response.meta.hasMore;
           _isLoading = false;
+          _isLoadingMore = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted &&
+              _scrollController.hasClients &&
+              _scrollController.position.maxScrollExtent <= 0 &&
+              _hasMore &&
+              !_isLoading &&
+              !_isLoadingMore) {
+            _fetchEvents(isLoadMore: true);
+          }
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      }
       _showSnackBar("Failed to load events", isError: true);
     }
   }
@@ -148,9 +221,10 @@ class _EventsScreenState extends State<EventsScreen> {
     final user = _authService.currentUser;
     final bool isPriest = user?.role.toLowerCase() == 'priest';
 
-    final String currentFilterLabel = _selectedFilter == "Upcoming"
-        ? loc.upcoming
-        : (_selectedFilter == "Past" ? loc.past : loc.myEvents);
+    final String currentFilterLabel =
+        _selectedFilter == "Upcoming"
+            ? loc.upcoming
+            : (_selectedFilter == "Past" ? loc.past : loc.myEvents);
 
     return Scaffold(
       appBar: AppBar(
@@ -168,7 +242,10 @@ class _EventsScreenState extends State<EventsScreen> {
               ? FloatingActionButton(
                 backgroundColor: const Color(0xFF5D3A99),
                 onPressed: () async {
-                  final success = await Navigator.pushNamed(context, Routes.newEvent);
+                  final success = await Navigator.pushNamed(
+                    context,
+                    Routes.newEvent,
+                  );
                   if (success == true) {
                     _fetchEvents();
                   }
@@ -192,31 +269,52 @@ class _EventsScreenState extends State<EventsScreen> {
                       child:
                           _events.isEmpty
                               ? ListView(
-                                  physics: const AlwaysScrollableScrollPhysics(),
-                                  children: [
-                                    SizedBox(
-                                      height: MediaQuery.of(context).size.height * 0.6,
-                                      child: Center(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                                          child: Text(
-                                            loc.noEventsFound(currentFilterLabel.toLowerCase()),
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: Colors.grey.shade600,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                    height:
+                                        MediaQuery.of(context).size.height *
+                                        0.6,
+                                    child: Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                        ),
+                                        child: Text(
+                                          loc.noEventsFound(
+                                            currentFilterLabel.toLowerCase(),
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey.shade600,
+                                            fontWeight: FontWeight.w500,
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ],
-                                )
+                                  ),
+                                ],
+                              )
                               : ListView.builder(
+                                controller: _scrollController,
+                                physics: const AlwaysScrollableScrollPhysics(),
                                 padding: const EdgeInsets.all(20),
-                                itemCount: _events.length,
+                                itemCount:
+                                    _events.length + (_isLoadingMore ? 1 : 0),
                                 itemBuilder: (ctx, index) {
+                                  if (index == _events.length) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: Color(0xFF5D3A99),
+                                        ),
+                                      ),
+                                    );
+                                  }
                                   final event = _events[index];
                                   return EventCard(
                                     event: event,
