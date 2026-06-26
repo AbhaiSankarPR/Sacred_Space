@@ -1,25 +1,59 @@
-import 'package:dio/dio.dart';
 import '../auth/api_service.dart'; // Import your ApiService file
+import '../auth/auth_service.dart';
 import 'booking_model.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import '../core/models/paginated_response.dart';
 
 class BookingService {
   // GET: Fetch all bookings using your Dio-based apiService
-  Future<List<BookingData>> fetchBookings() async {
+  Future<PaginatedResponse<BookingData>> fetchBookings({
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final response = await apiService.get('/booking');
+      final isOfficial = AuthService().currentUser?.isOfficial ?? false;
+      final endpoint = isOfficial ? '/booking/church' : '/booking';
+      final response = await apiService.get(
+        '$endpoint?page=$page&limit=$limit',
+      );
 
       // Safety check: ensure we have data
-      if (response.data == null) return [];
+      if (response.data == null) {
+        return PaginatedResponse(
+          data: [],
+          meta: PaginationMeta(page: page, limit: limit, hasMore: false),
+        );
+      }
 
-      // Access the 'data' list from the JSON response
-      final Map<String, dynamic> responseBody =
+      final decodedData =
           response.data is String ? json.decode(response.data) : response.data;
 
-      final List<dynamic> bookingsList = responseBody['data'] ?? [];
+      List<dynamic> bookingsList = [];
+      PaginationMeta meta;
 
-      return bookingsList.map((json) => BookingData.fromJson(json)).toList();
+      if (decodedData is Map<String, dynamic>) {
+        bookingsList = decodedData['data'] ?? [];
+        if (decodedData.containsKey('meta') && decodedData['meta'] != null) {
+          meta = PaginationMeta.fromJson(decodedData['meta']);
+        } else {
+          final int count = decodedData['count'] ?? bookingsList.length;
+          final bool hasMore = (page * limit) < count;
+          meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
+        }
+      } else if (decodedData is List) {
+        bookingsList = decodedData;
+        final bool hasMore = bookingsList.length == limit;
+        meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
+      } else {
+        bookingsList = [];
+        meta = PaginationMeta(page: page, limit: limit, hasMore: false);
+      }
+
+      final data =
+          bookingsList.map((json) => BookingData.fromJson(json)).toList();
+
+      return PaginatedResponse(data: data, meta: meta);
     } catch (e) {
       // Re-throw so the FutureBuilder shows the error
       throw Exception('Failed to load bookings: $e');
@@ -39,28 +73,34 @@ class BookingService {
   }
 
   // PATCH: Update booking status (Priest only)
-  Future<void> updateBookingStatus(String id, String status, {String? reason}) async {
-  try {
-    final Map<String, dynamic> body = {"status": status};
-    if (reason != null) body["reason"] = reason;
-    if (reason != null && reason.isNotEmpty) {
-      body["reason"] = reason;}
-    // Using the positional argument format we corrected earlier
-    await apiService.patch('/booking/$id', body); 
-  } catch (e) {
-    throw Exception('Failed to update booking: $e');
+  Future<void> updateBookingStatus(
+    String id,
+    String status, {
+    String? reason,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {"status": status};
+      if (reason != null && reason.trim().isNotEmpty) {
+        body["reason"] = reason.trim();
+      }
+      // Using the positional argument format we corrected earlier
+      await apiService.patch('/booking/$id', body);
+    } catch (e) {
+      throw Exception('Failed to update booking: $e');
+    }
   }
-}
+
   Future<List<BookingData>> checkConflicts(String bookingId) async {
-  try {
-    final response = await apiService.get('/booking/$bookingId/conflicts');
-    final List<dynamic> conflictsJson = response.data['conflicts'] ?? [];
-    return conflictsJson.map((json) => BookingData.fromJson(json)).toList();
-  } catch (e) {
-    return [];
+    try {
+      final response = await apiService.get('/booking/$bookingId/conflicts');
+      final List<dynamic> conflictsJson = response.data['conflicts'] ?? [];
+      return conflictsJson.map((json) => BookingData.fromJson(json)).toList();
+    } catch (e) {
+      return [];
+    }
   }
-}
-// DELETE: Cancel a booking request
+
+  // DELETE: Cancel a booking request
   Future<void> cancelBooking(String bookingId) async {
     try {
       await apiService.delete('/booking/$bookingId');
@@ -69,18 +109,19 @@ class BookingService {
       throw Exception('Failed to cancel booking');
     }
   }
+
   Future<List<BookingData>> fetchCalendarEvents(int month, int year) async {
-  try {
-    final response = await apiService.get('/booking/calendar', params: {
-      'month': month,
-      'year': year,
-    });
-    
-    final List<dynamic> eventsJson = response.data['events'] ?? [];
-    return eventsJson.map((json) => BookingData.fromJson(json)).toList();
-  } catch (e) {
-    debugPrint('Calendar Fetch Error: $e');
-    return [];
+    try {
+      final response = await apiService.get(
+        '/booking/calendar',
+        params: {'month': month, 'year': year},
+      );
+
+      final List<dynamic> eventsJson = response.data['events'] ?? [];
+      return eventsJson.map((json) => BookingData.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('Calendar Fetch Error: $e');
+      return [];
+    }
   }
-}
 }

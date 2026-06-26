@@ -6,6 +6,7 @@ import '../widgets/app_drawer.dart';
 import 'booking_model.dart';
 import 'booking_service.dart';
 import 'booking_card.dart'; // Import the card
+import '../core/models/paginated_response.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -17,18 +18,111 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen> {
   String _selectedFilter = "All";
   final BookingService _service = BookingService();
-  late Future<List<BookingData>> _bookingsFuture;
+
+  List<BookingData> _bookings = [];
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  int _currentPage = 1;
+  bool _hasMore = false;
+  final int _limit = 10;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _refreshBookings();
+    _scrollController.addListener(_scrollListener);
+    _fetchBookings(isRefresh: true);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _fetchBookings(isLoadMore: true);
+      }
+    }
+  }
+
+  Future<void> _fetchBookings({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
+    if (!mounted) return;
+
+    if (isRefresh) {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    } else if (isLoadMore) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    } else {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    }
+
+    try {
+      final int pageToFetch = isLoadMore ? _currentPage + 1 : 1;
+      final response = await _service.fetchBookings(
+        page: pageToFetch,
+        limit: _limit,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (isLoadMore) {
+            _bookings.addAll(response.data);
+            _currentPage = pageToFetch;
+          } else {
+            _bookings = response.data;
+            _currentPage = 1;
+          }
+          _hasMore = response.meta.hasMore;
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted &&
+              _scrollController.hasClients &&
+              _scrollController.position.maxScrollExtent <= 0 &&
+              _hasMore &&
+              !_isLoading &&
+              !_isLoadingMore) {
+            _fetchBookings(isLoadMore: true);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load bookings'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _refreshBookings() {
-    setState(() {
-      _bookingsFuture = _service.fetchBookings();
-    });
+    _fetchBookings(isRefresh: true);
   }
 
   @override
@@ -45,6 +139,17 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
     final bool isPriest = user.isOfficial;
     final theme = Theme.of(context);
+
+    final filteredBookings =
+        _selectedFilter == "All"
+            ? _bookings
+            : _bookings
+                .where(
+                  (b) =>
+                      b.status.name.toLowerCase() ==
+                      _selectedFilter.toLowerCase(),
+                )
+                .toList();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -72,48 +177,61 @@ class _BookingsScreenState extends State<BookingsScreen> {
         children: [
           _buildFilterBar(loc, theme),
           Expanded(
-            child: FutureBuilder<List<BookingData>>(
-              future: _bookingsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text(loc.errorOccurred));
-                }
-
-                final allBookings = snapshot.data ?? [];
-                final filteredBookings =
-                    _selectedFilter == "All"
-                        ? allBookings
-                        : allBookings
-                            .where(
-                              (b) =>
-                                  b.status.name.toLowerCase() ==
-                                  _selectedFilter.toLowerCase(),
-                            )
-                            .toList();
-
-                return RefreshIndicator(
-                  onRefresh: () async => _refreshBookings(),
-                  child:
-                      filteredBookings.isEmpty
-                          ? Center(child: Text(loc.noBookingsFound))
-                          : ListView.builder(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            itemCount: filteredBookings.length,
-                            itemBuilder:
-                                (context, index) => BookingCard(
-                                  data: filteredBookings[index],
-                                  isPriest: isPriest,
-                                  onRefresh: _refreshBookings,
+            child:
+                _isLoading && _bookings.isEmpty
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF5D3A99),
+                      ),
+                    )
+                    : RefreshIndicator(
+                      onRefresh: () async => _refreshBookings(),
+                      child:
+                          filteredBookings.isEmpty
+                              ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                    height:
+                                        MediaQuery.of(context).size.height *
+                                        0.6,
+                                    child: Center(
+                                      child: Text(loc.noBookingsFound),
+                                    ),
+                                  ),
+                                ],
+                              )
+                              : ListView.builder(
+                                controller: _scrollController,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
                                 ),
-                          ),
-                );
-              },
-            ),
+                                itemCount:
+                                    filteredBookings.length +
+                                    (_isLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index == filteredBookings.length) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          color: Color(0xFF5D3A99),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return BookingCard(
+                                    data: filteredBookings[index],
+                                    isPriest: isPriest,
+                                    onRefresh: _refreshBookings,
+                                  );
+                                },
+                              ),
+                    ),
           ),
         ],
       ),
@@ -171,7 +289,19 @@ class _BookingsScreenState extends State<BookingsScreen> {
                         ),
                       ),
                       selected: isSelected,
-                      onSelected: (val) => setState(() => _selectedFilter = f),
+                      onSelected: (val) {
+                        setState(() => _selectedFilter = f);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted &&
+                              _scrollController.hasClients &&
+                              _scrollController.position.maxScrollExtent <= 0 &&
+                              _hasMore &&
+                              !_isLoading &&
+                              !_isLoadingMore) {
+                            _fetchBookings(isLoadMore: true);
+                          }
+                        });
+                      },
                       selectedColor: const Color(0xFF5D3A99),
                       backgroundColor:
                           isDark

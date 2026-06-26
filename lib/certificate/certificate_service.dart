@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -8,23 +7,58 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import '../auth/api_service.dart';
 import 'certificate_model.dart';
+import '../core/models/paginated_response.dart';
 
 class CertificateService {
   // GET: Fetch all certificate requests for the current user
-  Future<List<CertificateRequest>> fetchMyRequests() async {
+  Future<PaginatedResponse<CertificateRequest>> fetchMyRequests({
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final response = await apiService.get('/certificate/my-requests');
+      final response = await apiService.get('/certificate/my-requests?page=$page&limit=$limit');
 
       // Safety check: ensure we have data
-      if (response.data == null) return [];
+      if (response.data == null) {
+        return PaginatedResponse(
+          data: [],
+          meta: PaginationMeta(page: page, limit: limit, hasMore: false),
+        );
+      }
 
-      final List<dynamic> requestsList = response.data is String
+      final decodedData = response.data is String
           ? json.decode(response.data)
           : response.data;
 
-      return requestsList
+      List<dynamic> requestsList = [];
+      PaginationMeta meta;
+
+      if (decodedData is Map<String, dynamic>) {
+        requestsList = decodedData['data'] ?? [];
+        if (decodedData.containsKey('meta') && decodedData['meta'] != null) {
+          meta = PaginationMeta.fromJson(decodedData['meta']);
+        } else {
+          final int count = decodedData['count'] ?? requestsList.length;
+          final bool hasMore = (page * limit) < count;
+          meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
+        }
+      } else if (decodedData is List) {
+        requestsList = decodedData;
+        final bool hasMore = requestsList.length == limit;
+        meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
+      } else {
+        requestsList = [];
+        meta = PaginationMeta(page: page, limit: limit, hasMore: false);
+      }
+
+      final data = requestsList
           .map((json) => CertificateRequest.fromJson(json))
           .toList();
+
+      return PaginatedResponse(
+        data: data,
+        meta: meta,
+      );
     } catch (e) {
       debugPrint('Fetch Certificate Requests Error: $e');
       throw Exception('Failed to load certificate requests: $e');
@@ -56,23 +90,61 @@ class CertificateService {
   }
 
   // GET: Fetch all certificate requests in the church (Priest/Officials only)
-  Future<List<CertificateRequest>> fetchChurchRequests({String? status}) async {
+  Future<PaginatedResponse<CertificateRequest>> fetchChurchRequests({
+    String? status,
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
-      final Map<String, dynamic> params = {};
+      final Map<String, dynamic> params = {
+        'page': page,
+        'limit': limit,
+      };
       if (status != null && status != 'ALL') {
         params['status'] = status;
       }
       final response = await apiService.get('/certificate', params: params);
 
-      if (response.data == null) return [];
+      if (response.data == null) {
+        return PaginatedResponse(
+          data: [],
+          meta: PaginationMeta(page: page, limit: limit, hasMore: false),
+        );
+      }
 
-      final List<dynamic> requestsList = response.data is String
+      final decodedData = response.data is String
           ? json.decode(response.data)
           : response.data;
 
-      return requestsList
+      List<dynamic> requestsList = [];
+      PaginationMeta meta;
+
+      if (decodedData is Map<String, dynamic>) {
+        requestsList = decodedData['data'] ?? [];
+        if (decodedData.containsKey('meta') && decodedData['meta'] != null) {
+          meta = PaginationMeta.fromJson(decodedData['meta']);
+        } else {
+          final int count = decodedData['count'] ?? requestsList.length;
+          final bool hasMore = (page * limit) < count;
+          meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
+        }
+      } else if (decodedData is List) {
+        requestsList = decodedData;
+        final bool hasMore = requestsList.length == limit;
+        meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
+      } else {
+        requestsList = [];
+        meta = PaginationMeta(page: page, limit: limit, hasMore: false);
+      }
+
+      final data = requestsList
           .map((json) => CertificateRequest.fromJson(json))
           .toList();
+
+      return PaginatedResponse(
+        data: data,
+        meta: meta,
+      );
     } catch (e) {
       debugPrint('Fetch Church Certificate Requests Error: $e');
       throw Exception('Failed to load certificate requests: $e');

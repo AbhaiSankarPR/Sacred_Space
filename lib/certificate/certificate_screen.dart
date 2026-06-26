@@ -7,6 +7,7 @@ import 'certificate_model.dart';
 import 'certificate_service.dart';
 import 'certificate_request_form.dart';
 import 'certificate_request_card.dart';
+import '../core/models/paginated_response.dart';
 
 class CertificateScreen extends StatefulWidget {
   const CertificateScreen({super.key});
@@ -20,7 +21,13 @@ class _CertificateScreenState extends State<CertificateScreen>
   late TabController _tabController;
   final CertificateService _certificateService = CertificateService();
 
-  late Future<List<CertificateRequest>> _requestsFuture;
+  List<CertificateRequest> _requests = [];
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  int _currentPage = 1;
+  bool _hasMore = false;
+  final int _limit = 10;
+  final ScrollController _scrollController = ScrollController();
 
   // Priest Filter State
   String _selectedFilter = 'All';
@@ -29,28 +36,112 @@ class _CertificateScreenState extends State<CertificateScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _refreshRequests();
+    _scrollController.addListener(_scrollListener);
+    _fetchRequests(isRefresh: true);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _refreshRequests() {
-    setState(() {
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _fetchRequests(isLoadMore: true);
+      }
+    }
+  }
+
+  Future<void> _fetchRequests({
+    bool isRefresh = false,
+    bool isLoadMore = false,
+  }) async {
+    if (!mounted) return;
+
+    if (isRefresh) {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    } else if (isLoadMore) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    } else {
+      setState(() {
+        _currentPage = 1;
+        _isLoading = true;
+        _hasMore = false;
+      });
+    }
+
+    try {
       final user = AuthService().currentUser;
       final bool isPriest = user?.isOfficial ?? false;
-      
+      final int pageToFetch = isLoadMore ? _currentPage + 1 : 1;
+      PaginatedResponse<CertificateRequest> response;
+
       if (isPriest) {
-        _requestsFuture = _certificateService.fetchChurchRequests(
+        response = await _certificateService.fetchChurchRequests(
           status: _selectedFilter == 'All' ? null : _selectedFilter.toUpperCase(),
+          page: pageToFetch,
+          limit: _limit,
         );
       } else {
-        _requestsFuture = _certificateService.fetchMyRequests();
+        response = await _certificateService.fetchMyRequests(
+          page: pageToFetch,
+          limit: _limit,
+        );
       }
-    });
+
+      if (mounted) {
+        setState(() {
+          if (isLoadMore) {
+            _requests.addAll(response.data);
+            _currentPage = pageToFetch;
+          } else {
+            _requests = response.data;
+            _currentPage = 1;
+          }
+          _hasMore = response.meta.hasMore;
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted &&
+              _scrollController.hasClients &&
+              _scrollController.position.maxScrollExtent <= 0 &&
+              _hasMore &&
+              !_isLoading &&
+              !_isLoadingMore) {
+            _fetchRequests(isLoadMore: true);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load certificate requests'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _refreshRequests() {
+    _fetchRequests(isRefresh: true);
   }
 
   Future<void> _approveRequest(String id, Map<String, dynamic> officialDetails, AppLocalizations loc) async {
@@ -351,103 +442,80 @@ class _CertificateScreenState extends State<CertificateScreen>
 
   Widget _buildPriestHistoryTab(
       AppLocalizations loc, ThemeData theme, bool isDark) {
-    return FutureBuilder<List<CertificateRequest>>(
-      future: _requestsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+    if (_isLoading && _requests.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_requests.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () async => _refreshRequests(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline_rounded,
-                      color: Colors.red[400], size: 48),
-                  const SizedBox(height: 16),
-                  Text(
-                    loc.errorOccurred,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF5D3A99).withValues(alpha: 0.08),
+                    ),
+                    child: const Icon(
+                      Icons.assignment_turned_in_outlined,
+                      color: Color(0xFF5D3A99),
+                      size: 48,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _refreshRequests,
-                    child: const Text('Retry'),
-                  )
+                  const SizedBox(height: 20),
+                  Text(
+                    loc.noPendingCertificates,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
             ),
-          );
-        }
+          ],
+        ),
+      );
+    }
 
-        final requests = snapshot.data ?? [];
-
-        if (requests.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () async => _refreshRequests(),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF5D3A99).withValues(alpha: 0.08),
-                        ),
-                        child: const Icon(
-                          Icons.assignment_turned_in_outlined,
-                          color: Color(0xFF5D3A99),
-                          size: 48,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        loc.noPendingCertificates,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
+    return RefreshIndicator(
+      onRefresh: () async => _refreshRequests(),
+      child: ListView.builder(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: _requests.length + (_isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _requests.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF5D3A99),
                 ),
-              ],
-            ),
+              ),
+            );
+          }
+          final req = _requests[index];
+          return CertificateRequestCard(
+            request: req,
+            loc: loc,
+            theme: theme,
+            isDark: isDark,
+            isPriest: true,
+            onApprove: (officialDetails) => _approveRequest(req.id, officialDetails, loc),
+            onReject: (reason) => _rejectRequest(req.id, reason, loc),
           );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async => _refreshRequests(),
-          child: ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final req = requests[index];
-              return CertificateRequestCard(
-                request: req,
-                loc: loc,
-                theme: theme,
-                isDark: isDark,
-                isPriest: true,
-                onApprove: (officialDetails) => _approveRequest(req.id, officialDetails, loc),
-                onReject: (reason) => _rejectRequest(req.id, reason, loc),
-              );
-            },
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 
@@ -461,100 +529,77 @@ class _CertificateScreenState extends State<CertificateScreen>
 
   Widget _buildHistoryTab(
       AppLocalizations loc, ThemeData theme, bool isDark) {
-    return FutureBuilder<List<CertificateRequest>>(
-      future: _requestsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+    if (_isLoading && _requests.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_requests.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () async => _refreshRequests(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline_rounded,
-                      color: Colors.red[400], size: 48),
-                  const SizedBox(height: 16),
-                  Text(
-                    loc.errorOccurred,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF5D3A99).withValues(alpha: 0.08),
+                    ),
+                    child: const Icon(
+                      Icons.assignment_turned_in_outlined,
+                      color: Color(0xFF5D3A99),
+                      size: 48,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _refreshRequests,
-                    child: const Text('Retry'),
-                  )
+                  const SizedBox(height: 20),
+                  Text(
+                    loc.noRequestsFound,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
             ),
-          );
-        }
+          ],
+        ),
+      );
+    }
 
-        final requests = snapshot.data ?? [];
-
-        if (requests.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () async => _refreshRequests(),
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF5D3A99).withValues(alpha: 0.08),
-                        ),
-                        child: const Icon(
-                          Icons.assignment_turned_in_outlined,
-                          color: Color(0xFF5D3A99),
-                          size: 48,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        loc.noRequestsFound,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
+    return RefreshIndicator(
+      onRefresh: () async => _refreshRequests(),
+      child: ListView.builder(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: _requests.length + (_isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _requests.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF5D3A99),
                 ),
-              ],
-            ),
+              ),
+            );
+          }
+          return CertificateRequestCard(
+            request: _requests[index],
+            loc: loc,
+            theme: theme,
+            isDark: isDark,
+            isPriest: false,
           );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async => _refreshRequests(),
-          child: ListView.builder(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              return CertificateRequestCard(
-                request: requests[index],
-                loc: loc,
-                theme: theme,
-                isDark: isDark,
-                isPriest: false,
-              );
-            },
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 }

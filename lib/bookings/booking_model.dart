@@ -22,13 +22,22 @@ class BookingData {
   });
 
   factory BookingData.fromJson(Map<String, dynamic> json) {
+    String? reqName;
+    if (json['user'] != null) {
+      if (json['user']['profile'] != null) {
+        reqName = json['user']['profile']['name'];
+      }
+      reqName ??= json['user']['name'];
+    }
+    reqName ??= json['userId'];
+
     return BookingData(
       id: json['id'] ?? '',
       title: json['title'] ?? 'No Title',
       description: json['description'] ?? '',
       startTime: DateTime.parse(json['startTime']).toLocal(),
       endTime: DateTime.parse(json['endTime']).toLocal(),
-      requestedBy: json['userId'], // You can map this to a name if the API provides it
+      requestedBy: reqName,
       status: _parseStatus(json['status']),
       rejectionReason: json['rejectionReason'], // Map from JSON
     );
