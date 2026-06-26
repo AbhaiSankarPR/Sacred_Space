@@ -88,7 +88,8 @@ class _CertificateScreenState extends State<CertificateScreen>
 
       if (isPriest) {
         response = await _certificateService.fetchChurchRequests(
-          status: _selectedFilter == 'All' ? null : _selectedFilter.toUpperCase(),
+          status:
+              _selectedFilter == 'All' ? null : _selectedFilter.toUpperCase(),
           page: pageToFetch,
           limit: _limit,
         );
@@ -131,12 +132,14 @@ class _CertificateScreenState extends State<CertificateScreen>
           _isLoadingMore = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to load certificate requests'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load certificate requests'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -144,9 +147,16 @@ class _CertificateScreenState extends State<CertificateScreen>
     _fetchRequests(isRefresh: true);
   }
 
-  Future<void> _approveRequest(String id, Map<String, dynamic> officialDetails, AppLocalizations loc) async {
+  Future<void> _approveRequest(
+    String id,
+    Map<String, dynamic> officialDetails,
+    AppLocalizations loc,
+  ) async {
     try {
-      final message = await _certificateService.approveRequest(id, body: officialDetails);
+      final message = await _certificateService.approveRequest(
+        id,
+        body: officialDetails,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -178,7 +188,11 @@ class _CertificateScreenState extends State<CertificateScreen>
     }
   }
 
-  Future<void> _rejectRequest(String id, String? reason, AppLocalizations loc) async {
+  Future<void> _rejectRequest(
+    String id,
+    String? reason,
+    AppLocalizations loc,
+  ) async {
     try {
       final message = await _certificateService.rejectRequest(id, reason);
       if (mounted) {
@@ -219,9 +233,7 @@ class _CertificateScreenState extends State<CertificateScreen>
 
     if (user == null) {
       final navigator = Navigator.of(context);
-      Future.microtask(
-        () => navigator.pushReplacementNamed(Routes.login),
-      );
+      Future.microtask(() => navigator.pushReplacementNamed(Routes.login));
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -244,7 +256,9 @@ class _CertificateScreenState extends State<CertificateScreen>
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(28),
+                  ),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: true,
@@ -275,9 +289,7 @@ class _CertificateScreenState extends State<CertificateScreen>
           body: Column(
             children: [
               _buildFilterBar(loc, theme),
-              Expanded(
-                child: _buildPriestHistoryTab(loc, theme, isDark),
-              ),
+              Expanded(child: _buildPriestHistoryTab(loc, theme, isDark)),
             ],
           ),
         ),
@@ -298,7 +310,9 @@ class _CertificateScreenState extends State<CertificateScreen>
               foregroundColor: Colors.white,
               elevation: 0,
               shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(28),
+                ),
               ),
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: const EdgeInsets.only(bottom: 50),
@@ -388,52 +402,59 @@ class _CertificateScreenState extends State<CertificateScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: filters.map((f) {
-              final isSelected = _selectedFilter == f;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                child: ChoiceChip(
-                  label: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      f == "All"
-                          ? (loc.all)
-                          : (f == "Pending"
-                              ? (loc.pending)
-                              : (f == "Approved"
-                                  ? (loc.approved)
-                                  : (loc.rejected))),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected
-                            ? Colors.white
-                            : theme.textTheme.bodyMedium?.color,
+            children:
+                filters.map((f) {
+                  final isSelected = _selectedFilter == f;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: ChoiceChip(
+                      label: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          f == "All"
+                              ? (loc.all)
+                              : (f == "Pending"
+                                  ? (loc.pending)
+                                  : (f == "Approved"
+                                      ? (loc.approved)
+                                      : (loc.rejected))),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                isSelected ? FontWeight.bold : FontWeight.w500,
+                            color:
+                                isSelected
+                                    ? Colors.white
+                                    : theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (val) {
+                        setState(() {
+                          _selectedFilter = f;
+                          _refreshRequests();
+                        });
+                      },
+                      selectedColor: const Color(0xFF5D3A99),
+                      backgroundColor:
+                          isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.grey[100],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color:
+                              isSelected
+                                  ? Colors.transparent
+                                  : (isDark
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!),
+                        ),
                       ),
                     ),
-                  ),
-                  selected: isSelected,
-                  onSelected: (val) {
-                    setState(() {
-                      _selectedFilter = f;
-                      _refreshRequests();
-                    });
-                  },
-                  selectedColor: const Color(0xFF5D3A99),
-                  backgroundColor: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.grey[100],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isSelected
-                          ? Colors.transparent
-                          : (isDark ? Colors.grey[800]! : Colors.grey[300]!),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ),
       ),
@@ -441,7 +462,10 @@ class _CertificateScreenState extends State<CertificateScreen>
   }
 
   Widget _buildPriestHistoryTab(
-      AppLocalizations loc, ThemeData theme, bool isDark) {
+    AppLocalizations loc,
+    ThemeData theme,
+    bool isDark,
+  ) {
     if (_isLoading && _requests.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -490,6 +514,7 @@ class _CertificateScreenState extends State<CertificateScreen>
       onRefresh: () async => _refreshRequests(),
       child: ListView.builder(
         controller: _scrollController,
+        key: const PageStorageKey('priest_requests_list'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: _requests.length + (_isLoadingMore ? 1 : 0),
@@ -498,9 +523,7 @@ class _CertificateScreenState extends State<CertificateScreen>
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF5D3A99),
-                ),
+                child: CircularProgressIndicator(color: Color(0xFF5D3A99)),
               ),
             );
           }
@@ -511,7 +534,9 @@ class _CertificateScreenState extends State<CertificateScreen>
             theme: theme,
             isDark: isDark,
             isPriest: true,
-            onApprove: (officialDetails) => _approveRequest(req.id, officialDetails, loc),
+            onApprove:
+                (officialDetails) =>
+                    _approveRequest(req.id, officialDetails, loc),
             onReject: (reason) => _rejectRequest(req.id, reason, loc),
           );
         },
@@ -519,16 +544,14 @@ class _CertificateScreenState extends State<CertificateScreen>
     );
   }
 
-  Widget _buildRequestTab(
-      AppLocalizations loc, ThemeData theme, bool isDark) {
+  Widget _buildRequestTab(AppLocalizations loc, ThemeData theme, bool isDark) {
     return CertificateRequestForm(
       onSubmitted: _refreshRequests,
       tabController: _tabController,
     );
   }
 
-  Widget _buildHistoryTab(
-      AppLocalizations loc, ThemeData theme, bool isDark) {
+  Widget _buildHistoryTab(AppLocalizations loc, ThemeData theme, bool isDark) {
     if (_isLoading && _requests.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -577,6 +600,7 @@ class _CertificateScreenState extends State<CertificateScreen>
       onRefresh: () async => _refreshRequests(),
       child: ListView.builder(
         controller: _scrollController,
+        key: const PageStorageKey('user_requests_list'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: _requests.length + (_isLoadingMore ? 1 : 0),
@@ -585,9 +609,7 @@ class _CertificateScreenState extends State<CertificateScreen>
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
-                child: CircularProgressIndicator(
-                  color: Color(0xFF5D3A99),
-                ),
+                child: CircularProgressIndicator(color: Color(0xFF5D3A99)),
               ),
             );
           }

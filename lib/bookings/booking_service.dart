@@ -26,29 +26,12 @@ class BookingService {
         );
       }
 
-      final decodedData =
+      final Map<String, dynamic> decodedData =
           response.data is String ? json.decode(response.data) : response.data;
 
-      List<dynamic> bookingsList = [];
-      PaginationMeta meta;
-
-      if (decodedData is Map<String, dynamic>) {
-        bookingsList = decodedData['data'] ?? [];
-        if (decodedData.containsKey('meta') && decodedData['meta'] != null) {
-          meta = PaginationMeta.fromJson(decodedData['meta']);
-        } else {
-          final int count = decodedData['count'] ?? bookingsList.length;
-          final bool hasMore = (page * limit) < count;
-          meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
-        }
-      } else if (decodedData is List) {
-        bookingsList = decodedData;
-        final bool hasMore = bookingsList.length == limit;
-        meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
-      } else {
-        bookingsList = [];
-        meta = PaginationMeta(page: page, limit: limit, hasMore: false);
-      }
+      final List<dynamic> bookingsList = decodedData['data'] ?? [];
+      final metaJson = decodedData['meta'] ?? {};
+      final meta = PaginationMeta.fromJson(metaJson);
 
       final data =
           bookingsList.map((json) => BookingData.fromJson(json)).toList();

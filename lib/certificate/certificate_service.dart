@@ -26,30 +26,13 @@ class CertificateService {
         );
       }
 
-      final decodedData = response.data is String
+      final Map<String, dynamic> decodedData = response.data is String
           ? json.decode(response.data)
           : response.data;
 
-      List<dynamic> requestsList = [];
-      PaginationMeta meta;
-
-      if (decodedData is Map<String, dynamic>) {
-        requestsList = decodedData['data'] ?? [];
-        if (decodedData.containsKey('meta') && decodedData['meta'] != null) {
-          meta = PaginationMeta.fromJson(decodedData['meta']);
-        } else {
-          final int count = decodedData['count'] ?? requestsList.length;
-          final bool hasMore = (page * limit) < count;
-          meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
-        }
-      } else if (decodedData is List) {
-        requestsList = decodedData;
-        final bool hasMore = requestsList.length == limit;
-        meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
-      } else {
-        requestsList = [];
-        meta = PaginationMeta(page: page, limit: limit, hasMore: false);
-      }
+      final List<dynamic> requestsList = decodedData['data'] ?? [];
+      final metaJson = decodedData['meta'] ?? {};
+      final meta = PaginationMeta.fromJson(metaJson);
 
       final data = requestsList
           .map((json) => CertificateRequest.fromJson(json))
@@ -112,30 +95,13 @@ class CertificateService {
         );
       }
 
-      final decodedData = response.data is String
+      final Map<String, dynamic> decodedData = response.data is String
           ? json.decode(response.data)
           : response.data;
 
-      List<dynamic> requestsList = [];
-      PaginationMeta meta;
-
-      if (decodedData is Map<String, dynamic>) {
-        requestsList = decodedData['data'] ?? [];
-        if (decodedData.containsKey('meta') && decodedData['meta'] != null) {
-          meta = PaginationMeta.fromJson(decodedData['meta']);
-        } else {
-          final int count = decodedData['count'] ?? requestsList.length;
-          final bool hasMore = (page * limit) < count;
-          meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
-        }
-      } else if (decodedData is List) {
-        requestsList = decodedData;
-        final bool hasMore = requestsList.length == limit;
-        meta = PaginationMeta(page: page, limit: limit, hasMore: hasMore);
-      } else {
-        requestsList = [];
-        meta = PaginationMeta(page: page, limit: limit, hasMore: false);
-      }
+      final List<dynamic> requestsList = decodedData['data'] ?? [];
+      final metaJson = decodedData['meta'] ?? {};
+      final meta = PaginationMeta.fromJson(metaJson);
 
       final data = requestsList
           .map((json) => CertificateRequest.fromJson(json))

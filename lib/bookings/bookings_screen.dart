@@ -6,7 +6,6 @@ import '../widgets/app_drawer.dart';
 import 'booking_model.dart';
 import 'booking_service.dart';
 import 'booking_card.dart'; // Import the card
-import '../core/models/paginated_response.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -112,12 +111,14 @@ class _BookingsScreenState extends State<BookingsScreen> {
           _isLoadingMore = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to load bookings'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load bookings'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -131,8 +132,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
     final user = AuthService().currentUser;
 
     if (user == null) {
+      final navigator = Navigator.of(context);
       Future.microtask(
-        () => Navigator.pushReplacementNamed(context, Routes.login),
+        () => navigator.pushReplacementNamed(Routes.login),
       );
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
