@@ -23,7 +23,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
   bool _isLoadingMore = false;
   int _currentPage = 1;
   bool _hasMore = false;
-  final int _limit = 6;
+  final int _limit = 10;
   bool _isPriest = false;
 
   @override
