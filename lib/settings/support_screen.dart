@@ -1,14 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import './complaint_service.dart';
 
-class SupportScreen extends StatelessWidget {
+class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
+
+  @override
+  State<SupportScreen> createState() => _SupportScreenState();
+}
+
+class _SupportScreenState extends State<SupportScreen> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _feedbackController = TextEditingController();
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _feedbackController.dispose();
+    super.dispose();
+  }
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri)) {
       debugPrint('Could not launch $url');
+    }
+  }
+
+  Future<void> _submitComplaintForm(String title, String message) async {
+    if (title.trim().isEmpty || message.trim().isEmpty || _isSending) return;
+
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      final successMessage = await ComplaintService().submitComplaint(
+        title: title,
+        description: message,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(successMessage)),
+      );
+      _titleController.clear();
+      _feedbackController.clear();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll("Exception: ", ""))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
     }
   }
 
@@ -21,7 +71,6 @@ class SupportScreen extends StatelessWidget {
     final subTextColor = isDark ? Colors.white70 : Colors.grey[600];
     final cardColor = theme.cardColor;
 
-    // Localized FAQ List
     final List<Map<String, String>> faqs = [
       {'question': loc.faqQ1, 'answer': loc.faqA1},
       {'question': loc.faqQ2, 'answer': loc.faqA2},
@@ -93,7 +142,7 @@ class SupportScreen extends StatelessWidget {
                     title: loc.website,
                     color: Colors.blue,
                     isDark: isDark,
-                    onTap: () => _launchUrl("https://sacredspace.com"),
+                    onTap: () => _launchUrl("https://www.sacredspace.app"),
                   ),
                 ),
               ],
@@ -169,7 +218,33 @@ class SupportScreen extends StatelessWidget {
               child: Column(
                 children: [
                   TextField(
+                    controller: _titleController,
+                    enabled: !_isSending,
+                    style: TextStyle(color: textColor),
+                    decoration: InputDecoration(
+                      hintText: "Subject",
+                      hintStyle: TextStyle(color: theme.hintColor),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF5D3A99), width: 2),
+                      ),
+                      filled: true,
+                      fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _feedbackController, 
                     maxLines: 4,
+                    enabled: !_isSending,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
                       hintText: loc.feedbackHint,
@@ -200,12 +275,16 @@ class SupportScreen extends StatelessWidget {
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(loc.feedbackSuccess)),
-                        );
-                      },
-                      child: Text(loc.submitFeedback, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      onPressed: _isSending 
+                          ? null 
+                          : () => _submitComplaintForm(_titleController.text, _feedbackController.text),
+                      child: _isSending
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                            )
+                          : Text(loc.submitFeedback, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ),
                 ],
