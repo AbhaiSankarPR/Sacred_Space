@@ -29,7 +29,7 @@ class BookingData {
       }
       reqName ??= json['user']['name'];
     }
-    reqName ??= json['userId'];
+    reqName ??= 'Unknown';
 
     return BookingData(
       id: json['id'] ?? '',

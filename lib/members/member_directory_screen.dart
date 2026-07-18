@@ -93,12 +93,14 @@ class _MemberDirectoryScreenState extends State<MemberDirectoryScreen> {
       );
 
       if (mounted) {
+        final currentUserId = AuthService().currentUser?.id;
+        final filteredMembers = response.data.where((m) => m.id != currentUserId).toList();
         setState(() {
           if (isLoadMore) {
-            _allMembers.addAll(response.data);
+            _allMembers.addAll(filteredMembers);
             _currentPage = pageToFetch;
           } else {
-            _allMembers = response.data;
+            _allMembers = filteredMembers;
             _currentPage = 1;
           }
           _hasMore = response.meta.hasMore;
