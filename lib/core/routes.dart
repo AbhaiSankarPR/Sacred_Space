@@ -29,6 +29,7 @@ import '../settings/settings_screen.dart';
 import '../settings/about_screen.dart';
 import '../settings/support_screen.dart';
 import '../screens/PrivacyPolicyScreen.dart';
+import '../screens/TermsOfServiceScreen.dart';
 import '../screens/editProfile.dart';
 import '../settings/family_connections_screen.dart';
 import '../screens/family_members_screen.dart';
@@ -75,6 +76,7 @@ class Routes {
   static const about = '/about';
   static const support = '/support';
   static const privacyPolicy = '/privacy-policy';
+  static const termsOfService = '/terms-of-service';
   static const familyConnections = '/family-connections';
   static const familyMembers = '/family-members';
   static const certificate = '/certificate';
@@ -134,6 +136,7 @@ class Routes {
     about: (_) => const AboutScreen(),
     support: (_) => const SupportScreen(),
     privacyPolicy: (_) => const PrivacyPolicyScreen(),
+    termsOfService: (_) => const TermsOfServiceScreen(),
     familyConnections: (_) => const FamilyConnectionsScreen(),
     familyMembers: (_) => const FamilyMembersScreen(),
     parishCalendar: (_) => const ParishCalendarScreen(),
