@@ -303,38 +303,34 @@ class _CertificateScreenState extends State<CertificateScreen>
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 130.0,
               pinned: true,
               floating: false,
               backgroundColor: const Color(0xFF5D3A99),
               foregroundColor: Colors.white,
               elevation: 0,
+              centerTitle: true,
+              title: Text(
+                loc.certificates,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(
                   bottom: Radius.circular(28),
                 ),
               ),
-              flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.only(bottom: 50),
-                centerTitle: true,
-                title: Text(
-                  loc.certificates,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              flexibleSpace: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF5D3A99), Color(0xFF7B1FA2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ),
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF5D3A99), Color(0xFF7B1FA2)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(28),
-                    ),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(28),
                   ),
                 ),
               ),

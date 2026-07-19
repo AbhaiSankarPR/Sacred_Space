@@ -27,6 +27,8 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
   CertificateType _selectedType = CertificateType.NIHIL_OBSTAT;
   bool _isSubmitting = false;
 
+  late final ScrollController _scrollController;
+
   // Dynamic controllers and custom values map
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, dynamic> _formData = {};
@@ -174,10 +176,17 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
   void dispose() {
     for (var controller in _controllers.values) {
       controller.dispose();
     }
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -203,36 +212,57 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
 
       switch (_selectedType) {
         case CertificateType.NIHIL_OBSTAT:
-          details['issuingParish'] = _getController('no_issuing_parish').text.trim();
-          details['issuingDiocese'] = _getController('no_issuing_diocese').text.trim();
-          details['permissionType'] = _formData['no_permission_type'] ?? 'PUBLISH_BANNS_MARRIAGE';
-          
+          details['issuingParish'] =
+              _getController('no_issuing_parish').text.trim();
+          details['issuingDiocese'] =
+              _getController('no_issuing_diocese').text.trim();
+          details['permissionType'] =
+              _formData['no_permission_type'] ?? 'PUBLISH_BANNS_MARRIAGE';
+
           details['groomName'] = _getController('no_groom_name').text.trim();
           if (_formData['no_groom_dob'] != null) {
-            details['groomDob'] = DateFormat('yyyy-MM-dd').format(_formData['no_groom_dob']);
+            details['groomDob'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['no_groom_dob']);
           }
           if (_formData['no_groom_bapt_date'] != null) {
-            details['groomBaptismDate'] = DateFormat('yyyy-MM-dd').format(_formData['no_groom_bapt_date']);
+            details['groomBaptismDate'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['no_groom_bapt_date']);
           }
-          details['groomFather'] = _getController('no_groom_father').text.trim();
-          details['groomMother'] = _getController('no_groom_mother').text.trim();
-          details['groomAddress'] = _getController('no_groom_address').text.trim();
-          details['groomParish'] = _getController('no_groom_parish').text.trim();
-          details['groomDiocese'] = _getController('no_groom_diocese').text.trim();
+          details['groomFather'] =
+              _getController('no_groom_father').text.trim();
+          details['groomMother'] =
+              _getController('no_groom_mother').text.trim();
+          details['groomAddress'] =
+              _getController('no_groom_address').text.trim();
+          details['groomParish'] =
+              _getController('no_groom_parish').text.trim();
+          details['groomDiocese'] =
+              _getController('no_groom_diocese').text.trim();
 
           details['brideName'] = _getController('no_bride_name').text.trim();
           if (_formData['no_bride_dob'] != null) {
-            details['brideDob'] = DateFormat('yyyy-MM-dd').format(_formData['no_bride_dob']);
+            details['brideDob'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['no_bride_dob']);
           }
           if (_formData['no_bride_bapt_date'] != null) {
-            details['brideBaptismDate'] = DateFormat('yyyy-MM-dd').format(_formData['no_bride_bapt_date']);
+            details['brideBaptismDate'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['no_bride_bapt_date']);
           }
-          details['brideFather'] = _getController('no_bride_father').text.trim();
-          details['brideMother'] = _getController('no_bride_mother').text.trim();
-          details['brideAddress'] = _getController('no_bride_address').text.trim();
-          details['brideParish'] = _getController('no_bride_parish').text.trim();
-          details['brideDiocese'] = _getController('no_bride_diocese').text.trim();
-          
+          details['brideFather'] =
+              _getController('no_bride_father').text.trim();
+          details['brideMother'] =
+              _getController('no_bride_mother').text.trim();
+          details['brideAddress'] =
+              _getController('no_bride_address').text.trim();
+          details['brideParish'] =
+              _getController('no_bride_parish').text.trim();
+          details['brideDiocese'] =
+              _getController('no_bride_diocese').text.trim();
+
           details['impediments'] = _getController('no_impediments').text.trim();
           break;
 
@@ -240,83 +270,126 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
           details['name'] = _getController('bap_name').text.trim();
           details['gender'] = _formData['bap_gender'] ?? 'MALE';
           if (_formData['bap_dob'] != null) {
-            details['dob'] = DateFormat('yyyy-MM-dd').format(_formData['bap_dob']);
+            details['dob'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['bap_dob']);
           }
           details['placeOfBirth'] = _getController('bap_pob').text.trim();
           if (_formData['bap_date'] != null) {
-            details['dateOfBaptism'] = DateFormat('yyyy-MM-dd').format(_formData['bap_date']);
+            details['dateOfBaptism'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['bap_date']);
           }
           details['placeOfBaptism'] = _getController('bap_place').text.trim();
           details['fatherName'] = _getController('bap_father').text.trim();
           details['motherName'] = _getController('bap_mother').text.trim();
-          details['permanentResidence'] = _getController('bap_residence').text.trim();
-          details['godfatherName'] = _getController('bap_godfather').text.trim();
-          details['godmotherName'] = _getController('bap_godmother').text.trim();
-          details['issuingDiocese'] = _getController('bap_issuing_diocese').text.trim();
-          details['ministerOfBaptism'] = _getController('bap_minister').text.trim();
-          details['registryBook'] = _getController('bap_registry_book').text.trim();
+          details['permanentResidence'] =
+              _getController('bap_residence').text.trim();
+          details['godfatherName'] =
+              _getController('bap_godfather').text.trim();
+          details['godmotherName'] =
+              _getController('bap_godmother').text.trim();
+          details['issuingDiocese'] =
+              _getController('bap_issuing_diocese').text.trim();
+          details['ministerOfBaptism'] =
+              _getController('bap_minister').text.trim();
+          details['registryBook'] =
+              _getController('bap_registry_book').text.trim();
           break;
 
         case CertificateType.MARRIAGE_PREPARATION:
-          details['targetCenter'] = _getController('prep_target_center').text.trim();
+          details['targetCenter'] =
+              _getController('prep_target_center').text.trim();
           details['name'] = _getController('prep_candidate_name').text.trim();
           details['gender'] = _formData['prep_gender'] ?? 'MALE';
-          details['parentName'] = _getController('prep_parent_name').text.trim();
-          details['homeParish'] = _getController('prep_home_parish').text.trim();
-          details['substationName'] = _getController('prep_substation').text.trim();
+          details['parentName'] =
+              _getController('prep_parent_name').text.trim();
+          details['homeParish'] =
+              _getController('prep_home_parish').text.trim();
+          details['substationName'] =
+              _getController('prep_substation').text.trim();
           details['foranateArea'] = _getController('prep_foranate').text.trim();
           details['dioceseName'] = _getController('prep_diocese').text.trim();
-          details['courseCategory'] = _getController('prep_course_category').text.trim();
+          details['courseCategory'] =
+              _getController('prep_course_category').text.trim();
           break;
 
         case CertificateType.MARRIAGE:
-          details['issuingDiocese'] = _getController('mar_issuing_diocese').text.trim();
-          details['locationOfMarriage'] = _getController('mar_location').text.trim();
-          details['substationName'] = _getController('mar_substation').text.trim();
+          details['issuingDiocese'] =
+              _getController('mar_issuing_diocese').text.trim();
+          details['locationOfMarriage'] =
+              _getController('mar_location').text.trim();
+          details['substationName'] =
+              _getController('mar_substation').text.trim();
           if (_formData['mar_date'] != null) {
-            details['marriageDate'] = DateFormat('yyyy-MM-dd').format(_formData['mar_date']);
+            details['marriageDate'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['mar_date']);
           }
-          details['officiatingPriest'] = _getController('mar_officiating_priest').text.trim();
+          details['officiatingPriest'] =
+              _getController('mar_officiating_priest').text.trim();
 
           // Groom Block
           details['groomName'] = _getController('mar_groom_name').text.trim();
-          details['groomFather'] = _getController('mar_groom_father').text.trim();
-          details['groomMother'] = _getController('mar_groom_mother').text.trim();
-          details['groomParish'] = _getController('mar_groom_parish').text.trim();
+          details['groomFather'] =
+              _getController('mar_groom_father').text.trim();
+          details['groomMother'] =
+              _getController('mar_groom_mother').text.trim();
+          details['groomParish'] =
+              _getController('mar_groom_parish').text.trim();
           details['groomPob'] = _getController('mar_groom_pob').text.trim();
           if (_formData['mar_groom_dob'] != null) {
-            details['groomDob'] = DateFormat('yyyy-MM-dd').format(_formData['mar_groom_dob']);
+            details['groomDob'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['mar_groom_dob']);
           }
-          details['groomPlaceBaptism'] = _getController('mar_groom_place_bapt').text.trim();
+          details['groomPlaceBaptism'] =
+              _getController('mar_groom_place_bapt').text.trim();
           if (_formData['mar_groom_bapt_date'] != null) {
-            details['groomBaptismDate'] = DateFormat('yyyy-MM-dd').format(_formData['mar_groom_bapt_date']);
+            details['groomBaptismDate'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['mar_groom_bapt_date']);
           }
-          details['groomAddress'] = _getController('mar_groom_address').text.trim();
+          details['groomAddress'] =
+              _getController('mar_groom_address').text.trim();
 
           // Bride Block
           details['brideName'] = _getController('mar_bride_name').text.trim();
-          details['brideFather'] = _getController('mar_bride_father').text.trim();
-          details['brideMother'] = _getController('mar_bride_mother').text.trim();
-          details['brideParish'] = _getController('mar_bride_parish').text.trim();
+          details['brideFather'] =
+              _getController('mar_bride_father').text.trim();
+          details['brideMother'] =
+              _getController('mar_bride_mother').text.trim();
+          details['brideParish'] =
+              _getController('mar_bride_parish').text.trim();
           details['bridePob'] = _getController('mar_bride_pob').text.trim();
           if (_formData['mar_bride_dob'] != null) {
-            details['brideDob'] = DateFormat('yyyy-MM-dd').format(_formData['mar_bride_dob']);
+            details['brideDob'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['mar_bride_dob']);
           }
-          details['bridePlaceBaptism'] = _getController('mar_bride_place_bapt').text.trim();
+          details['bridePlaceBaptism'] =
+              _getController('mar_bride_place_bapt').text.trim();
           if (_formData['mar_bride_bapt_date'] != null) {
-            details['brideBaptismDate'] = DateFormat('yyyy-MM-dd').format(_formData['mar_bride_bapt_date']);
+            details['brideBaptismDate'] = DateFormat(
+              'yyyy-MM-dd',
+            ).format(_formData['mar_bride_bapt_date']);
           }
-          details['brideAddress'] = _getController('mar_bride_address').text.trim();
+          details['brideAddress'] =
+              _getController('mar_bride_address').text.trim();
 
           // Witness 1
           details['witness1Name'] = _getController('mar_w1_name').text.trim();
-          details['witness1Parish'] = _getController('mar_w1_parish').text.trim();
-          details['witness1Address'] = _getController('mar_w1_address').text.trim();
+          details['witness1Parish'] =
+              _getController('mar_w1_parish').text.trim();
+          details['witness1Address'] =
+              _getController('mar_w1_address').text.trim();
 
           // Witness 2
           details['witness2Name'] = _getController('mar_w2_name').text.trim();
-          details['witness2Parish'] = _getController('mar_w2_parish').text.trim();
-          details['witness2Address'] = _getController('mar_w2_address').text.trim();
+          details['witness2Parish'] =
+              _getController('mar_w2_parish').text.trim();
+          details['witness2Address'] =
+              _getController('mar_w2_address').text.trim();
           break;
       }
 
@@ -350,7 +423,13 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
         );
         _resetForm();
         widget.onSubmitted();
-        widget.tabController.animateTo(1);
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0, // 0.0 is the very top of the scrollable view
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -416,6 +495,7 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
     final isDark = theme.brightness == Brightness.dark;
 
     return SingleChildScrollView(
+      controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20),
       child: Card(
@@ -456,9 +536,10 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
                     border: Border.all(
                       color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
                     ),
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.02)
-                        : Colors.grey[50],
+                    color:
+                        isDark
+                            ? Colors.white.withValues(alpha: 0.02)
+                            : Colors.grey[50],
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<CertificateType>(
@@ -477,20 +558,23 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
                           });
                         }
                       },
-                      items: CertificateType.values
-                          .map<DropdownMenuItem<CertificateType>>(
-                              (CertificateType value) {
-                        return DropdownMenuItem<CertificateType>(
-                          value: value,
-                          child: Text(
-                            _getTypeDisplayName(value, loc),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                      items:
+                          CertificateType.values
+                              .map<DropdownMenuItem<CertificateType>>((
+                                CertificateType value,
+                              ) {
+                                return DropdownMenuItem<CertificateType>(
+                                  value: value,
+                                  child: Text(
+                                    _getTypeDisplayName(value, loc),
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              })
+                              .toList(),
                     ),
                   ),
                 ),
@@ -521,25 +605,27 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      onPressed: _isSubmitting ? null : () => _submitRequest(loc),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
+                      onPressed:
+                          _isSubmitting ? null : () => _submitRequest(loc),
+                      child:
+                          _isSubmitting
+                              ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 3,
+                                ),
+                              )
+                              : Text(
+                                loc.submitRequest.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            )
-                          : Text(
-                              loc.submitRequest.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
                     ),
                   ),
                 ),
@@ -597,644 +683,831 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
   }
 
   List<Widget> _buildDynamicFormFields(
-      AppLocalizations loc, ThemeData theme, bool isDark) {
+    AppLocalizations loc,
+    ThemeData theme,
+    bool isDark,
+  ) {
     _prefillAllFormData();
     switch (_selectedType) {
       case CertificateType.NIHIL_OBSTAT:
         return [
           _buildFormSectionTitle(loc.clearanceForm),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('no_issuing_parish'),
-              label: loc.issuingParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_issuing_diocese'),
-              label: loc.issuingDiocese,
-              icon: Icons.location_city_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
-          
-          _buildFormSectionTitle(loc.permissionType),
-          _buildSectionCard(children: [
-            DropdownButtonFormField<String>(
-              isExpanded: true,
-              value: _formData['no_permission_type'] ?? 'PUBLISH_BANNS_MARRIAGE',
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.verified_outlined, color: Color(0xFF5D3A99)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('no_issuing_parish'),
+                label: loc.issuingParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
               ),
-              dropdownColor: theme.cardColor,
-              onChanged: (val) {
-                setState(() {
-                  _formData['no_permission_type'] = val;
-                });
-              },
-              items: [
-                DropdownMenuItem(
-                  value: 'ASSIST_AT_ENGAGEMENT',
-                  child: Text(
-                    loc.assistAtEngagement,
-                    overflow: TextOverflow.ellipsis,
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_issuing_diocese'),
+                label: loc.issuingDiocese,
+                icon: Icons.location_city_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
+
+          _buildFormSectionTitle(loc.permissionType),
+          _buildSectionCard(
+            children: [
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                value:
+                    _formData['no_permission_type'] ?? 'PUBLISH_BANNS_MARRIAGE',
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(
+                    Icons.verified_outlined,
+                    color: Color(0xFF5D3A99),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                DropdownMenuItem(
-                  value: 'PUBLISH_BANNS_MARRIAGE',
-                  child: Text(
-                    loc.publishBannsMarriage,
-                    overflow: TextOverflow.ellipsis,
+                dropdownColor: theme.cardColor,
+                onChanged: (val) {
+                  setState(() {
+                    _formData['no_permission_type'] = val;
+                  });
+                },
+                items: [
+                  DropdownMenuItem(
+                    value: 'ASSIST_AT_ENGAGEMENT',
+                    child: Text(
+                      loc.assistAtEngagement,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                DropdownMenuItem(
-                  value: 'ASSIST_AT_THE_MARRIAGE',
-                  child: Text(
-                    loc.assistAtTheMarriage,
-                    overflow: TextOverflow.ellipsis,
+                  DropdownMenuItem(
+                    value: 'PUBLISH_BANNS_MARRIAGE',
+                    child: Text(
+                      loc.publishBannsMarriage,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ]),
+                  DropdownMenuItem(
+                    value: 'ASSIST_AT_THE_MARRIAGE',
+                    child: Text(
+                      loc.assistAtTheMarriage,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.groomDetails),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('no_groom_name'),
-              label: loc.name,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dob,
-              selectedDate: _formData['no_groom_dob'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['no_groom_dob']);
-                if (date != null) setState(() => _formData['no_groom_dob'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dateOfBaptism,
-              selectedDate: _formData['no_groom_bapt_date'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['no_groom_bapt_date']);
-                if (date != null) setState(() => _formData['no_groom_bapt_date'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_groom_father'),
-              label: loc.fatherName,
-              icon: Icons.person,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_groom_mother'),
-              label: loc.motherName,
-              icon: Icons.person_3_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_groom_address'),
-              label: loc.homeAddress,
-              icon: Icons.home_outlined,
-              maxLines: 2,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_groom_parish'),
-              label: loc.currentParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_groom_diocese'),
-              label: loc.currentDiocese,
-              icon: Icons.location_city_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('no_groom_name'),
+                label: loc.name,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dob,
+                selectedDate: _formData['no_groom_dob'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['no_groom_dob'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['no_groom_dob'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dateOfBaptism,
+                selectedDate: _formData['no_groom_bapt_date'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['no_groom_bapt_date'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['no_groom_bapt_date'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_groom_father'),
+                label: loc.fatherName,
+                icon: Icons.person,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_groom_mother'),
+                label: loc.motherName,
+                icon: Icons.person_3_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_groom_address'),
+                label: loc.homeAddress,
+                icon: Icons.home_outlined,
+                maxLines: 2,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_groom_parish'),
+                label: loc.currentParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_groom_diocese'),
+                label: loc.currentDiocese,
+                icon: Icons.location_city_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.brideDetails),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('no_bride_name'),
-              label: loc.name,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dob,
-              selectedDate: _formData['no_bride_dob'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['no_bride_dob']);
-                if (date != null) setState(() => _formData['no_bride_dob'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dateOfBaptism,
-              selectedDate: _formData['no_bride_bapt_date'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['no_bride_bapt_date']);
-                if (date != null) setState(() => _formData['no_bride_bapt_date'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_bride_father'),
-              label: loc.fatherName,
-              icon: Icons.person,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_bride_mother'),
-              label: loc.motherName,
-              icon: Icons.person_3_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_bride_address'),
-              label: loc.homeAddress,
-              icon: Icons.home_outlined,
-              maxLines: 2,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_bride_parish'),
-              label: loc.currentParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('no_bride_diocese'),
-              label: loc.currentDiocese,
-              icon: Icons.location_city_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('no_bride_name'),
+                label: loc.name,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dob,
+                selectedDate: _formData['no_bride_dob'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['no_bride_dob'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['no_bride_dob'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dateOfBaptism,
+                selectedDate: _formData['no_bride_bapt_date'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['no_bride_bapt_date'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['no_bride_bapt_date'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_bride_father'),
+                label: loc.fatherName,
+                icon: Icons.person,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_bride_mother'),
+                label: loc.motherName,
+                icon: Icons.person_3_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_bride_address'),
+                label: loc.homeAddress,
+                icon: Icons.home_outlined,
+                maxLines: 2,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_bride_parish'),
+                label: loc.currentParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('no_bride_diocese'),
+                label: loc.currentDiocese,
+                icon: Icons.location_city_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.impedimentsLabel),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('no_impediments'),
-              label: loc.impediments,
-              icon: Icons.warning_amber_rounded,
-              maxLines: 3,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('no_impediments'),
+                label: loc.impediments,
+                icon: Icons.warning_amber_rounded,
+                maxLines: 3,
+              ),
+            ],
+          ),
         ];
 
       case CertificateType.BAPTISM:
         return [
           _buildFormSectionTitle(loc.details),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('bap_name'),
-              label: loc.name,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildGenderDropdown(loc, isDark),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dob,
-              selectedDate: _formData['bap_dob'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['bap_dob']);
-                if (date != null) setState(() => _formData['bap_dob'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_pob'),
-              label: loc.placeOfBirth,
-              icon: Icons.location_on_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dateOfBaptism,
-              selectedDate: _formData['bap_date'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['bap_date']);
-                if (date != null) setState(() => _formData['bap_date'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_place'),
-              label: loc.placeOfBaptism,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('bap_name'),
+                label: loc.name,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildGenderDropdown(loc, isDark),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dob,
+                selectedDate: _formData['bap_dob'],
+                onTap: () async {
+                  final date = await _pickDate(context, _formData['bap_dob']);
+                  if (date != null) setState(() => _formData['bap_dob'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_pob'),
+                label: loc.placeOfBirth,
+                icon: Icons.location_on_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dateOfBaptism,
+                selectedDate: _formData['bap_date'],
+                onTap: () async {
+                  final date = await _pickDate(context, _formData['bap_date']);
+                  if (date != null)
+                    setState(() => _formData['bap_date'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_place'),
+                label: loc.placeOfBaptism,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle('${loc.fatherName} & ${loc.motherName}'),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('bap_father'),
-              label: loc.fatherName,
-              icon: Icons.person,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_mother'),
-              label: loc.motherName,
-              icon: Icons.person_3_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_residence'),
-              label: loc.homeAddress,
-              icon: Icons.home_outlined,
-              maxLines: 2,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_godfather'),
-              label: loc.godfatherName,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_godmother'),
-              label: loc.godmotherName,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('bap_father'),
+                label: loc.fatherName,
+                icon: Icons.person,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_mother'),
+                label: loc.motherName,
+                icon: Icons.person_3_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_residence'),
+                label: loc.homeAddress,
+                icon: Icons.home_outlined,
+                maxLines: 2,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_godfather'),
+                label: loc.godfatherName,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_godmother'),
+                label: loc.godmotherName,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle('Ecclesiastical details'),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('bap_issuing_diocese'),
-              label: loc.issuingDiocese,
-              icon: Icons.location_city_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_minister'),
-              label: loc.ministerOfBaptism,
-              icon: Icons.assignment_ind_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('bap_registry_book'),
-              label: '${loc.registryBook} (${loc.keptAt})',
-              icon: Icons.menu_book_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('bap_issuing_diocese'),
+                label: loc.issuingDiocese,
+                icon: Icons.location_city_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_minister'),
+                label: loc.ministerOfBaptism,
+                icon: Icons.assignment_ind_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('bap_registry_book'),
+                label: '${loc.registryBook} (${loc.keptAt})',
+                icon: Icons.menu_book_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
         ];
 
       case CertificateType.MARRIAGE_PREPARATION:
         if (_getController('prep_target_center').text.isEmpty) {
-          _getController('prep_target_center').text = 'Family Apostolate Centre, Vlangamuri';
+          _getController('prep_target_center').text =
+              'Family Apostolate Centre, Vlangamuri';
         }
         return [
           _buildFormSectionTitle(loc.marriagePreparation),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('prep_target_center'),
-              label: loc.targetCenter,
-              icon: Icons.business_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('prep_course_category'),
-              label: loc.courseCategory,
-              icon: Icons.calendar_today_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('prep_target_center'),
+                label: loc.targetCenter,
+                icon: Icons.business_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('prep_course_category'),
+                label: loc.courseCategory,
+                icon: Icons.calendar_today_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.details),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('prep_candidate_name'),
-              label: loc.name,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildGenderDropdown(loc, isDark, stateKey: 'prep_gender'),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('prep_parent_name'),
-              label: '${loc.fatherName} / ${loc.motherName} (Son/Daughter of...)',
-              icon: Icons.people_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('prep_candidate_name'),
+                label: loc.name,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildGenderDropdown(loc, isDark, stateKey: 'prep_gender'),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('prep_parent_name'),
+                label:
+                    '${loc.fatherName} / ${loc.motherName} (Son/Daughter of...)',
+                icon: Icons.people_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle('Home Parish Registry'),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('prep_home_parish'),
-              label: loc.issuingParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('prep_substation'),
-              label: loc.substationName,
-              icon: Icons.church_outlined,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('prep_foranate'),
-              label: loc.foranateArea,
-              icon: Icons.map_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('prep_diocese'),
-              label: loc.issuingDiocese,
-              icon: Icons.location_city_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('prep_home_parish'),
+                label: loc.issuingParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('prep_substation'),
+                label: loc.substationName,
+                icon: Icons.church_outlined,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('prep_foranate'),
+                label: loc.foranateArea,
+                icon: Icons.map_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('prep_diocese'),
+                label: loc.issuingDiocese,
+                icon: Icons.location_city_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
         ];
 
       case CertificateType.MARRIAGE:
         return [
           _buildFormSectionTitle(loc.marriageLocation),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('mar_issuing_diocese'),
-              label: loc.issuingDiocese,
-              icon: Icons.location_city_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_location'),
-              label: loc.marriageLocation,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_substation'),
-              label: loc.substationName,
-              icon: Icons.church_outlined,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.marriageDate,
-              selectedDate: _formData['mar_date'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['mar_date']);
-                if (date != null) setState(() => _formData['mar_date'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_officiating_priest'),
-              label: loc.officiatingPriest,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('mar_issuing_diocese'),
+                label: loc.issuingDiocese,
+                icon: Icons.location_city_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_location'),
+                label: loc.marriageLocation,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_substation'),
+                label: loc.substationName,
+                icon: Icons.church_outlined,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.marriageDate,
+                selectedDate: _formData['mar_date'],
+                onTap: () async {
+                  final date = await _pickDate(context, _formData['mar_date']);
+                  if (date != null)
+                    setState(() => _formData['mar_date'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_officiating_priest'),
+                label: loc.officiatingPriest,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.groomDetails),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('mar_groom_name'),
-              label: loc.name,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_groom_father'),
-              label: loc.fatherName,
-              icon: Icons.person,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_groom_mother'),
-              label: loc.motherName,
-              icon: Icons.person_3_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_groom_parish'),
-              label: loc.currentParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_groom_pob'),
-              label: loc.placeOfBirth,
-              icon: Icons.location_on_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dob,
-              selectedDate: _formData['mar_groom_dob'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['mar_groom_dob']);
-                if (date != null) setState(() => _formData['mar_groom_dob'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_groom_place_bapt'),
-              label: loc.placeOfBaptism,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dateOfBaptism,
-              selectedDate: _formData['mar_groom_bapt_date'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['mar_groom_bapt_date']);
-                if (date != null) setState(() => _formData['mar_groom_bapt_date'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_groom_address'),
-              label: loc.homeAddress,
-              icon: Icons.home_outlined,
-              maxLines: 2,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('mar_groom_name'),
+                label: loc.name,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_groom_father'),
+                label: loc.fatherName,
+                icon: Icons.person,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_groom_mother'),
+                label: loc.motherName,
+                icon: Icons.person_3_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_groom_parish'),
+                label: loc.currentParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_groom_pob'),
+                label: loc.placeOfBirth,
+                icon: Icons.location_on_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dob,
+                selectedDate: _formData['mar_groom_dob'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['mar_groom_dob'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['mar_groom_dob'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_groom_place_bapt'),
+                label: loc.placeOfBaptism,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dateOfBaptism,
+                selectedDate: _formData['mar_groom_bapt_date'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['mar_groom_bapt_date'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['mar_groom_bapt_date'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_groom_address'),
+                label: loc.homeAddress,
+                icon: Icons.home_outlined,
+                maxLines: 2,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.brideDetails),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('mar_bride_name'),
-              label: loc.name,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_bride_father'),
-              label: loc.fatherName,
-              icon: Icons.person,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_bride_mother'),
-              label: loc.motherName,
-              icon: Icons.person_3_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_bride_parish'),
-              label: loc.currentParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_bride_pob'),
-              label: loc.placeOfBirth,
-              icon: Icons.location_on_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dob,
-              selectedDate: _formData['mar_bride_dob'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['mar_bride_dob']);
-                if (date != null) setState(() => _formData['mar_bride_dob'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_bride_place_bapt'),
-              label: loc.placeOfBaptism,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildDatePickerField(
-              label: loc.dateOfBaptism,
-              selectedDate: _formData['mar_bride_bapt_date'],
-              onTap: () async {
-                final date = await _pickDate(context, _formData['mar_bride_bapt_date']);
-                if (date != null) setState(() => _formData['mar_bride_bapt_date'] = date);
-              },
-              loc: loc,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_bride_address'),
-              label: loc.homeAddress,
-              icon: Icons.home_outlined,
-              maxLines: 2,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('mar_bride_name'),
+                label: loc.name,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_bride_father'),
+                label: loc.fatherName,
+                icon: Icons.person,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_bride_mother'),
+                label: loc.motherName,
+                icon: Icons.person_3_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_bride_parish'),
+                label: loc.currentParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_bride_pob'),
+                label: loc.placeOfBirth,
+                icon: Icons.location_on_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dob,
+                selectedDate: _formData['mar_bride_dob'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['mar_bride_dob'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['mar_bride_dob'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_bride_place_bapt'),
+                label: loc.placeOfBaptism,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildDatePickerField(
+                label: loc.dateOfBaptism,
+                selectedDate: _formData['mar_bride_bapt_date'],
+                onTap: () async {
+                  final date = await _pickDate(
+                    context,
+                    _formData['mar_bride_bapt_date'],
+                  );
+                  if (date != null)
+                    setState(() => _formData['mar_bride_bapt_date'] = date);
+                },
+                loc: loc,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_bride_address'),
+                label: loc.homeAddress,
+                icon: Icons.home_outlined,
+                maxLines: 2,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.witness1),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('mar_w1_name'),
-              label: loc.witnessName,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_w1_parish'),
-              label: loc.witnessParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_w1_address'),
-              label: loc.witnessAddress,
-              icon: Icons.home_outlined,
-              maxLines: 2,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('mar_w1_name'),
+                label: loc.witnessName,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_w1_parish'),
+                label: loc.witnessParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_w1_address'),
+                label: loc.witnessAddress,
+                icon: Icons.home_outlined,
+                maxLines: 2,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
 
           _buildFormSectionTitle(loc.witness2),
-          _buildSectionCard(children: [
-            _buildTextField(
-              controller: _getController('mar_w2_name'),
-              label: loc.witnessName,
-              icon: Icons.person_outline,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_w2_parish'),
-              label: loc.witnessParish,
-              icon: Icons.church_outlined,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: _getController('mar_w2_address'),
-              label: loc.witnessAddress,
-              icon: Icons.home_outlined,
-              maxLines: 2,
-              validator: (val) => val == null || val.isEmpty ? loc.fieldRequired : null,
-            ),
-          ]),
+          _buildSectionCard(
+            children: [
+              _buildTextField(
+                controller: _getController('mar_w2_name'),
+                label: loc.witnessName,
+                icon: Icons.person_outline,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_w2_parish'),
+                label: loc.witnessParish,
+                icon: Icons.church_outlined,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _getController('mar_w2_address'),
+                label: loc.witnessAddress,
+                icon: Icons.home_outlined,
+                maxLines: 2,
+                validator:
+                    (val) =>
+                        val == null || val.isEmpty ? loc.fieldRequired : null,
+              ),
+            ],
+          ),
         ];
     }
     return [];
@@ -1270,8 +1543,10 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: const Color(0xFF5D3A99), size: 22),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: Colors.grey[300]!),
@@ -1296,7 +1571,11 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
     );
   }
 
-  Widget _buildGenderDropdown(AppLocalizations loc, bool isDark, {String stateKey = 'bap_gender'}) {
+  Widget _buildGenderDropdown(
+    AppLocalizations loc,
+    bool isDark, {
+    String stateKey = 'bap_gender',
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1351,9 +1630,10 @@ class _CertificateRequestFormState extends State<CertificateRequestForm> {
     required AppLocalizations loc,
     required bool isDark,
   }) {
-    final dateStr = selectedDate == null
-        ? loc.selectDate
-        : DateFormat('MMMM dd, yyyy').format(selectedDate);
+    final dateStr =
+        selectedDate == null
+            ? loc.selectDate
+            : DateFormat('MMMM dd, yyyy').format(selectedDate);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
