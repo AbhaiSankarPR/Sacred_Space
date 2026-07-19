@@ -44,11 +44,14 @@ class BookingService {
   }
 
   // POST: Create a new booking
-  Future<void> createBooking(Map<String, dynamic> bookingData) async {
+  Future<BookingData> createBooking(Map<String, dynamic> bookingData) async {
     try {
       // Note: Most REST APIs use the base endpoint for POSTing new resources
       // Correct
-      await apiService.post('/booking', bookingData);
+      final response = await apiService.post('/booking', bookingData);
+      final decodedData =
+          response.data is String ? json.decode(response.data) : response.data;
+      return BookingData.fromJson(decodedData);
     } catch (e) {
       debugPrint('Create Booking Error: $e');
       throw Exception('Failed to create booking');

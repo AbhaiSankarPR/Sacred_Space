@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:sacred_space/auth/auth_service.dart';
 import 'booking_service.dart';
+import 'booking_model.dart';
 
 class NewBookingScreen extends StatefulWidget {
   const NewBookingScreen({super.key});
@@ -63,7 +64,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
       }
 
       try {
-        await _service.createBooking({
+        final newBooking = await _service.createBooking({
           "title": finalTitle,
           "description": _noteController.text,
           "startTime": start.toUtc().toIso8601String(),
@@ -71,7 +72,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
           "churchId": auth.currentUser?.churchId,
         });
 
-        if (mounted) _showSuccessDialog(loc);
+        if (mounted) _showSuccessDialog(loc, newBooking);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(
@@ -84,7 +85,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
     }
   }
 
-  void _showSuccessDialog(AppLocalizations loc) {
+  void _showSuccessDialog(AppLocalizations loc, BookingData newBooking) {
     final theme = Theme.of(context);
     showDialog(
       context: context,
@@ -120,7 +121,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                     ),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      Navigator.pop(context);
+                      Navigator.pop(context, newBooking);
                     },
                     child: Text(
                       loc.ok,

@@ -167,8 +167,15 @@ class _BookingsScreenState extends State<BookingsScreen> {
           !isPriest
               ? FloatingActionButton.extended(
                 onPressed: () async {
-                  await Navigator.pushNamed(context, Routes.newBooking);
-                  _refreshBookings();
+                  final newBooking =
+                      await Navigator.pushNamed(context, Routes.newBooking);
+                  if (newBooking is BookingData) {
+                    setState(() {
+                      _bookings.insert(0, newBooking);
+                    });
+                  } else if (newBooking == true) {
+                    _refreshBookings();
+                  }
                 },
                 backgroundColor: const Color(0xFF5D3A99),
                 icon: const Icon(Icons.add, color: Colors.white),
