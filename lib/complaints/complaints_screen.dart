@@ -157,8 +157,15 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
           !_isPriest
               ? FloatingActionButton.extended(
                 onPressed: () async {
-                  await Navigator.pushNamed(context, Routes.newComplaint);
-                  _refreshComplaints();
+                  final newComplaint =
+                      await Navigator.pushNamed(context, Routes.newComplaint);
+                  if (newComplaint is Complaint) {
+                    setState(() {
+                      _complaints.insert(0, newComplaint);
+                    });
+                  } else if (newComplaint == true) {
+                    _refreshComplaints();
+                  }
                 },
                 backgroundColor: const Color(0xFF5D3A99),
                 icon: const Icon(Icons.add, color: Colors.white),

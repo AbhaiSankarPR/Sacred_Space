@@ -33,7 +33,7 @@ class _NewComplaintScreenState extends State<NewComplaintScreen> {
     final loc = AppLocalizations.of(context)!;
 
     try {
-      await _service.createComplaint(
+      final newComplaint = await _service.createComplaint(
         _titleController.text.trim(),
         _descriptionController.text.trim(),
       );
@@ -45,7 +45,7 @@ class _NewComplaintScreenState extends State<NewComplaintScreen> {
             backgroundColor: Colors.green.shade700,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, newComplaint);
       }
     } catch (e) {
       if (mounted) {

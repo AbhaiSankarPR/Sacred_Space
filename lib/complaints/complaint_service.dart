@@ -51,7 +51,9 @@ class ComplaintService {
         'title': title,
         'description': description,
       });
-      return Complaint.fromJson(response.data);
+      final decodedData =
+          response.data is String ? json.decode(response.data) : response.data;
+      return Complaint.fromJson(decodedData);
     } catch (e) {
       debugPrint('Create Complaint Error: $e');
       throw Exception('Failed to submit complaint');
