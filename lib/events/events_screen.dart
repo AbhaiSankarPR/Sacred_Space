@@ -346,16 +346,18 @@ class _EventsScreenState extends State<EventsScreen> {
         children:
             tabs
                 .map(
-                  (tab) => _FilterTab(
-                    label:
-                        tab == "Upcoming"
-                            ? loc.upcoming
-                            : (tab == "Past" ? loc.past : loc.myEvents),
-                    isSelected: _selectedFilter == tab,
-                    onTap: () {
-                      setState(() => _selectedFilter = tab);
-                      _fetchEvents();
-                    },
+                  (tab) => Expanded(
+                    child: _FilterTab(
+                      label:
+                          tab == "Upcoming"
+                              ? loc.upcoming
+                              : (tab == "Past" ? loc.past : loc.myEvents),
+                      isSelected: _selectedFilter == tab,
+                      onTap: () {
+                        setState(() => _selectedFilter = tab);
+                        _fetchEvents();
+                      },
+                    ),
                   ),
                 )
                 .toList(),

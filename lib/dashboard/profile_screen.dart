@@ -45,10 +45,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final overlayState = Overlay.of(context);
       late OverlayEntry overlayEntry;
       overlayEntry = OverlayEntry(
-        builder: (context) => WaterDropNotification(
-          message: loc.profilePicUpdated,
-          onDismiss: () => overlayEntry.remove(),
-        ),
+        builder:
+            (context) => WaterDropNotification(
+              message: loc.profilePicUpdated,
+              onDismiss: () => overlayEntry.remove(),
+            ),
       );
       overlayState.insert(overlayEntry);
     } catch (e) {
@@ -146,22 +147,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               isDark ? Colors.grey[800] : Colors.grey[100],
                           // Use user's specific profile image if available, else fallback to initials or icon
                           backgroundImage:
-                              (user.profilePicUrl != null && user.profilePicUrl!.isNotEmpty)
+                              (user.profilePicUrl != null &&
+                                      user.profilePicUrl!.isNotEmpty)
                                   ? NetworkImage(user.profilePicUrl!)
-                                  : (user.logoUrl != null && user.logoUrl!.isNotEmpty)
-                                      ? NetworkImage(user.logoUrl!)
-                                      : null,
-                          child: _isUploading
-                              ? const CircularProgressIndicator(
-                                  color: Color(0xFF5D3A99),
-                                )
-                              : (user.profilePicUrl == null || user.profilePicUrl!.isEmpty) &&
-                                (user.logoUrl == null || user.logoUrl!.isEmpty)
+                                  : (user.logoUrl != null &&
+                                      user.logoUrl!.isNotEmpty)
+                                  ? NetworkImage(user.logoUrl!)
+                                  : null,
+                          child:
+                              _isUploading
+                                  ? const CircularProgressIndicator(
+                                    color: Color(0xFF5D3A99),
+                                  )
+                                  : (user.profilePicUrl == null ||
+                                          user.profilePicUrl!.isEmpty) &&
+                                      (user.logoUrl == null ||
+                                          user.logoUrl!.isEmpty)
                                   ? const Icon(
-                                      Icons.person,
-                                      size: 45,
-                                      color: Color(0xFF5D3A99),
-                                    )
+                                    Icons.person,
+                                    size: 45,
+                                    color: Color(0xFF5D3A99),
+                                  )
                                   : null,
                         ),
                       ),
@@ -208,10 +214,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: () {
-                      Clipboard.setData(ClipboardData(text: user.inviteCode ?? ""));
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(loc.inviteCodeCopied)));
+                      Clipboard.setData(
+                        ClipboardData(text: user.inviteCode ?? ""),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(loc.inviteCodeCopied)),
+                      );
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -279,11 +287,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   );
                 },
-              ),
-              _ProfileMenuTile(
-                icon: Icons.church_outlined,
-                title: user.churchName, // Display assigned church
-                onTap: () {},
               ),
               _ProfileMenuTile(
                 icon: Icons.lock_outline,
