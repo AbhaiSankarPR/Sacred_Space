@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import '../core/theme_provider.dart';
 import '../core/locale_provider.dart';
 import '../auth/auth_service.dart';
@@ -16,8 +18,89 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   bool _isUploading = false;
+  bool _notificationsEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkNotificationPermissionStatus();
+  }
+
+  @override
+  void dispose() {
+    // Clean up observer
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // 2. Automatically re-check when returning from System Settings app
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkNotificationPermissionStatus();
+    }
+  }
+
+  // 3. Check actual OS permission state
+  Future<void> _checkNotificationPermissionStatus() async {
+    final status = await Permission.notification.status;
+    if (mounted) {
+      setState(() {
+        _notificationsEnabled = status.isGranted;
+      });
+    }
+  }
+
+  // 4. Handle Switch Toggle Action
+  Future<void> _handleNotificationToggle(bool enable) async {
+    final status = await Permission.notification.status;
+
+    if (enable) {
+      if (status.isPermanentlyDenied || status.isRestricted) {
+        // OS blocked popups. Prompt user to open system settings.
+        _showOpenSettingsDialog();
+      } else {
+        // Request system permission popup
+        final result = await Permission.notification.request();
+        setState(() {
+          _notificationsEnabled = result.isGranted;
+        });
+      }
+    } else {
+      // Direct user to settings to manually revoke/disable OS-level permissions
+      _showOpenSettingsDialog();
+    }
+  }
+
+  void _showOpenSettingsDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Notification Settings"),
+            content: const Text(
+              "To change notification permissions, please update them in your system settings.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  openAppSettings(); // Native method to launch app OS settings page
+                },
+                child: const Text("Open Settings"),
+              ),
+            ],
+          ),
+    );
+  }
 
   Future<void> _pickAndUploadBackground() async {
     final loc = AppLocalizations.of(context)!;
@@ -41,10 +124,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final overlayState = Overlay.of(context);
       late OverlayEntry overlayEntry;
       overlayEntry = OverlayEntry(
-        builder: (context) => WaterDropNotification(
-          message: loc.backgroundUpdated,
-          onDismiss: () => overlayEntry.remove(),
-        ),
+        builder:
+            (context) => WaterDropNotification(
+              message: loc.backgroundUpdated,
+              onDismiss: () => overlayEntry.remove(),
+            ),
       );
       overlayState.insert(overlayEntry);
     } catch (e) {
@@ -66,12 +150,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Access Providers
     final themeProvider = Provider.of<ThemeProvider>(context);
     final localeProvider = Provider.of<LocaleProvider>(context);
     final loc = AppLocalizations.of(context)!;
 
-    // Fetch User safely
     final user = AuthService().currentUser;
 
     if (user == null) {
@@ -84,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          loc.settings, // Make sure 'settings' is in your ARB
+          loc.settings,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -115,13 +197,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap:
                   () => Navigator.pushNamed(context, Routes.familyConnections),
             ),
+
+            // --- DYNAMIC NOTIFICATION TILE HERE ---
             _SettingsTile(
               icon: Icons.notifications_none,
               title: loc.notifications,
               trailing: Switch(
-                value: true,
+                value:
+                    _notificationsEnabled, // Dynamically set by actual system permission status
                 activeColor: const Color(0xFF9B59B6),
-                onChanged: (v) {},
+                onChanged: _handleNotificationToggle,
               ),
             ),
           ]),
@@ -167,19 +252,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _SettingsTile(
                 icon: Icons.image_outlined,
                 title: loc.uploadBackground,
-                trailing: _isUploading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF5D3A99),
-                        ),
-                      )
-                    : null,
-                onTap: _isUploading
-                    ? null
-                    : _pickAndUploadBackground,
+                trailing:
+                    _isUploading
+                        ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF5D3A99),
+                          ),
+                        )
+                        : null,
+                onTap: _isUploading ? null : _pickAndUploadBackground,
               ),
             ]),
             const SizedBox(height: 24),
@@ -208,7 +292,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Language Selection Dialog
   void _showLanguageDialog(BuildContext context, LocaleProvider provider) {
     showDialog(
       context: context,

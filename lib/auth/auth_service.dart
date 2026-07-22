@@ -387,7 +387,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,

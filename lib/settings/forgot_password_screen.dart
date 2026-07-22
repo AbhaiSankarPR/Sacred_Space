@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../auth/auth_service.dart'; // Still needed for getChurches()
+import '../auth/auth_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -13,18 +13,21 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final  baseUrl = dotenv.env['API_BASE_URL'];
+  final baseUrl = dotenv.env['API_BASE_URL'];
   final _authService = AuthService();
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final List<TextEditingController> _otpControllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _otpControllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   String? _selectedChurchId;
   List<Map<String, String>> _churches = [];
-  int _step = 1; 
+  int _step = 1;
   bool _isLoading = false;
 
   @override
@@ -41,7 +44,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // --- STEP 1: REQUEST OTP (FETCH) ---
   void _requestOtp() async {
     if (_emailController.text.isEmpty || _selectedChurchId == null) return;
-    
+
     setState(() => _isLoading = true);
     try {
       final response = await http.post(
@@ -52,7 +55,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           'churchId': _selectedChurchId,
         }),
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         setState(() => _step = 2);
       } else {
@@ -69,7 +71,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // --- STEP 2: RESET PASSWORD (FETCH) ---
   void _handleFinalReset() async {
     String otp = _otpControllers.map((e) => e.text).join();
-    if (otp.length < 6 || _passwordController.text != _confirmPasswordController.text) return;
+    if (otp.length < 6 ||
+        _passwordController.text != _confirmPasswordController.text)
+      return;
 
     setState(() => _isLoading = true);
     try {
@@ -100,7 +104,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   void _showSnackBar(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: isError ? Colors.redAccent : Colors.green),
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+      ),
     );
   }
 
@@ -108,8 +115,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Reset Password"), 
-        backgroundColor: const Color(0xFF5D3A99), 
+        title: const Text("Reset Password"),
+        backgroundColor: const Color(0xFF5D3A99),
         foregroundColor: Colors.white,
         centerTitle: true,
       ),
@@ -118,13 +125,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            Icon(_step == 1 ? Icons.lock_reset : Icons.mark_email_read, size: 80, color: const Color(0xFF5D3A99)),
+            Icon(
+              _step == 1 ? Icons.lock_reset : Icons.mark_email_read,
+              size: 80,
+              color: const Color(0xFF5D3A99),
+            ),
             const SizedBox(height: 24),
-            Text(_step == 1 ? "Forgot Password?" : "Verify & Reset", 
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(
+              _step == 1 ? "Forgot Password?" : "Verify & Reset",
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
             Text(
-              _step == 1 ? "Get an OTP on your email" : "Enter OTP and new password",
+              _step == 1
+                  ? "Get an OTP on your email"
+                  : "Enter OTP and new password",
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.grey),
             ),
@@ -135,15 +150,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : (_step == 1 ? _requestOtp : _handleFinalReset),
+                onPressed:
+                    _isLoading
+                        ? null
+                        : (_step == 1 ? _requestOtp : _handleFinalReset),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5D3A99), 
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+                  backgroundColor: const Color(0xFF5D3A99),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-                child: _isLoading 
-                  ? const CircularProgressIndicator(color: Colors.white) 
-                  : Text(_step == 1 ? "SEND CODE" : "RESET PASSWORD", 
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child:
+                    _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                          _step == 1 ? "SEND CODE" : "RESET PASSWORD",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
               ),
             ),
           ],
@@ -158,48 +184,67 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         children: [
           DropdownButtonFormField<String>(
             value: _selectedChurchId,
-            items: _churches.map((c) => DropdownMenuItem(value: c['code'], child: Text(c['name']!))).toList(),
+            items:
+                _churches
+                    .map(
+                      (c) => DropdownMenuItem(
+                        value: c['code'],
+                        child: Text(c['name']!),
+                      ),
+                    )
+                    .toList(),
             onChanged: (val) => setState(() => _selectedChurchId = val),
             decoration: InputDecoration(
-              labelText: "Select Church", 
-              prefixIcon: const Icon(Icons.church), 
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))
+              labelText: "Select Church",
+              prefixIcon: const Icon(Icons.church),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
             ),
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: _emailController, 
+            controller: _emailController,
             decoration: InputDecoration(
-              labelText: "Email Address", 
-              prefixIcon: const Icon(Icons.email), 
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))
-            )
+              labelText: "Email Address",
+              prefixIcon: const Icon(Icons.email),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
           ),
         ],
       );
     } else {
       return Column(
         children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: List.generate(6, (i) => _buildOtpBox(i))),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(6, (i) => _buildOtpBox(i)),
+          ),
           const SizedBox(height: 24),
           TextField(
-            controller: _passwordController, 
-            obscureText: true, 
+            controller: _passwordController,
+            obscureText: true,
             decoration: InputDecoration(
-              labelText: "New Password", 
-              prefixIcon: const Icon(Icons.lock), 
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))
-            )
+              labelText: "New Password",
+              prefixIcon: const Icon(Icons.lock),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: _confirmPasswordController, 
-            obscureText: true, 
+            controller: _confirmPasswordController,
+            obscureText: true,
             decoration: InputDecoration(
-              labelText: "Confirm Password", 
-              prefixIcon: const Icon(Icons.lock_clock), 
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15))
-            )
+              labelText: "Confirm Password",
+              prefixIcon: const Icon(Icons.lock_clock),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
           ),
         ],
       );
@@ -243,14 +288,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color(0xFF5D3A99),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF5D3A99), width: 2),
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );
