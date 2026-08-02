@@ -109,6 +109,12 @@ class _GalleryManagementScreenState extends State<GalleryManagementScreen> {
 
       if (result == null || result.files.isEmpty) return;
 
+      final bool hasOversizedImage = result.files.any((file) => file.size > 5 * 1024 * 1024);
+      if (hasOversizedImage) {
+        _showSnackBar("One or more images exceed the 5MB size limit.", isError: true);
+        return;
+      }
+
       setState(() {
         _isUploading = true;
       });
